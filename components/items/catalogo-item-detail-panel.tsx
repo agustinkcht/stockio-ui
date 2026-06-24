@@ -1241,7 +1241,7 @@ export function CatalogoItemDetailPanel({
           </div>
         </div>
 
-        <div className={`grid gap-2 py-2 ${isViewingContainer ? (isExpandedMatrixOpen ? "grid-cols-1 gap-6" : "grid-cols-2 gap-6") : "grid-cols-10 gap-16"}`}>
+        <div className={`grid gap-2 py-2 items-start ${isViewingContainer ? (isExpandedMatrixOpen ? "grid-cols-1 gap-6" : "grid-cols-10 gap-6") : "grid-cols-10 gap-16"}`}>
           {/* Left Column - Image Card (only for standalone/children) - col-span-4 */}
           {!isViewingContainer && (
             <div className="col-span-4 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 border-none shadow-none">
@@ -1832,369 +1832,319 @@ export function CatalogoItemDetailPanel({
 
           {/* Right Column - Variantes Card (only for parent items, hidden when matrix is expanded) */}
           {isViewingContainer && !isExpandedMatrixOpen && (
-            <div className="col-span-1 order-2 flex flex-col">
+            <div className="col-span-4 order-2 self-start flex flex-col">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                {/* Toggle button for right card mode */}
-                <div className="mb-6">
-                  <div className="flex rounded-lg border border-slate-200 p-1 bg-slate-50 w-full">
+                {/* Flush tab bar — same as standalone */}
+                <div className="z-20 mb-6 -mx-6 -mt-6 flex flex-col">
+                  <div className="flex border-b border-slate-200">
                     <button
                       onClick={() => setRightCardMode("info")}
-                      className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${rightCardMode === "info"
-                        ? "bg-white text-slate-900 shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                        }`}
+                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${rightCardMode === "info" ? "text-slate-900" : "text-slate-400 hover:text-slate-600"}`}
                     >
-                      Info
+                      <span className="text-xs font-semibold uppercase tracking-widest">Info</span>
+                      {rightCardMode === "info" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />}
                     </button>
                     <button
                       onClick={() => setRightCardMode("atributos")}
-                      className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${rightCardMode === "atributos"
-                        ? "bg-white text-slate-900 shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                        }`}
+                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${rightCardMode === "atributos" ? "text-slate-900" : "text-slate-400 hover:text-slate-600"}`}
                     >
-                      Atributos
+                      <span className="text-xs font-semibold uppercase tracking-widest">Atributos</span>
+                      {rightCardMode === "atributos" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />}
                     </button>
                   </div>
                 </div>
 
-                {/* Info view - Información del Producto */}
+                {/* Info tab */}
                 {rightCardMode === "info" && (
-                  <div className="h-full flex flex-col py-2 overflow-y-auto">
-                    <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                  <div className="h-full flex flex-col mt-5">
+
+                    {/* ── INFORMACIÓN DEL PRODUCTO ── */}
+                    <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3">
                       Información del Producto
                     </h3>
-                    <p className="text-[11px] text-slate-400 mb-3 italic">
-                      Esta información es compartida por todas las variantes.
-                    </p>
 
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-medium text-gray-700">Categoría</label>
-                          <input
-                            type="text"
-                            value={categoria}
-                            onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
-                            disabled={shouldStrictlyInherit(fatherItem?.categoria)}
-                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shouldStrictlyInherit(fatherItem?.categoria)
-                              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-white border-gray-300 text-gray-900"
-                              }`}
-                            placeholder="Escribir categoría..."
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-medium text-gray-700">Marca</label>
-                          <input
-                            type="text"
-                            value={marca}
-                            onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
-                            disabled={shouldStrictlyInherit(fatherItem?.marca)}
-                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shouldStrictlyInherit(fatherItem?.marca)
-                              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-white border-gray-300 text-gray-900"
-                              }`}
-                            placeholder="Escribir marca..."
-                          />
-                        </div>
-                      </div>
-
-                      <div className="border-t border-gray-200 my-4"></div>
-
-                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                        Presentación
-                      </h3>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-medium text-gray-700">Formato de venta</label>
-                          <select
-                            value={formatoVenta}
-                            onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
-                            disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
-                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${shouldStrictlyInherit(fatherItem?.formatoVenta)
-                              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-white border-gray-300 text-gray-900 cursor-pointer"
-                              }`}
-                          >
-                            <option value="unidad">Unidad</option>
-                            <option value="pack">Pack</option>
-                          </select>
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
-                          <input
-                            type="text"
-                            value={formatoVenta === "unidad" ? "1" : (unidadesPorPack === "N.E." ? "" : unidadesPorPack)}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              if (value === "") {
-                                handleFieldChange("unidadesPorPack", "N.E.", setUnidadesPorPack)
-                              } else if (/^\d+$/.test(value)) {
-                                const numValue = Number.parseInt(value)
-                                handleFieldChange("unidadesPorPack", numValue < 1 ? "1" : value, setUnidadesPorPack)
-                              }
-                            }}
-                            disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
-                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${formatoVenta === "unidad" || isUnidadesPorPackLocked
-                              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-white border-gray-300 text-gray-900"
-                              }`}
-                            placeholder="N.E."
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-gray-700">Contenido</label>
-                          <button
-                            onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
-                            disabled={isChildItem}
-                            className={`w-10 h-5 rounded-full transition-colors relative ${volumenActive ? "bg-blue-500" : "bg-gray-300"
-                              } ${isChildItem ? "opacity-50 cursor-not-allowed" : ""}`}
-                          >
-                            <div
-                              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${volumenActive ? "translate-x-5" : "translate-x-0"
-                                }`}
+                    {isRightEditing ? (
+                      <div className="flex flex-col gap-4 mb-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Categoría</label>
+                            <input
+                              type="text"
+                              value={categoria}
+                              onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
+                              className="px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                              placeholder="Escribir categoría..."
                             />
-                          </button>
-                        </div>
-
-                        {volumenActive && (
-                          <div className="grid grid-cols-2 gap-4 mt-2">
-                            <div className="flex flex-col gap-2">
-                              <label className="text-sm font-medium text-gray-700">Cantidad</label>
-                              <input
-                                type="number"
-                                value={volumenCantidad}
-                                onChange={(e) =>
-                                  handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
-                                }
-                                disabled={isChildItem}
-                                className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isChildItem
-                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-white border-gray-300 text-gray-900"
-                                  }`}
-                                placeholder="0"
-                              />
-                            </div>
-
-                            <div className="flex flex-col gap-2">
-                              <label className="text-sm font-medium text-gray-700">Unidad de medida</label>
-                              <select
-                                value={volumenUnidad}
-                                onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
-                                disabled={isChildItem}
-                                className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${isChildItem
-                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-white border-gray-300 text-gray-900 cursor-pointer"
-                                  }`}
-                              >
-                                <option value="ml">mL</option>
-                                <option value="l">L</option>
-                                <option value="mg">mg</option>
-                                <option value="g">g</option>
-                                <option value="kg">kg</option>
-                                <option value="cm">cm</option>
-                                <option value="mm">mm</option>
-                                <option value="cm3">cm³</option>
-                                <option value="m3">m³</option>
-                              </select>
-                            </div>
                           </div>
-                        )}
-                      </div>
-
-                      {/* Vencimiento Section - Only shown if enabled in settings */}
-                      {catalogo.incluirVencimiento && (
-                        <div className="flex flex-col gap-2 mt-4">
-                          <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-gray-700">Vencimiento</label>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Marca</label>
+                            <input
+                              type="text"
+                              value={marca}
+                              onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
+                              className="px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                              placeholder="Escribir marca..."
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1 relative" ref={proveedorDropdownRef}>
+                            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</label>
                             <button
-                              onClick={() => setVencimientoActive(!vencimientoActive)}
-                              className={`w-10 h-5 rounded-full transition-colors relative ${vencimientoActive ? "bg-blue-500" : "bg-gray-300"
-                                }`}
+                              type="button"
+                              onClick={() => setProveedorDropdownOpen((o) => !o)}
+                              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-800 text-sm text-left flex items-center justify-between hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all"
                             >
-                              <div
-                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${vencimientoActive ? "translate-x-5" : "translate-x-0"
-                                  }`}
-                              />
+                              <span className={proveedor ? "text-slate-800" : "text-slate-400"}>{proveedor || "Seleccionar..."}</span>
+                              <ChevronDown className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                            </button>
+                            {proveedorDropdownOpen && (
+                              <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden" onMouseDown={(e) => e.preventDefault()}>
+                                <button type="button" onClick={() => { handleFieldChange("proveedor", "", setProveedor); setProveedorDropdownOpen(false); setProveedorSearch("") }} className="w-full px-3 py-2.5 flex items-center justify-between gap-2 text-sm text-slate-500 hover:bg-slate-50 border-b border-slate-100 transition-colors">
+                                  <span>Sin proveedor</span>
+                                  {!proveedor && <Check className="w-3.5 h-3.5 text-slate-400" />}
+                                </button>
+                                <button type="button" onClick={() => { setProveedorDropdownOpen(false); setIsNuevoProveedorModalOpen(true) }} className="w-full px-3 py-2.5 flex items-center gap-2 text-sm font-medium text-slate-700 hover:bg-slate-50 border-b border-slate-100 transition-colors">
+                                  <Plus className="w-3.5 h-3.5 text-slate-500" />
+                                  Nuevo proveedor
+                                </button>
+                                <div className="px-3 py-2 border-b border-slate-100">
+                                  <input type="text" value={proveedorSearch} onChange={(e) => setProveedorSearch(e.target.value)} placeholder="Buscar proveedor..." className="w-full px-2.5 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 placeholder:text-slate-400" autoFocus />
+                                </div>
+                                <div className="max-h-48 overflow-y-auto">
+                                  {proveedores.length === 0 ? (
+                                    <p className="px-3 py-3 text-sm text-slate-400 text-center">Sin proveedores</p>
+                                  ) : (() => {
+                                    const filtered = [...proveedores].map((p) => ({ p, displayName: p.tipo === "empresa" ? (p.razonSocial || p.nombre) : `${p.nombre}${p.apellido ? " " + p.apellido : ""}` })).sort((a, b) => a.displayName.localeCompare(b.displayName, "es")).filter(({ displayName }) => displayName.toLowerCase().includes(proveedorSearch.toLowerCase()))
+                                    return filtered.length === 0 ? <p className="px-3 py-3 text-sm text-slate-400 text-center">Sin resultados</p> : filtered.map(({ p, displayName }) => (
+                                      <button key={p.id} type="button" onClick={() => { handleFieldChange("proveedor", displayName, setProveedor); setProveedorDropdownOpen(false); setProveedorSearch("") }} className="w-full px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                                        <span>{displayName}</span>
+                                        {proveedor === displayName && <Check className="w-3.5 h-3.5 text-slate-500" />}
+                                      </button>
+                                    ))
+                                  })()}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
+                        <div className="grid grid-cols-2 divide-x divide-slate-200">
+                          <div className="px-4 py-3 flex flex-col gap-1">
+                            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Categoría</span>
+                            <span className="text-[15px] font-medium text-slate-800 leading-snug">{categoria || <span className="text-slate-300 font-normal">No aplica</span>}</span>
+                          </div>
+                          <div className="px-4 py-3 flex flex-col gap-1">
+                            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Marca</span>
+                            <span className="text-[15px] font-medium text-slate-800 leading-snug">{marca || <span className="text-slate-300 font-normal">No aplica</span>}</span>
+                          </div>
+                        </div>
+                        <div className="border-t border-slate-200 px-4 py-3 flex flex-col gap-1">
+                          <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</span>
+                          <span className="text-[15px] font-medium text-slate-800 leading-snug">{proveedor || <span className="text-slate-300 font-normal">No aplica</span>}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── PRESENTACIÓN ── */}
+                    <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">
+                      Presentación
+                    </h3>
+
+                    {isRightEditing ? (
+                      <div className="flex flex-col gap-4 mb-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Formato de venta</label>
+                            <select value={formatoVenta} onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)} className="px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300">
+                              <option value="unidad">Unidad</option>
+                              <option value="pack">Pack</option>
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</label>
+                            <input type="text" value={formatoVenta === "unidad" ? "1" : (unidadesPorPack === "N.E." ? "" : unidadesPorPack)} onChange={(e) => { const value = e.target.value; if (value === "") { handleFieldChange("unidadesPorPack", "N.E.", setUnidadesPorPack) } else if (/^\d+$/.test(value)) { const numValue = Number.parseInt(value); handleFieldChange("unidadesPorPack", numValue < 1 ? "1" : value, setUnidadesPorPack) } }} disabled={formatoVenta === "unidad"} className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${formatoVenta === "unidad" ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`} placeholder="N.E." />
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2.5">
+                            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Contenido</label>
+                            <button onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)} className={`w-9 h-5 rounded-full transition-all relative cursor-pointer ${volumenActive ? "bg-slate-800" : "bg-slate-200"}`}>
+                              <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${volumenActive ? "translate-x-4" : "translate-x-0"}`} />
                             </button>
                           </div>
-
-                          {vencimientoActive && (
-                            <div className="mt-2 p-3 border border-blue-200/60 rounded-lg bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
-                              <label className="text-xs font-semibold text-blue-900/70 uppercase tracking-wider mb-2 block">
-                                Fecha de Vencimiento
-                              </label>
-                              <div className="relative">
-                                <input
-                                  type="date"
-                                  value={fechaVencimiento}
-                                  onChange={(e) => setFechaVencimiento(e.target.value)}
-                                  className="w-full px-3 py-2.5 border border-blue-300/50 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 text-gray-900 text-sm font-medium transition-all shadow-sm hover:shadow-md"
-                                />
+                          {volumenActive && (
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Cantidad</label>
+                                <input type="number" value={volumenCantidad} onChange={(e) => handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)} className="px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm bg-white border-slate-200 text-slate-800 hover:border-slate-300" placeholder="0" />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidad de medida</label>
+                                <select value={volumenUnidad} onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)} className="px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300">
+                                  <option value="ml">mL</option>
+                                  <option value="l">L</option>
+                                  <option value="mg">mg</option>
+                                  <option value="g">g</option>
+                                  <option value="kg">kg</option>
+                                  <option value="cm">cm</option>
+                                  <option value="mm">mm</option>
+                                  <option value="cm3">cm³</option>
+                                  <option value="m3">m³</option>
+                                </select>
                               </div>
                             </div>
                           )}
                         </div>
-                      )}
-                    </div>
-
-                    <div className="border-t border-gray-200 my-4"></div>
-
-                    <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                      Información del Proveedor
-                    </h3>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-gray-700">Proveedor</label>
-                        <input
-                          type="text"
-                          value={proveedor}
-                          onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
-                          disabled={shouldInheritField(fatherItem?.proveedor)}
-                          className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${shouldInheritField(fatherItem?.proveedor)
-                            ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-white border-gray-300 text-gray-900"
-                            }`}
-                          placeholder="Nombre del proveedor"
-                        />
+                        {catalogo.incluirVencimiento && (
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2.5">
+                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Vencimiento</label>
+                              <button onClick={() => setVencimientoActive(!vencimientoActive)} className={`w-9 h-5 rounded-full transition-all relative cursor-pointer ${vencimientoActive ? "bg-slate-800" : "bg-slate-200"}`}>
+                                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${vencimientoActive ? "translate-x-4" : "translate-x-0"}`} />
+                              </button>
+                            </div>
+                            {vencimientoActive && (
+                              <input type="date" value={fechaVencimiento} onChange={(e) => setFechaVencimiento(e.target.value)} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-slate-300 text-slate-800 text-sm transition-all hover:border-slate-300" />
+                            )}
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
+                          <div className="grid grid-cols-2 divide-x divide-slate-200">
+                            <div className="px-4 py-3 flex flex-col gap-1">
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Formato de venta</span>
+                              <span className="text-[15px] font-medium text-slate-800 leading-snug capitalize">{formatoVenta || <span className="text-slate-300 font-normal">No aplica</span>}</span>
+                            </div>
+                            <div className="px-4 py-3 flex flex-col gap-1">
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</span>
+                              <span className="text-[15px] font-medium text-slate-800 leading-snug">{formatoVenta === "unidad" ? "1" : (unidadesPorPack || <span className="text-slate-300 font-normal">No aplica</span>)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        {volumenActive && (
+                          <>
+                            <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">Contenido</h3>
+                            <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
+                              <div className="grid grid-cols-2 divide-x divide-slate-200">
+                                <div className="px-4 py-3 flex flex-col gap-1">
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Cantidad</span>
+                                  <span className="text-[15px] font-medium text-slate-800 leading-snug">{volumenCantidad || <span className="text-slate-300 font-normal">No especificado</span>}</span>
+                                </div>
+                                <div className="px-4 py-3 flex flex-col gap-1">
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidad de medida</span>
+                                  <span className="text-[15px] font-medium text-slate-800 leading-snug">{volumenUnidad ? ({ ml: "mL", l: "L", mg: "mg", g: "g", kg: "kg", cm: "cm", mm: "mm", cm3: "cm³", m3: "m³" } as Record<string, string>)[volumenUnidad] ?? volumenUnidad : <span className="text-slate-300 font-normal">No especificado</span>}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                        {catalogo.incluirVencimiento && vencimientoActive && (
+                          <>
+                            <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">Vencimiento</h3>
+                            <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
+                              <div className="px-4 py-3 flex flex-col gap-1">
+                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Fecha de vencimiento</span>
+                                <span className="text-[15px] font-medium text-slate-800 leading-snug">{fechaVencimiento || <span className="text-slate-300 font-normal">No especificado</span>}</span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
 
-
-                {/* Atributos Informativos view */}
+                {/* Atributos tab */}
                 {rightCardMode === "atributos" && (
-                  <div className="py-2">
+                  <div className="h-full flex flex-col mt-2">
                     {!showAtributosView ? (
-                      <div className="flex flex-col items-center justify-center h-full gap-4 py-8">
-                        <p className="text-gray-500 text-sm">No hay atributos configurados</p>
-                        <button
-                          onClick={() => setShowAtributosView(true)}
-                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
-                        >
-                          Agregar atributos
-                        </button>
+                      <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
+                        <p className="text-slate-400 text-sm">No hay atributos configurados</p>
+                        {isRightEditing && (
+                          <button onClick={() => setShowAtributosView(true)} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-sm font-medium cursor-pointer">
+                            Agregar atributos
+                          </button>
+                        )}
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-6">
-                        <div className="flex flex-col gap-3">
-                          <div>
-                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                              Atributos Informativos
-                            </h3>
-                            <p className="text-xs text-gray-500 italic mt-1">
-                              Atributos que describen propiedades generales del producto
-                            </p>
-                          </div>
-
-                          {atributosInformativos.map((attr, index) => {
-                            const fatherAttr = fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
-                            const isAttributeLocked = isChildItem && fatherAttr !== undefined
-                            const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
-
-                            return (
-                              <div key={index} className="flex items-start gap-3">
-                                <div className="flex-1">
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                  <input
-                                    type="text"
-                                    value={attr.key}
-                                    onChange={(e) => {
-                                      if (!isAttributeLocked) {
-                                        const updated = [...atributosInformativos]
-                                        updated[index].key = e.target.value
-                                        handleAtributosInformativosChange(updated)
-                                      }
-                                    }}
-                                    disabled={isAttributeLocked}
-                                    className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                      }`}
-                                    placeholder="Ej: Color"
-                                  />
-                                </div>
-
-                                <div className="flex-1">
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
-                                  <input
-                                    type="text"
-                                    value={attr.value}
-                                    onChange={(e) => {
-                                      if (!isValueLocked) {
-                                        const updated = [...atributosInformativos]
-                                        updated[index].value = e.target.value
-                                        handleAtributosInformativosChange(updated)
-                                      }
-                                    }}
-                                    disabled={isValueLocked || (!isChildItem && attr.inheritValue)}
-                                    className={`w-full px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isValueLocked
-                                      ? "bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed"
-                                      : (!isChildItem && attr.inheritValue)
-                                        ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
-                                        : "bg-white border border-slate-200 text-slate-800 hover:border-slate-300"
-                                      }`}
-                                    placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Negro"}
-                                  />
-                                </div>
-
-                                <div className="flex items-center gap-1 mt-8">
-                                  {!isChildItem && isViewingContainer && (
-                                    <button
-                                      onClick={() => {
-                                        const updated = [...atributosInformativos]
-                                        updated[index].inheritValue = !updated[index].inheritValue
-                                        if (updated[index].inheritValue) {
-                                          updated[index].value = ""
-                                        }
-                                        handleAtributosInformativosChange(updated)
-                                      }}
-                                      className={`p-1.5 rounded-md transition-all cursor-pointer ${attr.inheritValue
-                                        ? "bg-slate-800 text-white"
-                                        : "text-gray-400 hover:text-slate-600 hover:bg-slate-100"
-                                        }`}
-                                      title={attr.inheritValue ? "Valor heredable a variantes (click para desactivar)" : "Marcar para que variantes completen el valor"}
-                                    >
-                                      <ArrowDownToLine className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                  {!isAttributeLocked && (
-                                    <button
-                                      onClick={() => {
-                                        const updated = atributosInformativos.filter((_, i) => i !== index)
-                                        handleAtributosInformativosChange(updated)
-                                        if (containerAtributosPrincipales.length === 0 && updated.length === 0) {
-                                          setShowAtributosView(false)
-                                        }
-                                      }}
-                                      className="text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                </div>
-                                {isAttributeLocked && <div className="mt-8 w-4"></div>}
-                              </div>
-                            )
-                          })}
-
-                          <button
-                            onClick={() => {
-                              handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])
-                            }}
-                            className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                          >
-                            <Plus className="w-4 h-4" />
-                            <span className="text-sm">Agregar atributo</span>
-                          </button>
+                      <div className="flex flex-col gap-4">
+                        <div>
+                          <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Atributos Informativos</h3>
+                          <p className="text-xs text-slate-400 mt-0.5">Atributos que describen propiedades adicionales del producto</p>
                         </div>
+
+                        {isRightEditing ? (
+                          <div className="flex flex-col gap-2">
+                            {/* Column headers */}
+                            <div className="grid gap-2 items-center" style={{ gridTemplateColumns: "1fr 2fr auto auto" }}>
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider px-1">Atributo</span>
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider px-1">Valor</span>
+                              <span className="w-7" title="Variantes completan">
+                                <ArrowDownToLine className="w-3.5 h-3.5 text-slate-300 mx-auto" />
+                              </span>
+                              <span className="w-8" />
+                            </div>
+
+                            {atributosInformativos.map((attr, index) => (
+                              <div key={index} className="grid gap-2 items-center" style={{ gridTemplateColumns: "1fr 2fr auto auto" }}>
+                                <input
+                                  type="text"
+                                  value={attr.key}
+                                  onChange={(e) => { const updated = [...atributosInformativos]; updated[index].key = e.target.value; handleAtributosInformativosChange(updated) }}
+                                  className="w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                  placeholder="Ej: Color"
+                                />
+                                <input
+                                  type="text"
+                                  value={attr.value}
+                                  onChange={(e) => { if (!attr.inheritValue) { const updated = [...atributosInformativos]; updated[index].value = e.target.value; handleAtributosInformativosChange(updated) } }}
+                                  disabled={!!attr.inheritValue}
+                                  className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${attr.inheritValue ? "bg-slate-50 border-dashed border-2 border-slate-300 text-slate-400 cursor-not-allowed italic" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
+                                  placeholder={attr.inheritValue ? "Variantes completarán..." : "Ej: Negro"}
+                                />
+                                <button
+                                  onClick={() => { const updated = [...atributosInformativos]; updated[index].inheritValue = !updated[index].inheritValue; if (updated[index].inheritValue) updated[index].value = ""; handleAtributosInformativosChange(updated) }}
+                                  className={`w-7 h-7 flex items-center justify-center rounded-md transition-all cursor-pointer ${attr.inheritValue ? "bg-slate-800 text-white" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"}`}
+                                  title={attr.inheritValue ? "Desactivar — variantes ya no completarán" : "Variantes completarán el valor"}
+                                >
+                                  <ArrowDownToLine className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => { const updated = atributosInformativos.filter((_, i) => i !== index); handleAtributosInformativosChange(updated); if (updated.length === 0) setShowAtributosView(false) }}
+                                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:text-red-400 hover:border-red-200 transition-colors cursor-pointer"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+
+                            <button
+                              onClick={() => handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])}
+                              className="w-full mt-1 px-3 py-2.5 border border-slate-200 rounded-lg text-slate-500 hover:text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 cursor-pointer text-sm"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Agregar atributo
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="grid gap-4 pb-2 border-b border-slate-200" style={{ gridTemplateColumns: "1fr 2fr" }}>
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Atributo</span>
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Valor</span>
+                            </div>
+                            {atributosInformativos.map((attr, index) => (
+                              <div key={index} className="grid gap-4 py-3 border-b border-slate-100 last:border-b-0" style={{ gridTemplateColumns: "1fr 2fr" }}>
+                                <span className="text-[13px] font-medium text-slate-600">{attr.key || <span className="text-slate-300 font-normal">—</span>}</span>
+                                <span className="text-[15px] font-semibold text-slate-800">{attr.value || (attr.inheritValue ? <span className="text-slate-400 italic text-[13px] font-normal">Varía por variante</span> : <span className="text-slate-300 font-normal">No aplica</span>)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -2204,7 +2154,7 @@ export function CatalogoItemDetailPanel({
           )}
 
           {/* Info/Atributos Column - col-span-6 for standalone/children, col-span-1 for container */}
-          <div className={`flex flex-col transition-all duration-500 overflow-hidden pb-0 ${isViewingContainer ? "order-1 col-span-1 pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+          <div className={`flex flex-col transition-all duration-500 overflow-hidden pb-0 ${isViewingContainer ? "order-1 col-span-6 pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
 
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
