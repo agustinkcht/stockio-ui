@@ -14,6 +14,7 @@ interface StockEditModalProps {
   itemMarca?: string
   itemCategoria?: string
   itemMedia?: { photo: string; descripcion: string }[]
+  itemTags?: { key?: string; value: string }[]
 }
 
 export function StockEditModal({
@@ -26,6 +27,7 @@ export function StockEditModal({
   itemMarca,
   itemCategoria,
   itemMedia,
+  itemTags,
 }: StockEditModalProps) {
   const [enStock, setEnStock] = useState(initialTotal)
   const [operation, setOperation] = useState<"add" | "remove" | "set">("add")
@@ -102,6 +104,15 @@ export function StockEditModal({
                   <p className="text-xs text-slate-400 truncate mt-0.5">
                     {[itemMarca, itemCategoria].filter(Boolean).join(" · ")}
                   </p>
+                )}
+                {itemTags && itemTags.length > 0 && (
+                  <div className="flex items-center gap-1 flex-wrap mt-1">
+                    {itemTags.map((tag, i) => (
+                      <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                        {tag.value}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

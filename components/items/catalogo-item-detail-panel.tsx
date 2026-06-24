@@ -3561,6 +3561,7 @@ export function CatalogoItemDetailPanel({
         itemMarca={selectedItem?.marca}
         itemCategoria={selectedItem?.categoria}
         itemMedia={selectedItem?.media}
+        itemTags={isChildItem ? (selectedItem?.atributosPrincipales || []) : undefined}
         initialValues={precioModalValues}
         costoBehavior={precios.costoBehavior}
         zIndex={50}
@@ -3575,7 +3576,6 @@ export function CatalogoItemDetailPanel({
             const currentTotal = Number.parseInt((selectedItem?.stock as any)?.enStock || selectedItem?.stock?.total || "0")
             const currentReservado = Number.parseInt(selectedItem?.stock?.reservado || "0")
             if (newTotal !== currentTotal || newReservado !== currentReservado) {
-              // Use enStock (the canonical shape post-migration)
               const newStock = {
                 enStock: newTotal.toString(),
                 reservado: newReservado.toString(),
@@ -3589,10 +3589,11 @@ export function CatalogoItemDetailPanel({
         }}
         initialTotal={Number.parseInt((selectedItem?.stock as any)?.enStock || selectedItem?.stock?.total || "0")}
         initialReservado={Number.parseInt(selectedItem?.stock?.reservado || "0")}
-            itemName={selectedItem?.name}
+        itemName={selectedItem?.name}
         itemMarca={selectedItem?.marca}
         itemCategoria={selectedItem?.categoria}
         itemMedia={selectedItem?.media}
+        itemTags={isChildItem ? (selectedItem?.atributosPrincipales || []) : undefined}
       />
 
       {/* Matrix Variant - Precio Modal */}
@@ -3613,6 +3614,7 @@ export function CatalogoItemDetailPanel({
         itemMarca={selectedItem?.marca}
         itemCategoria={selectedItem?.categoria}
         itemMedia={matrixVariantItem?.media || selectedItem?.media}
+        itemTags={matrixVariantItem?.atributosPrincipales || []}
         initialValues={matrixPrecioModalValues}
         costoBehavior={precios.costoBehavior}
         zIndex={50}
@@ -3642,6 +3644,7 @@ export function CatalogoItemDetailPanel({
         itemMarca={selectedItem?.marca}
         itemCategoria={selectedItem?.categoria}
         itemMedia={matrixVariantItem?.media || selectedItem?.media}
+        itemTags={matrixVariantItem?.atributosPrincipales || []}
       />
 
       {/* Expanded Matrix - Precio Modal */}
@@ -3662,6 +3665,7 @@ export function CatalogoItemDetailPanel({
         itemMarca={selectedItem?.marca}
         itemCategoria={selectedItem?.categoria}
         itemMedia={expandedMatrixPrecioModal.variant?.media || selectedItem?.media}
+        itemTags={expandedMatrixPrecioModal.variant?.atributosPrincipales || []}
         initialValues={expandedMatrixPrecioValues}
         costoBehavior={precios.costoBehavior}
         zIndex={60}
@@ -3689,6 +3693,7 @@ export function CatalogoItemDetailPanel({
         initialTotal={expandedMatrixStockValues.total}
         initialReservado={expandedMatrixStockValues.reservado}
         itemName={expandedMatrixStockModal.variant?.nombre || expandedMatrixStockModal.variant?.sku}
+        itemTags={expandedMatrixStockModal.variant?.atributosPrincipales || []}
       />
 
       {/* Expanded Matrix - Description Modal */}
@@ -3710,6 +3715,15 @@ export function CatalogoItemDetailPanel({
                       <p className="text-xs text-slate-400 truncate mt-0.5">
                         {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
                       </p>
+                    )}
+                    {expandedMatrixDescModal.variant?.atributosPrincipales?.length > 0 && (
+                      <div className="flex items-center gap-1 flex-wrap mt-1">
+                        {expandedMatrixDescModal.variant.atributosPrincipales.map((attr: any, i: number) => (
+                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                            {attr.value}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -3875,6 +3889,15 @@ export function CatalogoItemDetailPanel({
                         {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
                       </p>
                     )}
+                    {isChildItem && atributosPrincipales.length > 0 && (
+                      <div className="flex items-center gap-1 flex-wrap mt-1">
+                        {atributosPrincipales.map((attr, i) => (
+                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                            {attr.value}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => setIsEditNombreModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
@@ -4000,6 +4023,15 @@ export function CatalogoItemDetailPanel({
                         {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
                       </p>
                     )}
+                    {isChildItem && atributosPrincipales.length > 0 && (
+                      <div className="flex items-center gap-1 flex-wrap mt-1">
+                        {atributosPrincipales.map((attr, i) => (
+                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                            {attr.value}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => setIsEditCodigoUniversalModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
@@ -4053,6 +4085,15 @@ export function CatalogoItemDetailPanel({
                         {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
                       </p>
                     )}
+                    {isChildItem && atributosPrincipales.length > 0 && (
+                      <div className="flex items-center gap-1 flex-wrap mt-1">
+                        {atributosPrincipales.map((attr, i) => (
+                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                            {attr.value}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => setIsEditCodigoProveedorModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
@@ -4105,6 +4146,15 @@ export function CatalogoItemDetailPanel({
                       <p className="text-xs text-slate-400 truncate mt-0.5">
                         {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
                       </p>
+                    )}
+                    {isChildItem && atributosPrincipales.length > 0 && (
+                      <div className="flex items-center gap-1 flex-wrap mt-1">
+                        {atributosPrincipales.map((attr, i) => (
+                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                            {attr.value}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>
