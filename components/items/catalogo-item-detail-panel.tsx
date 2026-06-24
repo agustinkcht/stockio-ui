@@ -3171,49 +3171,50 @@ export function CatalogoItemDetailPanel({
                         </h3>
 
                         {isRightEditing ? (
-                          <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
-                            {/* Categoría + Marca */}
-                            <div className="grid grid-cols-2 divide-x divide-slate-200">
-                              <div className="px-4 py-3 flex flex-col gap-1">
+                          <div className="flex flex-col gap-4 mb-6">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-1">
                                 <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Categoría</label>
                                 <input
                                   type="text"
                                   value={categoria}
                                   onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
                                   disabled={shouldStrictlyInherit(fatherItem?.categoria)}
-                                  className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${shouldStrictlyInherit(fatherItem?.categoria) ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.categoria) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
                                   placeholder="Escribir categoría..."
                                 />
                               </div>
-                              <div className="px-4 py-3 flex flex-col gap-1">
+                              <div className="flex flex-col gap-1">
                                 <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Marca</label>
                                 <input
                                   type="text"
                                   value={marca}
                                   onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
                                   disabled={shouldStrictlyInherit(fatherItem?.marca)}
-                                  className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${shouldStrictlyInherit(fatherItem?.marca) ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.marca) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
                                   placeholder="Escribir marca..."
                                 />
                               </div>
                             </div>
-                            {/* Proveedor — full-width, border-t row */}
-                            <div className="border-t border-slate-200 px-4 py-3 relative" ref={proveedorDropdownRef}>
-                              <div className="flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</span>
+                            {/* Proveedor — half-width dropdown, same row as Categoría/Marca grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-1 relative" ref={proveedorDropdownRef}>
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</label>
                                 {shouldInheritField(fatherItem?.proveedor) ? (
-                                  <span className="text-[15px] font-medium text-slate-400 leading-snug cursor-not-allowed">{proveedor || "—"}</span>
+                                  <div className="px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-400 text-sm cursor-not-allowed">
+                                    {proveedor || "—"}
+                                  </div>
                                 ) : (
                                   <>
                                     <button
                                       type="button"
                                       onClick={() => setProveedorDropdownOpen((o) => !o)}
-                                      className="flex items-center gap-1.5 text-left focus:outline-none group/prov-btn"
+                                      className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-800 text-sm text-left flex items-center justify-between hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all"
                                     >
-                                      <span className={`text-[15px] font-medium leading-snug ${proveedor ? "text-slate-800" : "text-slate-300"}`}>
+                                      <span className={proveedor ? "text-slate-800" : "text-slate-400"}>
                                         {proveedor || "Seleccionar..."}
                                       </span>
-                                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover/prov-btn:opacity-100 transition-opacity flex-shrink-0" />
+                                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                                     </button>
                                     {proveedorDropdownOpen && (
                                       <div
@@ -3310,82 +3311,81 @@ export function CatalogoItemDetailPanel({
                           </div>
                         )}
 
+                        {isRightEditing && <div className="border-t border-slate-100" />}
+
                         {/* ── PRESENTACIÓN ── */}
                         <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">
                           Presentación
                         </h3>
 
                         {isRightEditing ? (
-                          <>
-                            {/* Presentación card */}
-                            <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
-                              <div className="grid grid-cols-2 divide-x divide-slate-200">
-                                <div className="px-4 py-3 flex flex-col gap-1">
-                                  <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Formato de venta</label>
-                                  <select
-                                    value={formatoVenta}
-                                    onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
-                                    disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
-                                    className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug appearance-none ${shouldStrictlyInherit(fatherItem?.formatoVenta) ? "text-slate-400 cursor-not-allowed" : "text-slate-800 cursor-pointer"}`}
-                                  >
-                                    <option value="unidad">Unidad</option>
-                                    <option value="pack">Pack</option>
-                                  </select>
-                                </div>
-                                <div className="px-4 py-3 flex flex-col gap-1">
-                                  <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</label>
-                                  <input
-                                    type="text"
-                                    value={formatoVenta === "unidad" ? "1" : (unidadesPorPack === "N.E." ? "" : unidadesPorPack)}
-                                    onChange={(e) => {
-                                      const value = e.target.value
-                                      if (value === "") {
-                                        handleFieldChange("unidadesPorPack", "N.E.", setUnidadesPorPack)
-                                      } else if (/^\d+$/.test(value)) {
-                                        const numValue = Number.parseInt(value)
-                                        handleFieldChange("unidadesPorPack", numValue < 1 ? "1" : value, setUnidadesPorPack)
-                                      }
-                                    }}
-                                    disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
-                                    className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${formatoVenta === "unidad" || isUnidadesPorPackLocked ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
-                                    placeholder="N.E."
-                                  />
-                                </div>
+                          <div className="flex flex-col gap-4 mb-6">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Formato de venta</label>
+                                <select
+                                  value={formatoVenta}
+                                  onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
+                                  disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${shouldStrictlyInherit(fatherItem?.formatoVenta) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"}`}
+                                >
+                                  <option value="unidad">Unidad</option>
+                                  <option value="pack">Pack</option>
+                                </select>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</label>
+                                <input
+                                  type="text"
+                                  value={formatoVenta === "unidad" ? "1" : (unidadesPorPack === "N.E." ? "" : unidadesPorPack)}
+                                  onChange={(e) => {
+                                    const value = e.target.value
+                                    if (value === "") {
+                                      handleFieldChange("unidadesPorPack", "N.E.", setUnidadesPorPack)
+                                    } else if (/^\d+$/.test(value)) {
+                                      const numValue = Number.parseInt(value)
+                                      handleFieldChange("unidadesPorPack", numValue < 1 ? "1" : value, setUnidadesPorPack)
+                                    }
+                                  }}
+                                  disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${formatoVenta === "unidad" || isUnidadesPorPackLocked ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
+                                  placeholder="N.E."
+                                />
                               </div>
                             </div>
 
-                            {/* Contenido section */}
-                            <div className="flex items-center gap-2.5 mb-3 mt-5">
-                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Contenido</h3>
-                              <button
-                                onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
-                                disabled={isChildItem}
-                                className={`w-9 h-5 rounded-full transition-all relative ${volumenActive ? "bg-slate-800" : "bg-slate-200"} ${isChildItem ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                              >
-                                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${volumenActive ? "translate-x-4" : "translate-x-0"}`} />
-                              </button>
-                            </div>
-                            {volumenActive && (
-                              <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
-                                <div className="grid grid-cols-2 divide-x divide-slate-200">
-                                  <div className="px-4 py-3 flex flex-col gap-1">
+                            {/* Volumen edit controls */}
+                            <div className="flex flex-col gap-3">
+                              <div className="flex items-center gap-2.5">
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Contenido</label>
+                                <button
+                                  onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
+                                  disabled={isChildItem}
+                                  className={`w-9 h-5 rounded-full transition-all relative ${volumenActive ? "bg-slate-800" : "bg-slate-200"} ${isChildItem ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                                >
+                                  <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${volumenActive ? "translate-x-4" : "translate-x-0"}`} />
+                                </button>
+                              </div>
+                              {volumenActive && (
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="flex flex-col gap-1">
                                     <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Cantidad</label>
                                     <input
                                       type="number"
                                       value={volumenCantidad}
                                       onChange={(e) => handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)}
                                       disabled={isChildItem}
-                                      className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${isChildItem ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
+                                      className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${isChildItem ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
                                       placeholder="0"
                                     />
                                   </div>
-                                  <div className="px-4 py-3 flex flex-col gap-1">
+                                  <div className="flex flex-col gap-1">
                                     <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidad de medida</label>
                                     <select
                                       value={volumenUnidad}
                                       onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
                                       disabled={isChildItem}
-                                      className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug appearance-none ${isChildItem ? "text-slate-400 cursor-not-allowed" : "text-slate-800 cursor-pointer"}`}
+                                      className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${isChildItem ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"}`}
                                     >
                                       <option value="ml">mL</option>
                                       <option value="l">L</option>
@@ -3399,9 +3399,9 @@ export function CatalogoItemDetailPanel({
                                     </select>
                                   </div>
                                 </div>
-                              </div>
-                            )}
-                          </>
+                              )}
+                            </div>
+                          </div>
                         ) : (
                           <>
                             {/* Presentación card */}
@@ -3465,16 +3465,14 @@ export function CatalogoItemDetailPanel({
                             </div>
                             {vencimientoActive && (
                               isRightEditing ? (
-                                <div className="mt-2 border border-slate-200 rounded-xl overflow-hidden">
-                                  <div className="px-4 py-3 flex flex-col gap-1">
-                                    <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Fecha de vencimiento</label>
-                                    <input
-                                      type="date"
-                                      value={fechaVencimiento}
-                                      onChange={(e) => setFechaVencimiento(e.target.value)}
-                                      className="w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug text-slate-800"
-                                    />
-                                  </div>
+                                <div className="mt-2 p-4 border border-slate-200 rounded-xl bg-slate-50/50">
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-2 block">Fecha de Vencimiento</label>
+                                  <input
+                                    type="date"
+                                    value={fechaVencimiento}
+                                    onChange={(e) => setFechaVencimiento(e.target.value)}
+                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-slate-300 text-slate-800 text-sm transition-all hover:border-slate-300"
+                                  />
                                 </div>
                               ) : (
                                 <div className="border border-slate-200 rounded-xl overflow-hidden">
