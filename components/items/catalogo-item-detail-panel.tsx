@@ -1832,7 +1832,7 @@ export function CatalogoItemDetailPanel({
 
           {/* Right Column - Variantes Card (only for parent items, hidden when matrix is expanded) */}
           {isViewingContainer && !isExpandedMatrixOpen && (
-            <div className="col-span-4 order-2 self-start flex flex-col">
+            <div className="col-span-5 order-2 self-start flex flex-col">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                 {/* Flush tab bar — same as standalone */}
                 <div className="z-20 mb-6 -mx-6 -mt-6 flex flex-col">
@@ -2154,7 +2154,7 @@ export function CatalogoItemDetailPanel({
           )}
 
           {/* Info/Atributos Column - col-span-6 for standalone/children, col-span-1 for container */}
-          <div className={`flex flex-col transition-all duration-500 overflow-hidden pb-0 ${isViewingContainer ? "order-1 col-span-6 pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+          <div className={`flex flex-col transition-all duration-500 overflow-hidden pb-0 ${isViewingContainer ? "order-1 col-span-5 pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
 
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
