@@ -2904,15 +2904,15 @@ export function CatalogoItemDetailPanel({
                         )}
 
                         {variantItems.length > 0 ? (
-                          <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                          <div className="bg-slate-900 rounded-xl overflow-hidden">
                             {/* Header */}
-                            <div className="grid grid-cols-12 bg-white border-b border-border/30">
-                              <div className="col-span-1 px-1 py-2" />
-                              <div className="col-span-5 px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
-                              <div className="col-span-4 px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Precio venta</div>
-                              <div className="col-span-2 px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-right">Stock</div>
+                            <div className="grid grid-cols-12 border-b border-white/10">
+                              <div className="col-span-1 px-1 py-2.5" />
+                              <div className="col-span-5 px-3 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Variante</div>
+                              <div className="col-span-4 px-3 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Precio venta</div>
+                              <div className="col-span-2 px-3 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Stock</div>
                             </div>
-                            <div className="divide-y divide-border/30">
+                            <div className="divide-y divide-white/[0.06]">
                               {variantItems.map((variant) => {
                                 const sourceVariant = selectedItem.variants?.find((v: any) => {
                                   if (!v.atributosPrincipales) return false
@@ -2926,6 +2926,7 @@ export function CatalogoItemDetailPanel({
                                 })
                                 const variantId = variant.id || sourceVariant?.id
                                 const fullSku = `${skuValue}-${variant.skuSuffix || ""}`.replace(/-$/, "")
+                                const stockDisp = sourceVariant?.stock?.disponible ?? 0
 
                                 const handleDeleteVariant = () => {
                                   const attr1Value = variant.variant1
@@ -2975,63 +2976,63 @@ export function CatalogoItemDetailPanel({
                                   <div
                                     key={variant.id || variant.skuSuffix || variant.sku}
                                     onClick={() => { if (variantId) router.push(`/catalogo/items/${variantId}`) }}
-                                    className="group grid grid-cols-12 items-center hover:bg-accent/50 transition-colors cursor-pointer"
+                                    className="group grid grid-cols-12 items-center hover:bg-white/[0.04] transition-colors cursor-pointer"
                                   >
                                     {/* Thumbnail */}
-                                    <div className="col-span-1 pl-2 py-2 flex items-center justify-center">
-                                      <div className="w-6 h-6 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                    <div className="col-span-1 pl-2 py-3 flex items-center justify-center">
+                                      <div className="w-7 h-7 rounded-lg bg-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center">
                                         <Image
                                           src={getItemPhoto(selectedItem)}
                                           alt={selectedItem?.categoria || ""}
-                                          width={24}
-                                          height={24}
-                                          className="w-4 h-4 object-contain opacity-60"
+                                          width={28}
+                                          height={28}
+                                          className="w-4 h-4 object-contain opacity-50"
                                         />
                                       </div>
                                     </div>
 
                                     {/* Variante tags + SKU below */}
-                                    <div className="col-span-5 px-3 py-2 flex flex-col gap-0.5">
+                                    <div className="col-span-5 px-3 py-3 flex flex-col gap-1">
                                       <div className="flex items-center gap-1.5">
                                         {variant.variant1 && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-white/80 border border-white/15 truncate max-w-[70px]">
                                             {variant.variant1}
                                           </span>
                                         )}
                                         {variant.variant1 && variant.variant2 && (
-                                          <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                                          <span className="text-[9px] text-white/30 font-medium">×</span>
                                         )}
                                         {variant.variant2 && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-white/80 border border-white/15 truncate max-w-[70px]">
                                             {variant.variant2}
                                           </span>
                                         )}
                                       </div>
-                                      <span className="text-[10px] font-mono text-muted-foreground/50 leading-none">
+                                      <span className="text-[10px] font-mono text-white/25 leading-none">
                                         {fullSku}
                                       </span>
                                     </div>
 
                                     {/* Precio venta */}
-                                    <div className="col-span-4 px-3 py-2">
-                                      <span className="text-sm font-medium text-foreground">
+                                    <div className="col-span-4 px-3 py-3">
+                                      <span className="text-sm font-semibold text-white tabular-nums">
                                         {sourceVariant?.precio?.precioFinal
                                           ? `$${Math.round(sourceVariant.precio.precioFinal).toLocaleString("es-AR")}`
-                                          : <span className="text-muted-foreground/40 text-xs">—</span>}
+                                          : <span className="text-white/25 text-xs font-normal">—</span>}
                                       </span>
                                     </div>
 
                                     {/* Stock disponible */}
-                                    <div className="col-span-2 px-3 py-2 text-right">
-                                      <span className={`text-sm font-medium tabular-nums ${
-                                        (sourceVariant?.stock?.disponible ?? 0) > 0
-                                          ? "text-foreground"
-                                          : (sourceVariant?.stock?.disponible ?? 0) < 0
-                                            ? "text-red-500"
-                                            : "text-muted-foreground/40"
-                                      }`}>
-                                        {sourceVariant?.stock?.disponible ?? 0}
-                                      </span>
+                                    <div className="col-span-2 px-3 py-3">
+                                      {stockDisp > 0 ? (
+                                        <span className="text-xs font-semibold text-emerald-400 tabular-nums">
+                                          {stockDisp} disp.
+                                        </span>
+                                      ) : (
+                                        <span className="text-[10px] font-medium text-white/25">
+                                          sin stock disp.
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 )
@@ -3039,7 +3040,7 @@ export function CatalogoItemDetailPanel({
                             </div>
                           </div>
                         ) : (
-                          <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border/60 rounded-lg">
+                          <div className="text-center text-xs text-white/30 py-8 border border-dashed border-white/10 rounded-xl">
                             No hay variantes configuradas
                           </div>
                         )}
