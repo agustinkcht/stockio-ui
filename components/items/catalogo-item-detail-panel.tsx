@@ -1928,7 +1928,7 @@ export function CatalogoItemDetailPanel({
                           <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
                           <input
                             type="text"
-                            value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
+                            value={formatoVenta === "unidad" ? "1" : (unidadesPorPack === "N.E." ? "" : unidadesPorPack)}
                             onChange={(e) => {
                               const value = e.target.value
                               if (value === "") {
@@ -3336,7 +3336,7 @@ export function CatalogoItemDetailPanel({
                                 <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</label>
                                 <input
                                   type="text"
-                                  value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
+                                  value={formatoVenta === "unidad" ? "1" : (unidadesPorPack === "N.E." ? "" : unidadesPorPack)}
                                   onChange={(e) => {
                                     const value = e.target.value
                                     if (value === "") {
@@ -3412,7 +3412,7 @@ export function CatalogoItemDetailPanel({
                                 <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</span>
                                 <span className="text-[15px] font-medium text-slate-800 leading-snug">
                                   {formatoVenta === "unidad"
-                                    ? <span className="text-slate-300 font-normal">No aplica</span>
+                                    ? "1"
                                     : (unidadesPorPack || <span className="text-slate-300 font-normal">No aplica</span>)}
                                 </span>
                               </div>
@@ -3426,7 +3426,7 @@ export function CatalogoItemDetailPanel({
                                 </div>
                                 <div className="px-4 py-3 flex flex-col gap-1">
                                   <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidad de medida</span>
-                                  <span className="text-[15px] font-medium text-slate-800 leading-snug">{volumenUnidad || <span className="text-slate-300 font-normal">No especificado</span>}</span>
+                                  <span className="text-[15px] font-medium text-slate-800 leading-snug">{volumenUnidad ? ({ ml: "mL", l: "L", mg: "mg", g: "g", kg: "kg", cm: "cm", mm: "mm", m: "M" } as Record<string, string>)[volumenUnidad] ?? volumenUnidad : <span className="text-slate-300 font-normal">No especificado</span>}</span>
                                 </div>
                               </div>
                             )}
