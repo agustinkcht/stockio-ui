@@ -1397,7 +1397,7 @@ export function CatalogoItemDetailPanel({
                             {selectedItem.atributosPrincipales.map((attr, i) => (
                               <span
                                 key={i}
-                                className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50/50 text-blue-600 border border-blue-200/40 whitespace-nowrap"
+                                className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60 whitespace-nowrap"
                               >
                                 {attr.value}
                               </span>
