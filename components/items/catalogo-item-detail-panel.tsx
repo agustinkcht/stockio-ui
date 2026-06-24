@@ -2158,8 +2158,7 @@ export function CatalogoItemDetailPanel({
 
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
-              <div className="mb-6 pb-5 border-b border-slate-200/60 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-slate-900">
-                {/* Top row: Layers icon + Title aligned horizontally */}
+              <div className="mb-3 pb-5 border-b border-slate-200/60 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-slate-900">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                     <Layers className="w-6 h-6 text-white" />
@@ -2168,24 +2167,6 @@ export function CatalogoItemDetailPanel({
                     <h2 className="font-semibold text-white text-base truncate">{selectedItem.name}</h2>
                     <p className="text-[10px] uppercase tracking-wider mt-0.5 text-slate-300">Agrupador de variantes</p>
                   </div>
-                  {/* Expand/Minimize button */}
-                  {isExpandedMatrixOpen ? (
-                    <button
-                      onClick={() => setIsExpandedMatrixOpen(false)}
-                      className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-                      title="Minimizar"
-                    >
-                      <Minimize2 className="w-5 h-5" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setIsExpandedMatrixOpen(true)}
-                      className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-                      title="Expandir matriz"
-                    >
-                      <Maximize2 className="w-5 h-5" />
-                    </button>
-                  )}
                 </div>
               </div>
             )}
@@ -2455,16 +2436,25 @@ export function CatalogoItemDetailPanel({
                     {variantItems.length > 0 && (
                       <div className="mt-6">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                          <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider">
                             {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
                           </h3>
-                          <button
-                            onClick={() => setIsNuevaVarianteModalOpen(true)}
-                            className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Nueva Variante</span>
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setIsExpandedMatrixOpen(false)}
+                              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                              title="Minimizar"
+                            >
+                              <Minimize2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setIsNuevaVarianteModalOpen(true)}
+                              className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Nueva Variante</span>
+                            </button>
+                          </div>
                         </div>
 
                         {/* SKU Prefijo */}
@@ -2897,81 +2887,30 @@ export function CatalogoItemDetailPanel({
                           </div>
                         )}
 
-                        {/* Variant matrix */}
+                        {/* Variantes header */}
                         {variantItems.length > 0 && (
-                          <div className="mt-6">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
-                                {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
-                              </h3>
-                              <button
-                                onClick={() => setIsNuevaVarianteModalOpen(true)}
-                                className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                                <span>Nueva Variante</span>
-                              </button>
-                            </div>
-
-                            {/* SKU Prefijo */}
-                            <div className="mb-4">
-                              <div className="flex items-center gap-2 group/skupadre">
-                                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                                  SKU Prefijo
-                                </span>
-                                {editingSkuPadre ? (
-                                  <input
-                                    type="text"
-                                    value={skuValue}
-                                    autoFocus
-                                    onChange={(e) => setSkuValue(e.target.value.toUpperCase())}
-                                    onBlur={() => {
-                                      setEditingSkuPadre(false)
-                                      const currentPrefix = selectedItem?.skuPrefix || selectedItem?.sku || ""
-                                      if (skuValue !== currentPrefix) {
-                                        onFieldChange(selectedItem.id, "skuPrefix", skuValue)
-                                      }
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                      if (e.key === "Escape") {
-                                        setSkuValue(selectedItem?.skuPrefix || selectedItem?.sku || "")
-                                        setEditingSkuPadre(false)
-                                      }
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="font-mono text-sm text-slate-800 bg-transparent border-b border-slate-400 focus:border-slate-600 focus:outline-none w-full max-w-[180px]"
-                                    placeholder="Ej: VNO-KNECHT"
-                                  />
-                                ) : (
-                                  <div
-                                    className="flex items-center gap-1.5 cursor-pointer"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setEditingSkuPadre(true)
-                                    }}
-                                  >
-                                    <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.skuPrefix || selectedItem?.sku}</span>
-                                    <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
-                                  </div>
-                                )}
-                              </div>
-                              <p className="text-[9px] text-slate-400 mt-0.5 italic">
-                                Base para generar SKUs de variantes
-                              </p>
-                            </div>
+                          <div className="mt-4 mb-3 flex items-center justify-between">
+                            <span className="text-base font-bold text-slate-900 uppercase tracking-wider">
+                              {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
+                            </span>
+                            <button
+                              onClick={() => setIsExpandedMatrixOpen(true)}
+                              className="px-3 py-1.5 border border-slate-200 rounded-full text-slate-600 hover:text-slate-900 hover:border-slate-400 hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+                            >
+                              <Maximize2 className="w-3.5 h-3.5" />
+                              <span>Expandir variantes</span>
+                            </button>
                           </div>
                         )}
 
                         {variantItems.length > 0 ? (
                           <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
-                            <div className="grid grid-cols-[32px_1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
-                              <div className="px-1 py-2" />
-                              <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
-                              <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                                SKU
-                              </div>
-                              <div />
+                            {/* Header */}
+                            <div className="grid grid-cols-12 bg-white border-b border-border/30">
+                              <div className="col-span-1 px-1 py-2" />
+                              <div className="col-span-5 px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
+                              <div className="col-span-4 px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Precio venta</div>
+                              <div className="col-span-2 px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-right">Stock</div>
                             </div>
                             <div className="divide-y divide-border/30">
                               {variantItems.map((variant) => {
@@ -2986,6 +2925,7 @@ export function CatalogoItemDetailPanel({
                                   return hasMatchingAttr1 && hasMatchingAttr2
                                 })
                                 const variantId = variant.id || sourceVariant?.id
+                                const fullSku = `${skuValue}-${variant.skuSuffix || ""}`.replace(/-$/, "")
 
                                 const handleDeleteVariant = () => {
                                   const attr1Value = variant.variant1
@@ -3035,10 +2975,10 @@ export function CatalogoItemDetailPanel({
                                   <div
                                     key={variant.id || variant.skuSuffix || variant.sku}
                                     onClick={() => { if (variantId) router.push(`/catalogo/items/${variantId}`) }}
-                                    className="group grid grid-cols-[32px_1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"
+                                    className="group grid grid-cols-12 items-center hover:bg-accent/50 transition-colors cursor-pointer"
                                   >
                                     {/* Thumbnail */}
-                                    <div className="pl-2 py-1.5 flex items-center justify-center">
+                                    <div className="col-span-1 pl-2 py-2 flex items-center justify-center">
                                       <div className="w-6 h-6 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
                                         <Image
                                           src={getItemPhoto(selectedItem)}
@@ -3049,52 +2989,49 @@ export function CatalogoItemDetailPanel({
                                         />
                                       </div>
                                     </div>
-                                    <div className="px-3 py-2 flex items-center gap-1.5">
-                                      {variant.variant1 && (
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
-                                          {variant.variant1}
-                                        </span>
-                                      )}
-                                      {variant.variant1 && variant.variant2 && (
-                                        <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
-                                      )}
-                                      {variant.variant2 && (
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
-                                          {variant.variant2}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                                      <div className="flex items-center w-full">
-                                        <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
-                                          {skuValue}-
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={variant.skuSuffix}
-                                          onChange={(e) => {
-                                            const newSuffix = e.target.value
-                                            setVariantItems((prev) =>
-                                              prev.map((v) => v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v)
-                                            )
-                                            const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-                                              ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
-                                            )
-                                            onFieldChange(selectedItem.id, "variants", updatedVariants)
-                                          }}
-                                          className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
-                                          placeholder="sufijo..."
-                                        />
+
+                                    {/* Variante tags + SKU below */}
+                                    <div className="col-span-5 px-3 py-2 flex flex-col gap-0.5">
+                                      <div className="flex items-center gap-1.5">
+                                        {variant.variant1 && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
+                                            {variant.variant1}
+                                          </span>
+                                        )}
+                                        {variant.variant1 && variant.variant2 && (
+                                          <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                                        )}
+                                        {variant.variant2 && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
+                                            {variant.variant2}
+                                          </span>
+                                        )}
                                       </div>
+                                      <span className="text-[10px] font-mono text-muted-foreground/50 leading-none">
+                                        {fullSku}
+                                      </span>
                                     </div>
-                                    <div className="px-1 py-2 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                                      <button
-                                        onClick={handleDeleteVariant}
-                                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
-                                        title="Eliminar variante"
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </button>
+
+                                    {/* Precio venta */}
+                                    <div className="col-span-4 px-3 py-2">
+                                      <span className="text-sm font-medium text-foreground">
+                                        {sourceVariant?.precio?.precioFinal
+                                          ? `$${Math.round(sourceVariant.precio.precioFinal).toLocaleString("es-AR")}`
+                                          : <span className="text-muted-foreground/40 text-xs">—</span>}
+                                      </span>
+                                    </div>
+
+                                    {/* Stock disponible */}
+                                    <div className="col-span-2 px-3 py-2 text-right">
+                                      <span className={`text-sm font-medium tabular-nums ${
+                                        (sourceVariant?.stock?.disponible ?? 0) > 0
+                                          ? "text-foreground"
+                                          : (sourceVariant?.stock?.disponible ?? 0) < 0
+                                            ? "text-red-500"
+                                            : "text-muted-foreground/40"
+                                      }`}>
+                                        {sourceVariant?.stock?.disponible ?? 0}
+                                      </span>
                                     </div>
                                   </div>
                                 )
