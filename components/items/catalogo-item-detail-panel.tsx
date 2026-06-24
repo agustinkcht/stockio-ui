@@ -94,6 +94,7 @@ interface ItemDetailPanelProps {
   isExpanded?: boolean
   onSaveNow?: () => void
   onShowToast?: (label: string) => void
+  isVariantesRoute?: boolean
 }
 
 export function CatalogoItemDetailPanel({
@@ -116,6 +117,7 @@ export function CatalogoItemDetailPanel({
   isExpanded = true,
   onSaveNow,
   onShowToast,
+  isVariantesRoute = false,
 }: ItemDetailPanelProps) {
   const router = useRouter()
   const { catalogo, stock, precios } = useSettings()
@@ -1209,7 +1211,7 @@ export function CatalogoItemDetailPanel({
         <div className="max-w-6xl mx-auto">
         {/* Section header — shared for all item types */}
         <div className="flex items-start justify-between pt-12 pb-8">
-          <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Detalle del Item</h1>
+          <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">{isVariantesRoute ? "Variantes del Agrupador" : "Detalle del Item"}</h1>
           <div className="flex items-center gap-2 mt-1 shrink-0">
             {!isRightEditing ? (
               <button
@@ -1241,7 +1243,7 @@ export function CatalogoItemDetailPanel({
           </div>
         </div>
 
-        <div className={`grid gap-2 py-2 items-start ${isViewingContainer ? (isExpandedMatrixOpen ? "grid-cols-1 gap-6" : "grid-cols-10 gap-6") : "grid-cols-10 gap-16"}`}>
+        <div className={`grid gap-2 py-2 items-start ${isViewingContainer ? (isVariantesRoute ? "grid-cols-1 gap-6" : "grid-cols-10 gap-6") : "grid-cols-10 gap-16"}`}>
           {/* Left Column - Image Card (only for standalone/children) - col-span-4 */}
           {!isViewingContainer && (
             <div className="col-span-4 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 border-none shadow-none">
@@ -1831,7 +1833,7 @@ export function CatalogoItemDetailPanel({
 
 
           {/* Right Column - Variantes Card (only for parent items, hidden when matrix is expanded) */}
-          {isViewingContainer && !isExpandedMatrixOpen && (
+          {isViewingContainer && !isVariantesRoute && (
             <div className="col-span-5 order-2 self-start flex flex-col">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                 {/* Flush tab bar — same as standalone */}
@@ -2169,19 +2171,19 @@ export function CatalogoItemDetailPanel({
                     <p className="text-[10px] uppercase tracking-wider mt-0.5 text-slate-300">Agrupador de variantes</p>
                   </div>
                   {/* Expand/Minimize button */}
-                  {isExpandedMatrixOpen ? (
+                  {isVariantesRoute ? (
                     <button
-                      onClick={() => setIsExpandedMatrixOpen(false)}
+                      onClick={() => router.push(`/catalogo/items/${selectedItem.id}`)}
                       className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-                      title="Minimizar"
+                      title="Volver al detalle"
                     >
                       <Minimize2 className="w-5 h-5" />
                     </button>
                   ) : (
                     <button
-                      onClick={() => setIsExpandedMatrixOpen(true)}
+                      onClick={() => router.push(`/catalogo/items/${selectedItem.id}/variantes`)}
                       className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-                      title="Expandir matriz"
+                      title="Ver variantes"
                     >
                       <Maximize2 className="w-5 h-5" />
                     </button>
@@ -2227,8 +2229,8 @@ export function CatalogoItemDetailPanel({
             {/* Tab Content */}
             {(
               <div className="flex-1 w-full overflow-hidden">
-                {isViewingContainer && isExpandedMatrixOpen ? (
-                  // Expanded Variant Matrix View (single card mode)
+                {isViewingContainer && isVariantesRoute ? (
+                  // Expanded Variant Matrix View (variantes route)
                   <div className="h-full flex flex-col py-2">
                     {/* Atributos de Variantes section - 50% width - ABOVE matrix */}
                     <div className="mb-6 pb-6 border-b border-gray-200 w-1/2">
