@@ -99,20 +99,20 @@ export function StockEditModal({
                 </div>
               )}
               <div className="min-w-0">
-                {itemName && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{itemName}</p>}
-                {(itemMarca || itemCategoria) && (
-                  <p className="text-xs text-slate-400 truncate mt-0.5">
-                    {[itemMarca, itemCategoria].filter(Boolean).join(" · ")}
-                  </p>
-                )}
-                {itemTags && itemTags.length > 0 && (
-                  <div className="flex items-center gap-1 flex-wrap mt-1">
-                    {itemTags.map((tag, i) => (
+                {itemName && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-sm font-semibold text-slate-900 leading-tight">{itemName}</p>
+                    {itemTags && itemTags.map((tag, i) => (
                       <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
                         {tag.value}
                       </span>
                     ))}
                   </div>
+                )}
+                {(itemMarca || itemCategoria) && (
+                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                    {[itemMarca, itemCategoria].filter(Boolean).join(" · ")}
+                  </p>
                 )}
               </div>
             </div>

@@ -3708,22 +3708,20 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(expandedMatrixDescModal.variant)} alt={expandedMatrixDescModal.variant?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    {expandedMatrixDescModal.variant?.name && (
-                      <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{expandedMatrixDescModal.variant.name}</p>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {expandedMatrixDescModal.variant?.name && (
+                        <p className="text-sm font-semibold text-slate-900 leading-tight">{expandedMatrixDescModal.variant.name}</p>
+                      )}
+                      {expandedMatrixDescModal.variant?.atributosPrincipales?.map((attr: any, i: number) => (
+                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                          {attr.value}
+                        </span>
+                      ))}
+                    </div>
                     {(selectedItem?.marca || selectedItem?.categoria) && (
                       <p className="text-xs text-slate-400 truncate mt-0.5">
                         {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
                       </p>
-                    )}
-                    {expandedMatrixDescModal.variant?.atributosPrincipales?.length > 0 && (
-                      <div className="flex items-center gap-1 flex-wrap mt-1">
-                        {expandedMatrixDescModal.variant.atributosPrincipales.map((attr: any, i: number) => (
-                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                            {attr.value}
-                          </span>
-                        ))}
-                      </div>
                     )}
                   </div>
                 </div>
@@ -3883,20 +3881,18 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{selectedItem.name}</p>}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 leading-tight">{selectedItem.name}</p>}
+                      {isChildItem && atributosPrincipales.map((attr, i) => (
+                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                          {attr.value}
+                        </span>
+                      ))}
+                    </div>
                     {(selectedItem?.marca || selectedItem?.categoria) && (
                       <p className="text-xs text-slate-400 truncate mt-0.5">
                         {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
                       </p>
-                    )}
-                    {isChildItem && atributosPrincipales.length > 0 && (
-                      <div className="flex items-center gap-1 flex-wrap mt-1">
-                        {atributosPrincipales.map((attr, i) => (
-                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                            {attr.value}
-                          </span>
-                        ))}
-                      </div>
                     )}
                   </div>
                 </div>
@@ -4017,20 +4013,18 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{selectedItem.name}</p>}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 leading-tight">{selectedItem.name}</p>}
+                      {isChildItem && atributosPrincipales.map((attr, i) => (
+                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                          {attr.value}
+                        </span>
+                      ))}
+                    </div>
                     {(selectedItem?.marca || selectedItem?.categoria) && (
                       <p className="text-xs text-slate-400 truncate mt-0.5">
                         {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
                       </p>
-                    )}
-                    {isChildItem && atributosPrincipales.length > 0 && (
-                      <div className="flex items-center gap-1 flex-wrap mt-1">
-                        {atributosPrincipales.map((attr, i) => (
-                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                            {attr.value}
-                          </span>
-                        ))}
-                      </div>
                     )}
                   </div>
                 </div>
@@ -4079,20 +4073,18 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{selectedItem.name}</p>}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 leading-tight">{selectedItem.name}</p>}
+                      {isChildItem && atributosPrincipales.map((attr, i) => (
+                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                          {attr.value}
+                        </span>
+                      ))}
+                    </div>
                     {(selectedItem?.marca || selectedItem?.categoria) && (
                       <p className="text-xs text-slate-400 truncate mt-0.5">
                         {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
                       </p>
-                    )}
-                    {isChildItem && atributosPrincipales.length > 0 && (
-                      <div className="flex items-center gap-1 flex-wrap mt-1">
-                        {atributosPrincipales.map((attr, i) => (
-                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                            {attr.value}
-                          </span>
-                        ))}
-                      </div>
                     )}
                   </div>
                 </div>
@@ -4141,20 +4133,18 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{selectedItem.name}</p>}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 leading-tight">{selectedItem.name}</p>}
+                      {isChildItem && atributosPrincipales.map((attr, i) => (
+                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                          {attr.value}
+                        </span>
+                      ))}
+                    </div>
                     {(selectedItem?.marca || selectedItem?.categoria) && (
                       <p className="text-xs text-slate-400 truncate mt-0.5">
                         {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
                       </p>
-                    )}
-                    {isChildItem && atributosPrincipales.length > 0 && (
-                      <div className="flex items-center gap-1 flex-wrap mt-1">
-                        {atributosPrincipales.map((attr, i) => (
-                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                            {attr.value}
-                          </span>
-                        ))}
-                      </div>
                     )}
                   </div>
                 </div>
