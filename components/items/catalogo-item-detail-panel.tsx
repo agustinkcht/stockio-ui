@@ -3181,7 +3181,7 @@ export function CatalogoItemDetailPanel({
                                   value={categoria}
                                   onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
                                   disabled={shouldStrictlyInherit(fatherItem?.categoria)}
-                                  className={`w-full text-[15px] font-medium bg-transparent border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${shouldStrictlyInherit(fatherItem?.categoria) ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
+                                  className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${shouldStrictlyInherit(fatherItem?.categoria) ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
                                   placeholder="Escribir categoría..."
                                 />
                               </div>
@@ -3192,7 +3192,7 @@ export function CatalogoItemDetailPanel({
                                   value={marca}
                                   onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
                                   disabled={shouldStrictlyInherit(fatherItem?.marca)}
-                                  className={`w-full text-[15px] font-medium bg-transparent border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${shouldStrictlyInherit(fatherItem?.marca) ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
+                                  className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${shouldStrictlyInherit(fatherItem?.marca) ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
                                   placeholder="Escribir marca..."
                                 />
                               </div>
@@ -3326,7 +3326,7 @@ export function CatalogoItemDetailPanel({
                                     value={formatoVenta}
                                     onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
                                     disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
-                                    className={`w-full text-[15px] font-medium bg-transparent border-0 outline-none p-0 leading-snug appearance-none ${shouldStrictlyInherit(fatherItem?.formatoVenta) ? "text-slate-400 cursor-not-allowed" : "text-slate-800 cursor-pointer"}`}
+                                    className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug appearance-none ${shouldStrictlyInherit(fatherItem?.formatoVenta) ? "text-slate-400 cursor-not-allowed" : "text-slate-800 cursor-pointer"}`}
                                   >
                                     <option value="unidad">Unidad</option>
                                     <option value="pack">Pack</option>
@@ -3347,7 +3347,7 @@ export function CatalogoItemDetailPanel({
                                       }
                                     }}
                                     disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
-                                    className={`w-full text-[15px] font-medium bg-transparent border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${formatoVenta === "unidad" || isUnidadesPorPackLocked ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
+                                    className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${formatoVenta === "unidad" || isUnidadesPorPackLocked ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
                                     placeholder="N.E."
                                   />
                                 </div>
@@ -3375,7 +3375,7 @@ export function CatalogoItemDetailPanel({
                                       value={volumenCantidad}
                                       onChange={(e) => handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)}
                                       disabled={isChildItem}
-                                      className={`w-full text-[15px] font-medium bg-transparent border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${isChildItem ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
+                                      className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug placeholder:text-slate-300 ${isChildItem ? "text-slate-400 cursor-not-allowed" : "text-slate-800"}`}
                                       placeholder="0"
                                     />
                                   </div>
@@ -3385,7 +3385,7 @@ export function CatalogoItemDetailPanel({
                                       value={volumenUnidad}
                                       onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
                                       disabled={isChildItem}
-                                      className={`w-full text-[15px] font-medium bg-transparent border-0 outline-none p-0 leading-snug appearance-none ${isChildItem ? "text-slate-400 cursor-not-allowed" : "text-slate-800 cursor-pointer"}`}
+                                      className={`w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug appearance-none ${isChildItem ? "text-slate-400 cursor-not-allowed" : "text-slate-800 cursor-pointer"}`}
                                     >
                                       <option value="ml">mL</option>
                                       <option value="l">L</option>
@@ -3472,7 +3472,7 @@ export function CatalogoItemDetailPanel({
                                       type="date"
                                       value={fechaVencimiento}
                                       onChange={(e) => setFechaVencimiento(e.target.value)}
-                                      className="w-full text-[15px] font-medium bg-transparent border-0 outline-none p-0 leading-snug text-slate-800"
+                                      className="w-full text-[15px] font-medium bg-white border-0 outline-none p-0 leading-snug text-slate-800"
                                     />
                                   </div>
                                 </div>
