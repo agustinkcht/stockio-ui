@@ -1950,7 +1950,7 @@ export function CatalogoItemDetailPanel({
 
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
-                          <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
+                            <label className="text-sm font-medium text-gray-700">Contenido</label>
                           <button
                             onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
                             disabled={isChildItem}
@@ -2001,7 +2001,8 @@ export function CatalogoItemDetailPanel({
                                 <option value="kg">kg</option>
                                 <option value="cm">cm</option>
                                 <option value="mm">mm</option>
-                                <option value="m">M</option>
+                                <option value="cm3">cm³</option>
+                                <option value="m3">m³</option>
                               </select>
                             </div>
                           </div>
@@ -3356,7 +3357,7 @@ export function CatalogoItemDetailPanel({
                             {/* Volumen edit controls */}
                             <div className="flex flex-col gap-3">
                               <div className="flex items-center gap-2.5">
-                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Volumen de la unidad</label>
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Contenido</label>
                                 <button
                                   onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
                                   disabled={isChildItem}
@@ -3393,7 +3394,8 @@ export function CatalogoItemDetailPanel({
                                       <option value="kg">kg</option>
                                       <option value="cm">cm</option>
                                       <option value="mm">mm</option>
-                                      <option value="m">M</option>
+                                      <option value="cm3">cm³</option>
+                                      <option value="m3">m³</option>
                                     </select>
                                   </div>
                                 </div>
@@ -3401,36 +3403,46 @@ export function CatalogoItemDetailPanel({
                             </div>
                           </div>
                         ) : (
-                          <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
-                            {/* Formato de venta + Unidades por pack */}
-                            <div className="grid grid-cols-2 divide-x divide-slate-200">
-                              <div className="px-4 py-3 flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Formato de venta</span>
-                                <span className="text-[15px] font-medium text-slate-800 leading-snug capitalize">{formatoVenta || <span className="text-slate-300 font-normal">No aplica</span>}</span>
-                              </div>
-                              <div className="px-4 py-3 flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</span>
-                                <span className="text-[15px] font-medium text-slate-800 leading-snug">
-                                  {formatoVenta === "unidad"
-                                    ? "1"
-                                    : (unidadesPorPack || <span className="text-slate-300 font-normal">No aplica</span>)}
-                                </span>
+                          <>
+                            {/* Presentación card */}
+                            <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
+                              <div className="grid grid-cols-2 divide-x divide-slate-200">
+                                <div className="px-4 py-3 flex flex-col gap-1">
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Formato de venta</span>
+                                  <span className="text-[15px] font-medium text-slate-800 leading-snug capitalize">{formatoVenta || <span className="text-slate-300 font-normal">No aplica</span>}</span>
+                                </div>
+                                <div className="px-4 py-3 flex flex-col gap-1">
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</span>
+                                  <span className="text-[15px] font-medium text-slate-800 leading-snug">
+                                    {formatoVenta === "unidad"
+                                      ? "1"
+                                      : (unidadesPorPack || <span className="text-slate-300 font-normal">No aplica</span>)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                            {/* Volumen — only shown when active */}
+
+                            {/* Contenido section */}
                             {volumenActive && (
-                              <div className="grid grid-cols-2 divide-x divide-slate-200 border-t border-slate-200">
-                                <div className="px-4 py-3 flex flex-col gap-1">
-                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Cantidad</span>
-                                  <span className="text-[15px] font-medium text-slate-800 leading-snug">{volumenCantidad || <span className="text-slate-300 font-normal">No especificado</span>}</span>
+                              <>
+                                <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">
+                                  Contenido
+                                </h3>
+                                <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
+                                  <div className="grid grid-cols-2 divide-x divide-slate-200">
+                                    <div className="px-4 py-3 flex flex-col gap-1">
+                                      <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Cantidad</span>
+                                      <span className="text-[15px] font-medium text-slate-800 leading-snug">{volumenCantidad || <span className="text-slate-300 font-normal">No especificado</span>}</span>
+                                    </div>
+                                    <div className="px-4 py-3 flex flex-col gap-1">
+                                      <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidad de medida</span>
+                                      <span className="text-[15px] font-medium text-slate-800 leading-snug">{volumenUnidad ? ({ ml: "mL", l: "L", mg: "mg", g: "g", kg: "kg", cm: "cm", mm: "mm", cm3: "cm³", m3: "m³" } as Record<string, string>)[volumenUnidad] ?? volumenUnidad : <span className="text-slate-300 font-normal">No especificado</span>}</span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="px-4 py-3 flex flex-col gap-1">
-                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidad de medida</span>
-                                  <span className="text-[15px] font-medium text-slate-800 leading-snug">{volumenUnidad ? ({ ml: "mL", l: "L", mg: "mg", g: "g", kg: "kg", cm: "cm", mm: "mm", m: "M" } as Record<string, string>)[volumenUnidad] ?? volumenUnidad : <span className="text-slate-300 font-normal">No especificado</span>}</span>
-                                </div>
-                              </div>
+                              </>
                             )}
-                          </div>
+                          </>
                         )}
 
                         {/* Vencimiento Section */}

@@ -322,7 +322,7 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
                   {/* Volumen */}
                   <div className="mt-4 flex flex-col gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-medium text-gray-600 uppercase tracking-wider">Volumen de la unidad</span>
+                      <span className="text-[11px] font-medium text-gray-600 uppercase tracking-wider">Contenido</span>
                       <div className={`w-8 h-4 rounded-full relative transition-colors ${volumenActive ? "bg-slate-800" : "bg-gray-300"}`}>
                         <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${volumenActive ? "translate-x-4" : "translate-x-0"}`} />
                       </div>
