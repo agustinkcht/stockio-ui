@@ -294,6 +294,7 @@ export function CatalogoItemDetailPanel({
   const [isEditDescripcionModalOpen, setIsEditDescripcionModalOpen] = useState(false)
   const [modalDescripcionValue, setModalDescripcionValue] = useState("")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
+  const [proveedorSearch, setProveedorSearch] = useState("")
   const [isNuevoProveedorModalOpen, setIsNuevoProveedorModalOpen] = useState(false)
   const { proveedores, addProveedor } = useProveedores()
   const proveedorDropdownRef = useRef<HTMLDivElement>(null)
@@ -3225,6 +3226,7 @@ export function CatalogoItemDetailPanel({
                                           onClick={() => {
                                             handleFieldChange("proveedor", "", setProveedor)
                                             setProveedorDropdownOpen(false)
+                                            setProveedorSearch("")
                                           }}
                                           className="w-full px-3 py-2.5 flex items-center justify-between gap-2 text-sm text-slate-500 hover:bg-slate-50 border-b border-slate-100 transition-colors"
                                         >
@@ -3243,29 +3245,44 @@ export function CatalogoItemDetailPanel({
                                           <Plus className="w-3.5 h-3.5 text-slate-500" />
                                           Nuevo proveedor
                                         </button>
-                                        {/* Existing proveedores — alphabetical */}
+                                        {/* Search */}
+                                        <div className="px-3 py-2 border-b border-slate-100">
+                                          <input
+                                            type="text"
+                                            value={proveedorSearch}
+                                            onChange={(e) => setProveedorSearch(e.target.value)}
+                                            placeholder="Buscar proveedor..."
+                                            className="w-full px-2.5 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 placeholder:text-slate-400"
+                                            autoFocus
+                                          />
+                                        </div>
+                                        {/* Existing proveedores — alphabetical + filtered */}
                                         <div className="max-h-48 overflow-y-auto">
                                           {proveedores.length === 0 ? (
                                             <p className="px-3 py-3 text-sm text-slate-400 text-center">Sin proveedores</p>
-                                          ) : (
-                                            [...proveedores]
+                                          ) : (() => {
+                                            const filtered = [...proveedores]
                                               .map((p) => ({ p, displayName: p.tipo === "empresa" ? (p.razonSocial || p.nombre) : `${p.nombre}${p.apellido ? " " + p.apellido : ""}` }))
                                               .sort((a, b) => a.displayName.localeCompare(b.displayName, "es"))
-                                              .map(({ p, displayName }) => (
-                                                <button
-                                                  key={p.id}
-                                                  type="button"
-                                                  onClick={() => {
-                                                    handleFieldChange("proveedor", displayName, setProveedor)
-                                                    setProveedorDropdownOpen(false)
-                                                  }}
-                                                  className="w-full px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between"
-                                                >
-                                                  <span>{displayName}</span>
-                                                  {proveedor === displayName && <Check className="w-3.5 h-3.5 text-slate-500" />}
-                                                </button>
-                                              ))
-                                          )}
+                                              .filter(({ displayName }) => displayName.toLowerCase().includes(proveedorSearch.toLowerCase()))
+                                            return filtered.length === 0 ? (
+                                              <p className="px-3 py-3 text-sm text-slate-400 text-center">Sin resultados</p>
+                                            ) : filtered.map(({ p, displayName }) => (
+                                              <button
+                                                key={p.id}
+                                                type="button"
+                                                onClick={() => {
+                                                  handleFieldChange("proveedor", displayName, setProveedor)
+                                                  setProveedorDropdownOpen(false)
+                                                  setProveedorSearch("")
+                                                }}
+                                                className="w-full px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between"
+                                              >
+                                                <span>{displayName}</span>
+                                                {proveedor === displayName && <Check className="w-3.5 h-3.5 text-slate-500" />}
+                                              </button>
+                                            ))
+                                          })()}
                                         </div>
                                       </div>
                                     )}
