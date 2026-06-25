@@ -191,18 +191,13 @@ export function StockEditModal({
             </div>
           </div>
 
-          {/* Reservado — read-only, compact */}
-          <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl ${
-            initialReservado > 0
-              ? "bg-amber-50 border border-amber-100"
-              : "bg-slate-50 border border-slate-100"
-          }`}>
-            <span className={`text-xs font-medium uppercase tracking-wider ${
+          {/* Reservado — read-only, transparent/floating */}
+          <div className="flex items-center px-1 py-1">
+            <span className={`text-xs font-semibold uppercase tracking-wider ${
               initialReservado > 0 ? "text-amber-600" : "text-slate-400"
-            }`}>Reservado</span>
-            <span className={`text-base font-semibold tabular-nums ${
-              initialReservado > 0 ? "text-amber-600" : "text-slate-500"
-            }`}>{initialReservado}</span>
+            }`}>
+              Reservado: <span className="tabular-nums">{initialReservado}</span>
+            </span>
           </div>
 
           {/* Disponible — read-only */}
