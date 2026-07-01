@@ -1218,7 +1218,7 @@ export function CatalogoItemDetailPanel({
         <div className="flex items-start justify-between pt-12 pb-8">
           <div className="flex flex-col gap-1">
             <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-              {isChildItem ? "Detalle de la Variante" : "Detalle del Item"}
+              {isChildItem ? "Detalle de la Variante" : isViewingContainer ? "Detalle del Agrupador" : "Detalle del Item"}
             </h1>
             {isChildItem && fatherItem && (
               <button
