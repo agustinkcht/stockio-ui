@@ -2024,7 +2024,7 @@ export function CatalogoItemDetailPanel({
 
                 {/* Atributos tab */}
                 {rightCardMode === "atributos" && (
-                  <div className="h-full flex flex-col mt-2">
+                  <div className="h-full flex flex-col mt-4">
                     {!showAtributosView ? (
                       <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
                         <p className="text-slate-400 text-sm">No hay atributos configurados</p>
@@ -3397,7 +3397,7 @@ export function CatalogoItemDetailPanel({
                     )}
 
                     {selectedDetailTab === "atributos" && (
-                      <div className="h-full flex flex-col mt-2">
+                      <div className="h-full flex flex-col mt-4">
                         {!showIndividualAtributosView ? (
                           <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
                             <p className="text-slate-400 text-sm">No hay atributos configurados</p>
