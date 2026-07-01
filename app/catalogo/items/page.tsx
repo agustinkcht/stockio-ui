@@ -202,7 +202,7 @@ export default function CatalogoPage() {
     setDraftPrecioHasta(filterPrecioHasta != null ? String(filterPrecioHasta) : "")
     setDraftStockFlags(filterStockFlags)
     setFilterOpen(true)
-  }, [filterCategorias, filterMarcas, filterEstados, filterPrecioDesde, filterPrecioHasta, filterStockFlags])
+  }, [filterCategorias, filterMarcas, filterPrecioDesde, filterPrecioHasta, filterStockFlags])
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
