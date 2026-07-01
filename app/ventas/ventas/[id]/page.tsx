@@ -1643,10 +1643,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
               </div>{/* end col-span-2 left column */}
 
-              {/* Right col-span-1: single white panel */}
+              {/* Right col-span-1: two stacked cards */}
               {ventaItems.length > 0 && (
-                <div className="col-span-1 flex flex-col">
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="col-span-1 flex flex-col gap-4">
+                <div className="bg-white rounded-lg shadow-sm">
                   <div className="px-5 py-5 flex flex-col gap-0">
 
                     {/* ── Resumen section ── */}
@@ -1830,9 +1830,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </span>
                     </div>
                   </div>
-                    {/* ── Detalle del Cobro section ── */}
-                    <div className="border-t border-slate-100 -mx-5 w-[calc(100%+2.5rem)] mt-2 mb-0" />
-                    <div className="flex flex-col gap-0 pt-4">
+                </div>{/* end resumen card */}
+
+                {/* ── Detalle del Cobro card ── */}
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                  <div className="px-5 py-5 flex flex-col gap-0">
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
                     {ventaCobros.length > 0 ? (
@@ -1897,7 +1899,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </span>
                       </div>
                     )}
-                  </div>
                   </div>
                 </div>
               </div>
