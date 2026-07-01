@@ -1839,22 +1839,22 @@ export function CatalogoItemDetailPanel({
           {isViewingContainer && !isExpandedMatrixOpen && (
             <div className="col-span-5 order-2 self-start flex flex-col">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                {/* Flush tab bar — dark bg */}
+                {/* Flush tab bar */}
                 <div className="z-20 mb-0 -mx-6 -mt-6 flex flex-col rounded-t-2xl overflow-hidden">
-                  <div className="flex bg-slate-900">
+                  <div className="flex border-b border-slate-200">
                     <button
                       onClick={() => setRightCardMode("info")}
-                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${rightCardMode === "info" ? "text-white" : "text-slate-500 hover:text-slate-300"}`}
+                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${rightCardMode === "info" ? "text-slate-900" : "text-slate-400 hover:text-slate-600"}`}
                     >
                       <span className="text-xs font-semibold uppercase tracking-widest">Info</span>
-                      {rightCardMode === "info" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full" />}
+                      {rightCardMode === "info" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />}
                     </button>
                     <button
                       onClick={() => setRightCardMode("atributos")}
-                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${rightCardMode === "atributos" ? "text-white" : "text-slate-500 hover:text-slate-300"}`}
+                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${rightCardMode === "atributos" ? "text-slate-900" : "text-slate-400 hover:text-slate-600"}`}
                     >
                       <span className="text-xs font-semibold uppercase tracking-widest">Atributos</span>
-                      {rightCardMode === "atributos" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full" />}
+                      {rightCardMode === "atributos" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />}
                     </button>
                   </div>
                   {/* Shared info notice */}
