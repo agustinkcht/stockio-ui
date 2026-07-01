@@ -1043,10 +1043,38 @@ export function CatalogoItemDetailPanel({
     onFieldChange(sku, field, value)
   }
 
+  const copyToClipboard = (text: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {
+          const ta = document.createElement("textarea")
+          ta.value = text
+          ta.style.position = "fixed"
+          ta.style.opacity = "0"
+          document.body.appendChild(ta)
+          ta.focus()
+          ta.select()
+          document.execCommand("copy")
+          document.body.removeChild(ta)
+        })
+      } else {
+        const ta = document.createElement("textarea")
+        ta.value = text
+        ta.style.position = "fixed"
+        ta.style.opacity = "0"
+        document.body.appendChild(ta)
+        ta.focus()
+        ta.select()
+        document.execCommand("copy")
+        document.body.removeChild(ta)
+      }
+    } catch {}
+  }
+
   const handleCopySku = async () => {
     const skuToCopy = editingSku ? skuValue : selectedItem?.sku
     if (skuToCopy) {
-      await navigator.clipboard.writeText(skuToCopy)
+      copyToClipboard(skuToCopy)
       setSkuCopied(true)
       setTimeout(() => setSkuCopied(false), 2000)
     } else if (isViewingContainer && selectedItem?.name) {
@@ -1057,7 +1085,7 @@ export function CatalogoItemDetailPanel({
         .map((word: string) => word.substring(0, 3))
         .join("-")
         .substring(0, 15)
-      await navigator.clipboard.writeText(skuPadre)
+      copyToClipboard(skuPadre)
       setSkuCopied(true)
       setTimeout(() => setSkuCopied(false), 2000)
     }
@@ -1067,7 +1095,7 @@ export function CatalogoItemDetailPanel({
     // Fixed variable name typo `constcodigoUniversalToCopy` to `constcodigoUniversalToCopy`
     const codigoUniversalToCopy = editingCodigoUniversal ? codigoUniversalValue : selectedItem?.codigoUniversal
     if (codigoUniversalToCopy) {
-      await navigator.clipboard.writeText(codigoUniversalToCopy)
+      copyToClipboard(codigoUniversalToCopy)
       setCodigoUniversalCopied(true)
       setTimeout(() => setCodigoUniversalCopied(false), 2000)
     }
@@ -1339,7 +1367,7 @@ export function CatalogoItemDetailPanel({
                                 setModalNombreValue(nameValue || selectedItem.name || "")
                                 setIsEditNombreModalOpen(true)
                               } else {
-                                navigator.clipboard.writeText(nameValue || selectedItem.name || "")
+                                copyToClipboard(nameValue || selectedItem.name || "")
                                 setNombreCopied(true)
                                 setTimeout(() => setNombreCopied(false), 1500)
                               }
@@ -1362,7 +1390,7 @@ export function CatalogoItemDetailPanel({
                                 setModalNombreValue(nameValue || selectedItem.name || "")
                                 setIsEditNombreModalOpen(true)
                               } else {
-                                navigator.clipboard.writeText(nameValue || selectedItem.name || "")
+                                copyToClipboard(nameValue || selectedItem.name || "")
                                 setNombreCopied(true)
                                 setTimeout(() => setNombreCopied(false), 1500)
                               }
@@ -1405,7 +1433,7 @@ export function CatalogoItemDetailPanel({
                                   setIsEditSkuModalOpen(true)
                                 } else {
                                   const fullSku = `${fatherItem.skuPrefix || fatherItem.sku || ""}-${selectedItem.skuSuffix || selectedItem.sku || ""}`
-                                  navigator.clipboard.writeText(fullSku)
+                                  copyToClipboard(fullSku)
                                   setSkuCopied(true)
                                   setTimeout(() => setSkuCopied(false), 1500)
                                 }
@@ -1427,7 +1455,7 @@ export function CatalogoItemDetailPanel({
                                   setModalSkuValue(skuValue || selectedItem.sku || "")
                                   setIsEditSkuModalOpen(true)
                                 } else {
-                                  navigator.clipboard.writeText(skuValue || selectedItem.sku || "")
+                                  copyToClipboard(skuValue || selectedItem.sku || "")
                                   setSkuCopied(true)
                                   setTimeout(() => setSkuCopied(false), 1500)
                                 }
@@ -1466,7 +1494,7 @@ export function CatalogoItemDetailPanel({
                                 setIsPrecioModalOpen(true)
                               } else {
                                 const val = (selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-                                navigator.clipboard.writeText(val)
+                                copyToClipboard(val)
                                 setPrecioCopied(true)
                                 setTimeout(() => setPrecioCopied(false), 1500)
                               }
@@ -1498,7 +1526,7 @@ export function CatalogoItemDetailPanel({
                                 setIsStockModalOpen(true)
                               } else {
                                 const disp = selectedItem?.stock?.disponible ?? Number.parseInt(selectedItem?.stock?.enStock || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")
-                                navigator.clipboard.writeText(String(disp))
+                                copyToClipboard(String(disp))
                                 setStockCopied(true)
                                 setTimeout(() => setStockCopied(false), 1500)
                               }
@@ -1714,7 +1742,7 @@ export function CatalogoItemDetailPanel({
                                 } else {
                                   const val = codigoUniversalValue || selectedItem.codigoUniversal || ""
                                   if (val) {
-                                    navigator.clipboard.writeText(val)
+                                    copyToClipboard(val)
                                     setCodigoUniversalCopied(true)
                                     setTimeout(() => setCodigoUniversalCopied(false), 1500)
                                   }
@@ -1764,7 +1792,7 @@ export function CatalogoItemDetailPanel({
                                   setIsEditCodigoProveedorModalOpen(true)
                                 } else {
                                   if (codigoProveedor) {
-                                    navigator.clipboard.writeText(codigoProveedor)
+                                    copyToClipboard(codigoProveedor)
                                     setCodProveedorCopied(true)
                                     setTimeout(() => setCodProveedorCopied(false), 1500)
                                   }
