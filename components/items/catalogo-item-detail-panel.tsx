@@ -6,6 +6,7 @@ import type React from "react"
 import type { Item } from "@/lib/types"
 import { ChevronDown, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload, Layers, Maximize2, Minimize2, Info } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
 import { getItemPhoto } from "@/lib/utils/category-images"
@@ -2091,7 +2092,16 @@ export function CatalogoItemDetailPanel({
                       <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-1.5">
                           <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Atributos Informativos</h3>
-                          <Info className="w-3 h-3 text-slate-400 cursor-default shrink-0" title="Atributos que describen propiedades adicionales del producto" />
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="w-3 h-3 text-slate-400 cursor-default shrink-0" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                Atributos que describen propiedades adicionales del producto
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
 
                         {isRightEditing ? (
@@ -3459,7 +3469,16 @@ export function CatalogoItemDetailPanel({
                             {/* Section header */}
                             <div className="flex items-center gap-1.5">
                               <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Atributos Informativos</h3>
-                              <Info className="w-3 h-3 text-slate-400 cursor-default shrink-0" title="Atributos que describen propiedades adicionales del producto" />
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Info className="w-3 h-3 text-slate-400 cursor-default shrink-0" />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                    Atributos que describen propiedades adicionales del producto
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
 
                             {isRightEditing ? (

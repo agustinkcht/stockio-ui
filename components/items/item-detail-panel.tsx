@@ -6,6 +6,7 @@ import type React from "react"
 import type { Item } from "@/lib/types"
 import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen, Pencil, Info } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
 import { getItemPhoto } from "@/lib/utils/category-images"
@@ -1742,7 +1743,16 @@ export function ItemDetailPanel({
                               <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
                                 Atributos Informativos
                               </h3>
-                              <Info className="w-3.5 h-3.5 text-gray-400 cursor-default shrink-0" title="Atributos que describen propiedades generales del producto" />
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Info className="w-3.5 h-3.5 text-gray-400 cursor-default shrink-0" />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                    Atributos que describen propiedades generales del producto
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
                           </div>
 
@@ -2346,7 +2356,16 @@ export function ItemDetailPanel({
                                 <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
                                   Atributos Informativos
                                 </h3>
-                                <Info className="w-3.5 h-3.5 text-gray-400 cursor-default shrink-0" title="Atributos que describen propiedades adicionales del producto" />
+                                <TooltipProvider delayDuration={200}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Info className="w-3.5 h-3.5 text-gray-400 cursor-default shrink-0" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                      Atributos que describen propiedades adicionales del producto
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </div>
 
