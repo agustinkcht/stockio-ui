@@ -1746,7 +1746,7 @@ export function ItemDetailPanel({
                               <TooltipProvider delayDuration={200}>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Info className="w-3.5 h-3.5 text-gray-400 cursor-default shrink-0" />
+                                    <Info className="w-3.5 h-3.5 text-gray-400 cursor-pointer shrink-0" />
                                   </TooltipTrigger>
                                   <TooltipContent side="top" className="max-w-[220px] text-xs">
                                     Atributos que describen propiedades generales del producto
@@ -2359,10 +2359,10 @@ export function ItemDetailPanel({
                                 <TooltipProvider delayDuration={200}>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Info className="w-3.5 h-3.5 text-gray-400 cursor-default shrink-0" />
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="max-w-[220px] text-xs">
-                                      Atributos que describen propiedades adicionales del producto
+                                    <Info className="w-3.5 h-3.5 text-gray-400 cursor-pointer shrink-0" />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                    Atributos que describen propiedades adicionales del producto
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>

@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload, Layers, Maximize2, Minimize2, Info } from "lucide-react"
+import { ChevronDown, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload, Layers, Maximize2, Minimize2, Info, MoreVertical, Trash2 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
 import { getItemPhoto } from "@/lib/utils/category-images"
@@ -1215,7 +1216,20 @@ export function CatalogoItemDetailPanel({
         <div className="max-w-6xl mx-auto">
         {/* Section header — shared for all item types */}
         <div className="flex items-start justify-between pt-12 pb-8">
-          <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Detalle del Item</h1>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+              {isChildItem ? "Detalle de la Variante" : "Detalle del Item"}
+            </h1>
+            {isChildItem && fatherItem && (
+              <button
+                type="button"
+                onClick={() => router.push(`/catalogo/items/${fatherItem.id}`)}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium text-left cursor-pointer transition-colors w-fit"
+              >
+                Ver Agrupador
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-2 mt-1 shrink-0">
             {!isRightEditing ? (
               <button
@@ -1244,6 +1258,22 @@ export function CatalogoItemDetailPanel({
                 </button>
               </>
             )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="h-9 w-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer shadow-sm"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer gap-2">
+                  <Trash2 className="w-4 h-4" />
+                  {isViewingContainer ? "Eliminar agrupador" : isChildItem ? "Eliminar variante" : "Eliminar item"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -2095,7 +2125,7 @@ export function CatalogoItemDetailPanel({
                           <TooltipProvider delayDuration={200}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Info className="w-3 h-3 text-slate-400 cursor-default shrink-0" />
+                                <Info className="w-3 h-3 text-slate-400 cursor-pointer shrink-0" />
                               </TooltipTrigger>
                               <TooltipContent side="top" className="max-w-[220px] text-xs">
                                 Atributos que describen propiedades adicionales del producto
@@ -3472,7 +3502,7 @@ export function CatalogoItemDetailPanel({
                               <TooltipProvider delayDuration={200}>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Info className="w-3 h-3 text-slate-400 cursor-default shrink-0" />
+                                    <Info className="w-3 h-3 text-slate-400 cursor-pointer shrink-0" />
                                   </TooltipTrigger>
                                   <TooltipContent side="top" className="max-w-[220px] text-xs">
                                     Atributos que describen propiedades adicionales del producto
