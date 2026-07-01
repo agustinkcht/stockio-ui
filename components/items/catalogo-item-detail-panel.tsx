@@ -330,6 +330,10 @@ export function CatalogoItemDetailPanel({
 
   const [skuCopied, setSkuCopied] = useState(false)
   const [codigoUniversalCopied, setCodigoUniversalCopied] = useState(false)
+  const [nombreCopied, setNombreCopied] = useState(false)
+  const [precioCopied, setPrecioCopied] = useState(false)
+  const [stockCopied, setStockCopied] = useState(false)
+  const [codProveedorCopied, setCodProveedorCopied] = useState(false)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [isSelectingTemplateForContainer, setIsSelectingTemplateForContainer] = useState(false)
 
@@ -1215,8 +1219,8 @@ export function CatalogoItemDetailPanel({
       <div className="px-8 pb-8 bg-slate-50 min-h-screen">
         <div className="max-w-6xl mx-auto">
         {/* Section header — shared for all item types */}
-        <div className="flex items-start justify-between pt-12 pb-8">
-          <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between pt-12 pb-8">
+          <div className="flex items-center gap-3">
             <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
               {isChildItem ? "Detalle de la Variante" : isViewingContainer ? "Detalle del Agrupador" : "Detalle del Item"}
             </h1>
@@ -1224,22 +1228,40 @@ export function CatalogoItemDetailPanel({
               <button
                 type="button"
                 onClick={() => router.push(`/catalogo/items/${fatherItem.id}`)}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium text-left cursor-pointer transition-colors w-fit"
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer transition-colors whitespace-nowrap"
               >
                 Ver Agrupador
               </button>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-1 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {!isRightEditing ? (
-              <button
-                type="button"
-                onClick={enterRightEditMode}
-                className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
-              >
-                <Pencil className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
-                Editar
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={enterRightEditMode}
+                  className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                >
+                  <Pencil className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                  Editar
+                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="h-9 w-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer shadow-sm"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer gap-2">
+                      <Trash2 className="w-4 h-4" />
+                      {isViewingContainer ? "Eliminar agrupador" : isChildItem ? "Eliminar variante" : "Eliminar item"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
               <>
                 <button
@@ -1258,22 +1280,6 @@ export function CatalogoItemDetailPanel({
                 </button>
               </>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="h-9 w-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer shadow-sm"
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer gap-2">
-                  <Trash2 className="w-4 h-4" />
-                  {isViewingContainer ? "Eliminar agrupador" : isChildItem ? "Eliminar variante" : "Eliminar item"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
 
@@ -1325,18 +1331,50 @@ export function CatalogoItemDetailPanel({
                     <div className="mb-0 mt-6">
                       <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap group/title">
                           {isChildItem ? (
-                          <h2 className="font-semibold text-white text-2xl text-center">{nameValue || selectedItem.name}</h2>
+                          <div
+                            className="flex items-center gap-1.5 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (isRightEditing) {
+                                setModalNombreValue(nameValue || selectedItem.name || "")
+                                setIsEditNombreModalOpen(true)
+                              } else {
+                                navigator.clipboard.writeText(nameValue || selectedItem.name || "")
+                                setNombreCopied(true)
+                                setTimeout(() => setNombreCopied(false), 1500)
+                              }
+                            }}
+                          >
+                            <h2 className="font-semibold text-white text-2xl text-center">{nameValue || selectedItem.name}</h2>
+                            {isRightEditing
+                              ? <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                              : nombreCopied
+                                ? <Check className="w-3.5 h-3.5 text-emerald-400 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                                : <Copy className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                            }
+                          </div>
                         ) : (
                           <div
                             className="flex items-center gap-1.5 cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setModalNombreValue(nameValue || selectedItem.name || "")
-                              setIsEditNombreModalOpen(true)
+                              if (isRightEditing) {
+                                setModalNombreValue(nameValue || selectedItem.name || "")
+                                setIsEditNombreModalOpen(true)
+                              } else {
+                                navigator.clipboard.writeText(nameValue || selectedItem.name || "")
+                                setNombreCopied(true)
+                                setTimeout(() => setNombreCopied(false), 1500)
+                              }
                             }}
                           >
                             <h2 className="font-semibold text-white text-2xl text-center">{nameValue || selectedItem.name}</h2>
-                            <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                            {isRightEditing
+                              ? <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                              : nombreCopied
+                                ? <Check className="w-3.5 h-3.5 text-emerald-400 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                                : <Copy className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                            }
                           </div>
                         )}
                         {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
@@ -1362,8 +1400,15 @@ export function CatalogoItemDetailPanel({
                               className="flex items-center gap-0 cursor-pointer group/skuval"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setModalSkuValue(selectedItem.skuSuffix || selectedItem.sku || "")
-                                setIsEditSkuModalOpen(true)
+                                if (isRightEditing) {
+                                  setModalSkuValue(selectedItem.skuSuffix || selectedItem.sku || "")
+                                  setIsEditSkuModalOpen(true)
+                                } else {
+                                  const fullSku = `${fatherItem.skuPrefix || fatherItem.sku || ""}-${selectedItem.skuSuffix || selectedItem.sku || ""}`
+                                  navigator.clipboard.writeText(fullSku)
+                                  setSkuCopied(true)
+                                  setTimeout(() => setSkuCopied(false), 1500)
+                                }
                               }}
                             >
                               <span className="text-xs font-light text-slate-500 tracking-wide">
@@ -1378,14 +1423,25 @@ export function CatalogoItemDetailPanel({
                               className="text-xs font-light text-slate-400 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setModalSkuValue(skuValue || selectedItem.sku || "")
-                                setIsEditSkuModalOpen(true)
+                                if (isRightEditing) {
+                                  setModalSkuValue(skuValue || selectedItem.sku || "")
+                                  setIsEditSkuModalOpen(true)
+                                } else {
+                                  navigator.clipboard.writeText(skuValue || selectedItem.sku || "")
+                                  setSkuCopied(true)
+                                  setTimeout(() => setSkuCopied(false), 1500)
+                                }
                               }}
                             >
                               {skuValue || selectedItem.sku}
                             </span>
                           )}
-                          <Pencil className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
+                          {isRightEditing
+                            ? <Pencil className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
+                            : skuCopied
+                              ? <Check className="h-2.5 w-2.5 text-emerald-400 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
+                              : <Copy className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
+                          }
                         </div>
                       )}
 
@@ -1400,13 +1456,20 @@ export function CatalogoItemDetailPanel({
                             className="flex flex-col items-center py-3 group/precio cursor-pointer transition-all hover:scale-105"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setPrecioModalValues({
-                                costo: selectedItem?.precio?.costo || 0,
-                                margen: selectedItem?.precio?.margen || 0,
-                                iva: selectedItem?.precio?.iva || 0,
-                                precioFinal: selectedItem?.precio?.precioFinal || 0,
-                              })
-                              setIsPrecioModalOpen(true)
+                              if (isRightEditing) {
+                                setPrecioModalValues({
+                                  costo: selectedItem?.precio?.costo || 0,
+                                  margen: selectedItem?.precio?.margen || 0,
+                                  iva: selectedItem?.precio?.iva || 0,
+                                  precioFinal: selectedItem?.precio?.precioFinal || 0,
+                                })
+                                setIsPrecioModalOpen(true)
+                              } else {
+                                const val = (selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                                navigator.clipboard.writeText(val)
+                                setPrecioCopied(true)
+                                setTimeout(() => setPrecioCopied(false), 1500)
+                              }
                             }}
                           >
                             <span className="text-[11px] text-slate-500 uppercase tracking-[0.12em] mb-0.5">Precio Venta</span>
@@ -1414,7 +1477,12 @@ export function CatalogoItemDetailPanel({
                               <span className="text-white font-light text-lg tracking-tight tabular-nums">
                                 ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                               </span>
-                              <Pencil className="h-3 w-3 text-slate-600 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                              {isRightEditing
+                                ? <Pencil className="h-3 w-3 text-slate-600 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                                : precioCopied
+                                  ? <Check className="h-3 w-3 text-emerald-400 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                                  : <Copy className="h-3 w-3 text-slate-600 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                              }
                             </div>
                           </div>
 
@@ -1426,7 +1494,14 @@ export function CatalogoItemDetailPanel({
                             className="flex flex-col items-center py-3 group/stock cursor-pointer transition-all hover:scale-105"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setIsStockModalOpen(true)
+                              if (isRightEditing) {
+                                setIsStockModalOpen(true)
+                              } else {
+                                const disp = selectedItem?.stock?.disponible ?? Number.parseInt(selectedItem?.stock?.enStock || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")
+                                navigator.clipboard.writeText(String(disp))
+                                setStockCopied(true)
+                                setTimeout(() => setStockCopied(false), 1500)
+                              }
                             }}
                           >
                             <span className="text-[11px] text-slate-500 uppercase tracking-[0.12em] mb-0.5">Stock</span>
@@ -1434,7 +1509,12 @@ export function CatalogoItemDetailPanel({
                               <span className="text-white font-light text-lg tracking-tight tabular-nums">
                                 {selectedItem?.stock?.disponible ?? Number.parseInt(selectedItem?.stock?.enStock || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
                               </span>
-                              <Pencil className="h-3 w-3 text-slate-600 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                              {isRightEditing
+                                ? <Pencil className="h-3 w-3 text-slate-600 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                                : stockCopied
+                                  ? <Check className="h-3 w-3 text-emerald-400 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                                  : <Copy className="h-3 w-3 text-slate-600 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                              }
                             </div>
                           </div>
 
@@ -1628,15 +1708,29 @@ export function CatalogoItemDetailPanel({
                               className="text-sm font-semibold text-slate-200 tracking-wide cursor-pointer hover:text-slate-100 transition-colors truncate"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setModalCodigoUniversalValue(codigoUniversalValue || selectedItem.codigoUniversal || "")
-                                setIsEditCodigoUniversalModalOpen(true)
+                                if (isRightEditing) {
+                                  setModalCodigoUniversalValue(codigoUniversalValue || selectedItem.codigoUniversal || "")
+                                  setIsEditCodigoUniversalModalOpen(true)
+                                } else {
+                                  const val = codigoUniversalValue || selectedItem.codigoUniversal || ""
+                                  if (val) {
+                                    navigator.clipboard.writeText(val)
+                                    setCodigoUniversalCopied(true)
+                                    setTimeout(() => setCodigoUniversalCopied(false), 1500)
+                                  }
+                                }
                               }}
                             >
                               {codigoUniversalValue || selectedItem.codigoUniversal || (
                                 <span className="text-slate-500 italic font-normal">Agregar...</span>
                               )}
                             </span>
-                            <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/codUniversal:opacity-100 transition-opacity shrink-0" />
+                            {isRightEditing
+                              ? <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/codUniversal:opacity-100 transition-opacity shrink-0" />
+                              : codigoUniversalCopied
+                                ? <Check className="h-3 w-3 text-emerald-400 opacity-0 group-hover/codUniversal:opacity-100 transition-opacity shrink-0" />
+                                : <Copy className="h-3 w-3 text-slate-500 opacity-0 group-hover/codUniversal:opacity-100 transition-opacity shrink-0" />
+                            }
                           </div>
                         </div>
 
@@ -1665,15 +1759,28 @@ export function CatalogoItemDetailPanel({
                               className="text-sm font-semibold text-slate-200 tracking-wide cursor-pointer hover:text-slate-100 transition-colors truncate"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setModalCodigoProveedorValue(codigoProveedor || "")
-                                setIsEditCodigoProveedorModalOpen(true)
+                                if (isRightEditing) {
+                                  setModalCodigoProveedorValue(codigoProveedor || "")
+                                  setIsEditCodigoProveedorModalOpen(true)
+                                } else {
+                                  if (codigoProveedor) {
+                                    navigator.clipboard.writeText(codigoProveedor)
+                                    setCodProveedorCopied(true)
+                                    setTimeout(() => setCodProveedorCopied(false), 1500)
+                                  }
+                                }
                               }}
                             >
                               {codigoProveedor || (
                                 <span className="text-slate-500 italic font-normal">Agregar...</span>
                               )}
                             </span>
-                            <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/codProveedor:opacity-100 transition-opacity shrink-0" />
+                            {isRightEditing
+                              ? <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/codProveedor:opacity-100 transition-opacity shrink-0" />
+                              : codProveedorCopied
+                                ? <Check className="h-3 w-3 text-emerald-400 opacity-0 group-hover/codProveedor:opacity-100 transition-opacity shrink-0" />
+                                : <Copy className="h-3 w-3 text-slate-500 opacity-0 group-hover/codProveedor:opacity-100 transition-opacity shrink-0" />
+                            }
                           </div>
                         </div>
                       </div>
