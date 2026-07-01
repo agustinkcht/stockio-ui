@@ -1897,9 +1897,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </span>
                       </div>
                     )}
-                  </div>{/* end detalle cobro inner div */}
-                  </div>{/* end unified px-5 py-5 */}
-                </div>{/* end unified white card */}
+                  </div>
+                  </div>
+                </div>
               </div>
               )}
 
