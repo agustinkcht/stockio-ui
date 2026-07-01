@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload, Layers, Maximize2, Minimize2 } from "lucide-react"
+import { ChevronDown, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload, Layers, Maximize2, Minimize2, Info } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
@@ -1857,13 +1857,17 @@ export function CatalogoItemDetailPanel({
                       {rightCardMode === "atributos" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />}
                     </button>
                   </div>
-                  {/* Shared info notice */}
-                  <div className="px-0 pt-4 pb-0">
-                    <p className="text-[10px] text-slate-400 leading-relaxed px-1">
-                      Esta información es compartida por todas las variantes del agrupador.
-                    </p>
-                    <div className="mt-3 border-b border-slate-100" />
-                  </div>
+                  {/* Shared info notice — only in edit mode */}
+                  {isRightEditing && (
+                    <div className="px-6 pt-4 pb-0">
+                      <p className="text-[10px] text-slate-400 leading-relaxed">
+                        {rightCardMode === "info"
+                          ? "Esta información es compartida por todas las variantes."
+                          : "Estos atributos son compartidos por todas las variantes. El valor puede asignarse desde acá, o marcarse para completarse en cada variante."}
+                      </p>
+                      <div className="mt-3 border-b border-slate-100" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Info tab */}
@@ -2085,9 +2089,9 @@ export function CatalogoItemDetailPanel({
                       </div>
                     ) : (
                       <div className="flex flex-col gap-4">
-                        <div>
+                        <div className="flex items-center gap-1.5">
                           <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Atributos Informativos</h3>
-                          <p className="text-xs text-slate-400 mt-0.5">Atributos que describen propiedades adicionales del producto</p>
+                          <Info className="w-3 h-3 text-slate-400 cursor-default shrink-0" title="Atributos que describen propiedades adicionales del producto" />
                         </div>
 
                         {isRightEditing ? (
@@ -2214,6 +2218,21 @@ export function CatalogoItemDetailPanel({
                     )}
                   </button>
                 </div>
+                {/* Shared info notice — only in edit mode */}
+                {isRightEditing && (
+                  <div className="px-8 pt-4 pb-0">
+                    <p className="text-[10px] text-slate-400 leading-relaxed">
+                      {isChildItem
+                        ? selectedDetailTab === "info"
+                          ? "Esta información se completa desde el agrupador y es compartida por todas las variantes."
+                          : "Los atributos no editables se completan desde el agrupador y son compartidos por todas las variantes."
+                        : selectedDetailTab === "info"
+                          ? "Esta información es compartida por todas las variantes."
+                          : "Estos atributos son compartidos por todas las variantes."}
+                    </p>
+                    <div className="mt-3 border-b border-slate-100" />
+                  </div>
+                )}
               </div>
             )}
 
@@ -3438,9 +3457,9 @@ export function CatalogoItemDetailPanel({
                         ) : (
                           <div className="flex flex-col gap-4">
                             {/* Section header */}
-                            <div>
+                            <div className="flex items-center gap-1.5">
                               <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Atributos Informativos</h3>
-                              <p className="text-xs text-slate-400 mt-0.5">Atributos que describen propiedades adicionales del producto</p>
+                              <Info className="w-3 h-3 text-slate-400 cursor-default shrink-0" title="Atributos que describen propiedades adicionales del producto" />
                             </div>
 
                             {isRightEditing ? (

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen, Pencil } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen, Pencil, Info } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
@@ -1738,12 +1738,12 @@ export function ItemDetailPanel({
                       <div className="flex flex-col gap-6">
                         <div className="flex flex-col gap-3">
                           <div>
-                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                              Atributos Informativos
-                            </h3>
-                            <p className="text-xs text-gray-500 italic mt-1">
-                              Atributos que describen propiedades generales del producto
-                            </p>
+                            <div className="flex items-center gap-1.5 mb-3">
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                Atributos Informativos
+                              </h3>
+                              <Info className="w-3.5 h-3.5 text-gray-400 cursor-default shrink-0" title="Atributos que describen propiedades generales del producto" />
+                            </div>
                           </div>
 
                           {atributosInformativos.map((attr, index) => {
@@ -2342,12 +2342,12 @@ export function ItemDetailPanel({
                         <div className="flex flex-col gap-6">
                           <div className="flex flex-col gap-3">
                             <div>
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                                Atributos Informativos
-                              </h3>
-                              <p className="text-xs text-gray-500 italic mt-1">
-                                Atributos que describen propiedades adicionales del producto
-                              </p>
+                              <div className="flex items-center gap-1.5 mb-3">
+                                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                  Atributos Informativos
+                                </h3>
+                                <Info className="w-3.5 h-3.5 text-gray-400 cursor-default shrink-0" title="Atributos que describen propiedades adicionales del producto" />
+                              </div>
                             </div>
 
                             {atributosInformativos.map((attr, index) => {
