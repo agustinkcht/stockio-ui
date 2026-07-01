@@ -1839,29 +1839,36 @@ export function CatalogoItemDetailPanel({
           {isViewingContainer && !isExpandedMatrixOpen && (
             <div className="col-span-5 order-2 self-start flex flex-col">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                {/* Flush tab bar — same as standalone */}
-                <div className="z-20 mb-6 -mx-6 -mt-6 flex flex-col">
-                  <div className="flex border-b border-slate-200">
+                {/* Flush tab bar — dark bg */}
+                <div className="z-20 mb-0 -mx-6 -mt-6 flex flex-col rounded-t-2xl overflow-hidden">
+                  <div className="flex bg-slate-900">
                     <button
                       onClick={() => setRightCardMode("info")}
-                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${rightCardMode === "info" ? "text-slate-900" : "text-slate-400 hover:text-slate-600"}`}
+                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${rightCardMode === "info" ? "text-white" : "text-slate-500 hover:text-slate-300"}`}
                     >
                       <span className="text-xs font-semibold uppercase tracking-widest">Info</span>
-                      {rightCardMode === "info" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />}
+                      {rightCardMode === "info" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full" />}
                     </button>
                     <button
                       onClick={() => setRightCardMode("atributos")}
-                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${rightCardMode === "atributos" ? "text-slate-900" : "text-slate-400 hover:text-slate-600"}`}
+                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${rightCardMode === "atributos" ? "text-white" : "text-slate-500 hover:text-slate-300"}`}
                     >
                       <span className="text-xs font-semibold uppercase tracking-widest">Atributos</span>
-                      {rightCardMode === "atributos" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />}
+                      {rightCardMode === "atributos" && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full" />}
                     </button>
+                  </div>
+                  {/* Shared info notice */}
+                  <div className="px-0 pt-4 pb-0">
+                    <p className="text-[10px] text-slate-400 leading-relaxed px-1">
+                      Esta información es compartida por todas las variantes del agrupador.
+                    </p>
+                    <div className="mt-3 border-b border-slate-100" />
                   </div>
                 </div>
 
                 {/* Info tab */}
                 {rightCardMode === "info" && (
-                  <div className="h-full flex flex-col mt-5">
+                  <div className="h-full flex flex-col mt-4">
 
                     {/* ── INFORMACIÓN DEL PRODUCTO ── */}
                     <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3">
@@ -2163,16 +2170,16 @@ export function CatalogoItemDetailPanel({
 
             {/* Title Header for Parent Items */}
             {isViewingContainer && (
-              <div className="mb-3 pb-5 border-b border-white/10 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-slate-900">
+              <div className="mb-3 pb-5 border-b border-slate-200/60 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-gradient-to-b from-white to-slate-50/30">
                 <button
                   className="group/title flex items-center gap-2 min-w-0 max-w-full text-left cursor-pointer"
                   onClick={() => { setModalNombreValue(selectedItem.name || ""); setIsEditNombreModalOpen(true) }}
                   title="Editar nombre"
                 >
-                  <h2 className="font-bold text-white text-xl truncate leading-tight group-hover/title:text-white/80 transition-colors">{selectedItem.name}</h2>
-                  <Pencil className="w-3.5 h-3.5 text-white/30 opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" />
+                  <h2 className="font-bold text-slate-900 text-xl truncate leading-tight group-hover/title:text-slate-600 transition-colors">{selectedItem.name}</h2>
+                  <Pencil className="w-3.5 h-3.5 text-slate-300 opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" />
                 </button>
-                <p className="text-[10px] uppercase tracking-widest mt-1.5 text-slate-500 font-medium">Agrupador de variantes</p>
+                <p className="text-[10px] uppercase tracking-widest mt-1.5 text-slate-400 font-medium">Agrupador de variantes</p>
               </div>
             )}
 
@@ -2895,29 +2902,29 @@ export function CatalogoItemDetailPanel({
                         {/* Variantes header */}
                         {variantItems.length > 0 && (
                           <div className="mt-4 mb-3 flex items-center justify-between">
-                            <span className="text-base font-bold text-slate-900 uppercase tracking-wider">
+                            <span className="text-sm font-bold text-slate-900 uppercase tracking-wider">
                               {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
                             </span>
                             <button
                               onClick={() => setIsExpandedMatrixOpen(true)}
-                              className="px-3 py-1.5 border border-slate-200 rounded-full text-slate-600 hover:text-slate-900 hover:border-slate-400 hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+                              className="px-3 py-1.5 border border-slate-200 rounded-full text-slate-500 hover:text-slate-900 hover:border-slate-400 hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
                             >
                               <Maximize2 className="w-3.5 h-3.5" />
-                              <span>Expandir variantes</span>
+                              <span>Expandir</span>
                             </button>
                           </div>
                         )}
 
                         {variantItems.length > 0 ? (
-                          <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                          <div className="bg-slate-900 rounded-lg overflow-hidden">
                             {/* Header */}
-                            <div className="grid grid-cols-12 border-b border-border/30">
+                            <div className="grid grid-cols-12 border-b border-white/10">
                               <div className="col-span-1 px-1 py-2.5" />
-                              <div className="col-span-5 px-3 py-2.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
-                              <div className="col-span-4 px-3 py-2.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Precio venta</div>
-                              <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock</div>
+                              <div className="col-span-5 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider">Variante</div>
+                              <div className="col-span-4 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider">Precio venta</div>
+                              <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider">Stock</div>
                             </div>
-                            <div className="divide-y divide-border/30">
+                            <div className="divide-y divide-white/[0.06]">
                               {variantItems.map((variant) => {
                                 const sourceVariant = selectedItem.variants?.find((v: any) => {
                                   if (!v.atributosPrincipales) return false
@@ -2984,11 +2991,11 @@ export function CatalogoItemDetailPanel({
                                   <div
                                     key={variant.id || variant.skuSuffix || variant.sku}
                                     onClick={() => { if (variantId) router.push(`/catalogo/items/${variantId}`) }}
-                                    className="group grid grid-cols-12 items-center hover:bg-accent/50 transition-colors cursor-pointer"
+                                    className="group grid grid-cols-12 items-center hover:bg-white/[0.04] transition-colors cursor-pointer"
                                   >
-                                    {/* Thumbnail — price-grid style, pencil only on thumbnail hover */}
+                                    {/* Thumbnail — pencil only on thumbnail hover */}
                                     <div className="col-span-1 pl-2 py-2.5 flex items-center justify-center">
-                                      <div className="group/thumb w-9 h-9 shrink-0 rounded-md bg-slate-100 overflow-hidden flex items-center justify-center relative cursor-pointer">
+                                      <div className="group/thumb w-9 h-9 shrink-0 rounded-md bg-white/10 overflow-hidden flex items-center justify-center relative cursor-pointer">
                                         <Image
                                           src={getItemPhoto(variantItem || selectedItem)}
                                           alt={selectedItem?.categoria || ""}
@@ -2996,7 +3003,7 @@ export function CatalogoItemDetailPanel({
                                           height={36}
                                           className="object-cover w-full h-full"
                                         />
-                                        <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/25 transition-colors flex items-center justify-center">
+                                        <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/30 transition-colors flex items-center justify-center">
                                           <Pencil className="w-3 h-3 text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity" />
                                         </div>
                                       </div>
@@ -3006,20 +3013,20 @@ export function CatalogoItemDetailPanel({
                                     <div className="col-span-5 px-3 py-2.5 flex flex-col gap-1">
                                       <div className="flex items-center gap-1.5 flex-wrap">
                                         {variant.variant1 && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-slate-200 border border-white/15 truncate max-w-[70px]">
                                             {variant.variant1}
                                           </span>
                                         )}
                                         {variant.variant1 && variant.variant2 && (
-                                          <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                                          <span className="text-[9px] text-white/30 font-medium">×</span>
                                         )}
                                         {variant.variant2 && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-slate-200 border border-white/15 truncate max-w-[70px]">
                                             {variant.variant2}
                                           </span>
                                         )}
                                       </div>
-                                      <span className="text-[10px] font-mono text-muted-foreground/50 leading-none">
+                                      <span className="text-[10px] font-mono text-white/30 leading-none">
                                         {fullSku}
                                       </span>
                                     </div>
@@ -3038,12 +3045,12 @@ export function CatalogoItemDetailPanel({
                                       }}
                                     >
                                       <div className="flex items-center gap-1.5">
-                                        <span className="text-sm font-medium text-foreground tabular-nums">
+                                        <span className="text-sm font-medium text-slate-100 tabular-nums">
                                           {sourceVariant?.precio?.precioFinal
                                             ? `$${Math.round(sourceVariant.precio.precioFinal).toLocaleString("es-AR")}`
-                                            : <span className="text-muted-foreground/40 text-xs">—</span>}
+                                            : <span className="text-white/25 text-xs">—</span>}
                                         </span>
-                                        <Pencil className="w-3 h-3 text-muted-foreground/40 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                                        <Pencil className="w-3 h-3 text-white/30 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
                                       </div>
                                     </div>
 
@@ -3060,15 +3067,15 @@ export function CatalogoItemDetailPanel({
                                     >
                                       <div className="flex items-center gap-1.5">
                                         {stockDisp > 0 ? (
-                                          <span className="text-xs font-semibold text-emerald-600 tabular-nums whitespace-nowrap">
+                                          <span className="text-xs font-semibold text-emerald-400 tabular-nums whitespace-nowrap">
                                             {stockDisp} disp.
                                           </span>
                                         ) : (
-                                          <span className="text-[10px] font-medium text-muted-foreground/40 whitespace-nowrap">
+                                          <span className="text-[10px] font-medium text-white/25 whitespace-nowrap">
                                             sin stock disp.
                                           </span>
                                         )}
-                                        <Pencil className="w-3 h-3 text-muted-foreground/40 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                                        <Pencil className="w-3 h-3 text-white/30 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
                                       </div>
                                     </div>
                                   </div>
@@ -3077,7 +3084,7 @@ export function CatalogoItemDetailPanel({
                             </div>
                           </div>
                         ) : (
-                          <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border/60 rounded-lg">
+                          <div className="text-center text-xs text-slate-500 py-8 border border-dashed border-white/10 rounded-lg bg-slate-900">
                             No hay variantes configuradas
                           </div>
                         )}
