@@ -345,7 +345,6 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
       (filterConfig.proveedores?.length || 0) === 0 &&
       filterConfig.stock.length === 0 &&
       filterConfig.depositos.length === 0 &&
-      (filterConfig.estados?.length || 0) === 0 &&
       !filterConfig.precioDesde &&
       !filterConfig.precioHasta &&
       (filterConfig.stockFlags?.length || 0) === 0)
@@ -416,14 +415,6 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
 
     // Filter by deposito - for now we skip this as we don't have deposito info on items
     // In the future, you would query the stock table to check if item has stock in specific depositos
-
-    // Filter by estado (activo/pausado)
-    if (filterConfig.estados && filterConfig.estados.length > 0) {
-      const isActive = item.isActive !== false
-      const matchesActivo = filterConfig.estados.includes("activo") && isActive
-      const matchesPausado = filterConfig.estados.includes("pausado") && !isActive
-      if (!matchesActivo && !matchesPausado) return false
-    }
 
     // Filter by precio range (inclusive on both ends)
     if (filterConfig.precioDesde != null || filterConfig.precioHasta != null) {

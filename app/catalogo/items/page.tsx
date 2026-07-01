@@ -63,7 +63,6 @@ export default function CatalogoPage() {
   // ── Committed filters (from URL) ──────────────────────────────────────────
   const filterCategorias = searchParams.get("categorias")?.split(",").filter(Boolean) ?? []
   const filterMarcas = searchParams.get("marcas")?.split(",").filter(Boolean) ?? []
-  const filterEstados = searchParams.get("estados")?.split(",").filter(Boolean) ?? []
   const filterPrecioDesde = searchParams.get("precioDesde") ? Number(searchParams.get("precioDesde")) : null
   const filterPrecioHasta = searchParams.get("precioHasta") ? Number(searchParams.get("precioHasta")) : null
   const filterStockFlags = searchParams.get("stockFlags")?.split(",").filter(Boolean) ?? []
@@ -71,14 +70,12 @@ export default function CatalogoPage() {
   // ── Draft filter state (inside the modal, not yet applied) ────────────────
   const [draftCategorias, setDraftCategorias] = useState<string[]>(filterCategorias)
   const [draftMarcas, setDraftMarcas] = useState<string[]>(filterMarcas)
-  const [draftEstados, setDraftEstados] = useState<string[]>(filterEstados)
   const [draftPrecioDesde, setDraftPrecioDesde] = useState<string>(filterPrecioDesde != null ? String(filterPrecioDesde) : "")
   const [draftPrecioHasta, setDraftPrecioHasta] = useState<string>(filterPrecioHasta != null ? String(filterPrecioHasta) : "")
   const [draftStockFlags, setDraftStockFlags] = useState<string[]>(filterStockFlags)
 
   // ── Dropdown visibility ────────────────────────────────────────────────────
   const [filterOpen, setFilterOpen] = useState(false)
-  const [estadoExpanded, setEstadoExpanded] = useState(false)
   const [categoriasExpanded, setCategoriasExpanded] = useState(false)
   const [marcasExpanded, setMarcasExpanded] = useState(false)
   const [precioExpanded, setPrecioExpanded] = useState(false)
@@ -175,11 +172,10 @@ export default function CatalogoPage() {
     proveedores: [],
     stock: [],
     depositos: [],
-    estados: filterEstados as ("activo" | "pausado")[],
     precioDesde: filterPrecioDesde,
     precioHasta: filterPrecioHasta,
     stockFlags: filterStockFlags as ("sin_stock_disponible" | "con_stock_reservado")[],
-  }), [filterCategorias, filterMarcas, filterEstados, filterPrecioDesde, filterPrecioHasta, filterStockFlags])
+  }), [filterCategorias, filterMarcas, filterPrecioDesde, filterPrecioHasta, filterStockFlags])
 
   const sortConfig: SortFactorConfig[] = useMemo(() => ([
     { factor: sortField as any, direction: sortDir },
@@ -189,7 +185,7 @@ export default function CatalogoPage() {
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
 
-  const hasActiveFilters = filterCategorias.length > 0 || filterMarcas.length > 0 || filterEstados.length > 0 || filterPrecioDesde != null || filterPrecioHasta != null || filterStockFlags.length > 0
+  const hasActiveFilters = filterCategorias.length > 0 || filterMarcas.length > 0 || filterPrecioDesde != null || filterPrecioHasta != null || filterStockFlags.length > 0
 
   // ── Filtered count for badge ───────────────────────────────────────────────
   const filteredCount = useMemo(() => {
@@ -202,7 +198,6 @@ export default function CatalogoPage() {
     // Sync draft from currently committed URL params
     setDraftCategorias(filterCategorias)
     setDraftMarcas(filterMarcas)
-    setDraftEstados(filterEstados)
     setDraftPrecioDesde(filterPrecioDesde != null ? String(filterPrecioDesde) : "")
     setDraftPrecioHasta(filterPrecioHasta != null ? String(filterPrecioHasta) : "")
     setDraftStockFlags(filterStockFlags)
@@ -214,18 +209,16 @@ export default function CatalogoPage() {
     const setOrDelete = (key: string, value: string) => value ? params.set(key, value) : params.delete(key)
     setOrDelete("categorias", draftCategorias.join(","))
     setOrDelete("marcas", draftMarcas.join(","))
-    setOrDelete("estados", draftEstados.join(","))
     setOrDelete("precioDesde", draftPrecioDesde.trim())
     setOrDelete("precioHasta", draftPrecioHasta.trim())
     setOrDelete("stockFlags", draftStockFlags.join(","))
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
     setFilterOpen(false)
-  }, [draftCategorias, draftMarcas, draftEstados, draftPrecioDesde, draftPrecioHasta, draftStockFlags, searchParams, pathname, router])
+  }, [draftCategorias, draftMarcas, draftPrecioDesde, draftPrecioHasta, draftStockFlags, searchParams, pathname, router])
 
   const clearFilters = useCallback(() => {
     setDraftCategorias([])
     setDraftMarcas([])
-    setDraftEstados([])
     setDraftPrecioDesde("")
     setDraftPrecioHasta("")
     setDraftStockFlags([])
@@ -233,7 +226,6 @@ export default function CatalogoPage() {
     const params = new URLSearchParams(searchParams.toString())
     params.delete("categorias")
     params.delete("marcas")
-    params.delete("estados")
     params.delete("precioDesde")
     params.delete("precioHasta")
     params.delete("stockFlags")
@@ -508,14 +500,6 @@ export default function CatalogoPage() {
                       {/* Active filter tags */}
                       {hasActiveFilters && (
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          {filterEstados.map(e => (
-                            <span key={e} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
-                              {e === "activo" ? "Activo" : e === "pausado" ? "Pausado" : e}
-                              <button type="button" onClick={() => updateParam("estados", filterEstados.filter(x => x !== e).join(","))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
-                                <X className="w-2.5 h-2.5 text-slate-400" />
-                              </button>
-                            </span>
-                          ))}
                           {filterCategorias.map(c => (
                             <span key={c} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
                               {c}
@@ -664,15 +648,12 @@ export default function CatalogoPage() {
                     </div>
                   </div>
 
-                  {/* Tab header — grid-cols-12: item(5) estado(1) precio(2) stock(4) */}
+                  {/* Tab header — grid-cols-12: item(5) precio(3) stock(4) */}
                   <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 rounded-lg overflow-hidden">
                     <div className="col-span-5 flex items-center justify-center px-4 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
-                    <div className="col-span-1 flex items-center justify-center px-1 border-r border-slate-200/60">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
-                    </div>
-                    <div className="col-span-2 flex items-center justify-center px-4 border-r border-slate-200/60">
+                    <div className="col-span-3 flex items-center justify-center px-4 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Precio Venta</span>
                     </div>
                     <div className="col-span-4 flex items-center justify-center gap-1.5 px-2">
@@ -790,29 +771,6 @@ export default function CatalogoPage() {
 
             {/* Scrollable body */}
             <div className="overflow-y-auto overscroll-contain px-5 py-4 space-y-1" style={{ maxHeight: "60vh" }}>
-
-              {/* ── Estado ── */}
-              <div className="py-2">
-                <button type="button" onClick={() => setEstadoExpanded(v => !v)} className="flex items-center justify-between w-full cursor-pointer py-0.5">
-                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    Estado
-                    {draftEstados.length > 0 && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{draftEstados.length}</span>}
-                  </span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${estadoExpanded ? "rotate-180" : ""}`} />
-                </button>
-                {estadoExpanded && (
-                  <div className="mt-3 space-y-2.5">
-                    {(["activo", "pausado"] as const).map(e => (
-                      <label key={e} className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={draftEstados.includes(e)} onChange={(ev) => setDraftEstados(ev.target.checked ? [...draftEstados, e] : draftEstados.filter(x => x !== e))} className="w-3.5 h-3.5 rounded accent-slate-800" />
-                        <span className="text-xs text-slate-700">{e === "activo" ? "Activo" : "Pausado"}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="border-t border-slate-100" />
 
               {/* ── Categoría ── */}
               <div className="py-2">
