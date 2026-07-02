@@ -427,14 +427,16 @@ export function useItems() {
   const deleteItem = (itemToDelete: Item) => {
     const originalIndex = items.findIndex((item) => item.id === itemToDelete.id || item.sku === itemToDelete.sku)
     setDeletedItems((prev) => [...prev, { item: itemToDelete, originalIndex }])
-    setItems((prevItems) => prevItems.filter((item) => item.sku !== itemToDelete.sku))
-    setHasUnsavedDeletes(true)
+    const remaining = items.filter((item) => item.sku !== itemToDelete.sku)
+    setItems(remaining)
+    // Persist immediately so a page navigation / reload reflects the deletion
+    saveItems(remaining.filter(isValidItem))
+    setHasUnsavedDeletes(false)
   }
 
   const undoDelete = () => {
     if (deletedItems.length === 0) return
 
-    console.log("[v0] useItems - undoDelete called")
     setItems((prevItems) => {
       const newItems = [...prevItems]
       const sortedDeleted = [...deletedItems].sort((a, b) => a.originalIndex - b.originalIndex)
@@ -453,13 +455,11 @@ export function useItems() {
   const saveDelete = async () => {
     if (deletedItems.length === 0) return
 
-    console.log("[v0] useItems - saveDelete called")
     try {
       if (USE_MOCK_DATA) {
         // Filter out any invalid items before saving
         const validItems = items.filter(isValidItem)
         saveItems(validItems)
-        console.log("[v0] Updated localStorage after deletion, remaining valid items:", validItems.length)
         setDeletedItems([])
         setHasUnsavedDeletes(false)
         return

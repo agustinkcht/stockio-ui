@@ -110,7 +110,8 @@ export default function CatalogoItemDetailPage() {
 
   const handleDeleteWithTracking = (item: Item) => {
     deleteItem(item)
-    router.push("/catalogo/items")
+    const label = item.hasVariants || item.isAgrupador ? "agrupador" : "item"
+    router.push(`/catalogo/items?deleted=${encodeURIComponent(item.name)}&tipo=${label}`)
   }
 
   const hasUnsavedChanges = hasUnsavedEdits || hasUnsavedDeletes

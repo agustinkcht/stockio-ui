@@ -164,6 +164,27 @@ export default function CatalogoPage() {
     handleCloseDropdowns,
   } = useSidebar()
 
+  // ── Show success toast when redirected from item/agrupador deletion ───────
+  useEffect(() => {
+    const deletedName = searchParams.get("deleted")
+    const tipo = searchParams.get("tipo")
+    if (!deletedName) return
+    const label = tipo === "agrupador" ? "Agrupador" : "Item"
+    setToastLabel(`${label} eliminado`)
+    setShowSaveSuccess(true)
+    const t = setTimeout(() => {
+      setShowSaveSuccess(false)
+      setToastLabel(null)
+      // Clean up URL params without re-render loop
+      const p = new URLSearchParams(searchParams.toString())
+      p.delete("deleted")
+      p.delete("tipo")
+      router.replace(`${pathname}${p.toString() ? `?${p.toString()}` : ""}`)
+    }, 3000)
+    return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ── Derived filter/sort config for grid (committed from URL) ─────────────
   const filterConfig: FilterConfig = useMemo(() => ({
     tipos: [],
@@ -317,12 +338,12 @@ export default function CatalogoPage() {
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return
+    const label = itemToDelete.hasVariants || (itemToDelete as any).isAgrupador ? "Agrupador eliminado" : "Item eliminado"
     deleteItem(itemToDelete)
-    await sleep(300)
-    await saveDeletedItems()
     setItemToDelete(null)
+    setToastLabel(label)
     setShowSaveSuccess(true)
-    setTimeout(() => setShowSaveSuccess(false), 3000)
+    setTimeout(() => { setShowSaveSuccess(false); setToastLabel(null) }, 3000)
   }
 
   const handleCancelDelete = () => setItemToDelete(null)
@@ -411,7 +432,7 @@ export default function CatalogoPage() {
                 {showSaveSuccess && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
                     <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700 font-medium">Guardado</span>
+                    <span className="text-sm text-green-700 font-medium">{toastLabel ?? "Guardado"}</span>
                   </div>
                 )}
                 {statusMessage && (

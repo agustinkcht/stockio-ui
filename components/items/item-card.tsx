@@ -494,9 +494,10 @@ export function ItemCard({
               <DropdownMenuContent align="end" className="w-48 p-1">
                 <DropdownMenuItem
                   onClick={(e) => { e.stopPropagation(); onDelete?.(item) }}
+                  className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Eliminar
+                  {isChild ? "Eliminar variante" : item.hasVariants || (item as any).isAgrupador ? "Eliminar agrupador" : "Eliminar item"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
