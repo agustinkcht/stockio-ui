@@ -172,18 +172,19 @@ export default function CatalogoPage() {
     const label = tipo === "agrupador" ? "Agrupador" : "Item"
     setToastLabel(`${label} eliminado`)
     setShowSaveSuccess(true)
+    // Clean up URL params immediately so the effect doesn't re-fire
+    const p = new URLSearchParams(searchParams.toString())
+    p.delete("deleted")
+    p.delete("tipo")
+    router.replace(`${pathname}${p.toString() ? `?${p.toString()}` : ""}`, { scroll: false })
     const t = setTimeout(() => {
       setShowSaveSuccess(false)
       setToastLabel(null)
-      // Clean up URL params without re-render loop
-      const p = new URLSearchParams(searchParams.toString())
-      p.delete("deleted")
-      p.delete("tipo")
-      router.replace(`${pathname}${p.toString() ? `?${p.toString()}` : ""}`)
     }, 3000)
     return () => clearTimeout(t)
+  // searchParams is the correct dep — re-run whenever URL changes (e.g. on redirect arrival)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [searchParams])
 
   // ── Derived filter/sort config for grid (committed from URL) ─────────────
   const filterConfig: FilterConfig = useMemo(() => ({
