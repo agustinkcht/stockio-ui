@@ -295,6 +295,8 @@ export function CatalogoItemDetailPanel({
   const [modalCodigoProveedorValue, setModalCodigoProveedorValue] = useState("")
   const [isEditDescripcionModalOpen, setIsEditDescripcionModalOpen] = useState(false)
   const [modalDescripcionValue, setModalDescripcionValue] = useState("")
+  // When editing from the expanded matrix, track which variant is being edited
+  const [matrixEditingVariantId, setMatrixEditingVariantId] = useState<string | null>(null)
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
   const [proveedorSearch, setProveedorSearch] = useState("")
   const [isNuevoProveedorModalOpen, setIsNuevoProveedorModalOpen] = useState(false)
@@ -1194,41 +1196,79 @@ export function CatalogoItemDetailPanel({
 
   const handleSaveSkuModal = () => {
     const trimmed = modalSkuValue.trim()
-    if (!trimmed) { setIsEditSkuModalOpen(false); return }
-    setSkuValue(trimmed)
-    if (isChildItem && fatherItem) {
-      const updatedVariants = fatherItem.variants?.map((v: any) =>
-        v.id === selectedItem.id ? { ...v, skuSuffix: trimmed } : v
+    if (!trimmed) { setIsEditSkuModalOpen(false); setMatrixEditingVariantId(null); return }
+    if (matrixEditingVariantId) {
+      // Saving skuSuffix on a variant from the expanded matrix
+      const updatedVariants = (selectedItem?.variants || []).map((v: any) =>
+        v.id === matrixEditingVariantId ? { ...v, skuSuffix: trimmed } : v
       )
-      if (updatedVariants) {
-        onFieldChange(fatherItem.id, "variants", updatedVariants)
+      setVariantItems((prev) => prev.map((v) => v.id === matrixEditingVariantId ? { ...v, skuSuffix: trimmed } : v))
+      onFieldChange(selectedItem.id, "variants", updatedVariants)
+      onSaveNow?.()
+      setMatrixEditingVariantId(null)
+    } else {
+      setSkuValue(trimmed)
+      if (isChildItem && fatherItem) {
+        const updatedVariants = fatherItem.variants?.map((v: any) =>
+          v.id === selectedItem.id ? { ...v, skuSuffix: trimmed } : v
+        )
+        if (updatedVariants) {
+          onFieldChange(fatherItem.id, "variants", updatedVariants)
+          onSaveNow?.()
+        }
+      } else {
+        onFieldChange(selectedItem.id, "sku", trimmed)
         onSaveNow?.()
       }
-    } else {
-      onFieldChange(selectedItem.id, "sku", trimmed)
-      onSaveNow?.()
     }
     setIsEditSkuModalOpen(false)
   }
 
   const handleSaveCodigoUniversalModal = () => {
-    setCodigoUniversalValue(modalCodigoUniversalValue)
-    onFieldChange(selectedItem.id, "codigoUniversal", modalCodigoUniversalValue)
-    onSaveNow?.()
+    if (matrixEditingVariantId) {
+      const updatedVariants = (selectedItem?.variants || []).map((v: any) =>
+        v.id === matrixEditingVariantId ? { ...v, codigoUniversal: modalCodigoUniversalValue } : v
+      )
+      onFieldChange(selectedItem.id, "variants", updatedVariants)
+      onSaveNow?.()
+      setMatrixEditingVariantId(null)
+    } else {
+      setCodigoUniversalValue(modalCodigoUniversalValue)
+      onFieldChange(selectedItem.id, "codigoUniversal", modalCodigoUniversalValue)
+      onSaveNow?.()
+    }
     setIsEditCodigoUniversalModalOpen(false)
   }
 
   const handleSaveCodigoProveedorModal = () => {
-    setCodigoProveedor(modalCodigoProveedorValue)
-    onFieldChange(selectedItem.id, "codigoProveedor", modalCodigoProveedorValue)
-    onSaveNow?.()
+    if (matrixEditingVariantId) {
+      const updatedVariants = (selectedItem?.variants || []).map((v: any) =>
+        v.id === matrixEditingVariantId ? { ...v, codigoProveedor: modalCodigoProveedorValue } : v
+      )
+      onFieldChange(selectedItem.id, "variants", updatedVariants)
+      onSaveNow?.()
+      setMatrixEditingVariantId(null)
+    } else {
+      setCodigoProveedor(modalCodigoProveedorValue)
+      onFieldChange(selectedItem.id, "codigoProveedor", modalCodigoProveedorValue)
+      onSaveNow?.()
+    }
     setIsEditCodigoProveedorModalOpen(false)
   }
 
   const handleSaveDescripcionModal = () => {
-    setDescripcionValue(modalDescripcionValue)
-    onFieldChange(selectedItem.id, "descripcion", modalDescripcionValue)
-    onSaveNow?.()
+    if (matrixEditingVariantId) {
+      const updatedVariants = (selectedItem?.variants || []).map((v: any) =>
+        v.id === matrixEditingVariantId ? { ...v, descripcion: modalDescripcionValue } : v
+      )
+      onFieldChange(selectedItem.id, "variants", updatedVariants)
+      onSaveNow?.()
+      setMatrixEditingVariantId(null)
+    } else {
+      setDescripcionValue(modalDescripcionValue)
+      onFieldChange(selectedItem.id, "descripcion", modalDescripcionValue)
+      onSaveNow?.()
+    }
     setIsEditDescripcionModalOpen(false)
   }
 
@@ -2337,8 +2377,8 @@ export function CatalogoItemDetailPanel({
                   <div className="h-full flex flex-col py-2">
                     {/* Variantes header with Minimizar + Nueva Variante */}
                     {variantItems.length > 0 && (
-                      <div className="mt-0">
-                        <div className="flex items-center justify-between mb-3">
+                      <div className="mt-0 mb-3">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-slate-900 uppercase tracking-wider">
                               {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
@@ -2351,21 +2391,12 @@ export function CatalogoItemDetailPanel({
                               <span>Nueva Variante</span>
                             </button>
                           </div>
-                          <button
-                            onClick={() => setIsExpandedMatrixOpen(false)}
-                            className="px-3 py-1.5 border border-slate-200 rounded-full text-slate-500 hover:text-slate-900 hover:border-slate-400 hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
-                          >
-                            <Minimize2 className="w-3.5 h-3.5" />
-                            <span>Minimizar</span>
-                          </button>
-                        </div>
 
-                        {/* SKU Prefijo */}
-                        <div className="mb-4">
-                          <div className="flex items-center gap-2 group/skupadre">
-                            <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                              SKU Prefijo
-                            </span>
+                          {/* SKU Prefijo — inline between Nueva Variante and Minimizar */}
+                          <div className="flex items-center gap-1.5 group/skupadre px-3 py-1.5 border border-slate-200 rounded-full cursor-pointer hover:border-slate-400 hover:bg-slate-50 transition-colors"
+                            onClick={(e) => { e.stopPropagation(); setEditingSkuPadre(true) }}
+                          >
+                            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">Prefijo</span>
                             {editingSkuPadre ? (
                               <input
                                 type="text"
@@ -2387,25 +2418,24 @@ export function CatalogoItemDetailPanel({
                                   }
                                 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="font-mono text-sm text-slate-800 bg-transparent border-b border-slate-400 focus:border-slate-600 focus:outline-none w-full max-w-[180px]"
-                                placeholder="Ej: VNO-KNECHT"
+                                className="font-mono text-xs text-slate-800 bg-transparent border-b border-slate-400 focus:border-slate-600 focus:outline-none w-24"
+                                placeholder="VNO-001"
                               />
                             ) : (
-                              <div
-                                className="flex items-center gap-1.5 cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setEditingSkuPadre(true)
-                                }}
-                              >
-                                <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.skuPrefix || selectedItem?.sku}</span>
-                                <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
-                              </div>
+                              <>
+                                <span className="font-mono text-xs text-slate-800">{skuValue || selectedItem?.skuPrefix || selectedItem?.sku || "—"}</span>
+                                <Pencil className="w-3 h-3 text-slate-400 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
+                              </>
                             )}
                           </div>
-                          <p className="text-[9px] text-slate-400 mt-0.5 italic">
-                            Base para generar SKUs de variantes
-                          </p>
+
+                          <button
+                            onClick={() => setIsExpandedMatrixOpen(false)}
+                            className="px-3 py-1.5 border border-slate-200 rounded-full text-slate-500 hover:text-slate-900 hover:border-slate-400 hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+                          >
+                            <Minimize2 className="w-3.5 h-3.5" />
+                            <span>Minimizar</span>
+                          </button>
                         </div>
                       </div>
                     )}
@@ -2497,80 +2527,74 @@ export function CatalogoItemDetailPanel({
                                 </div>
                               )}
 
-                              {/* SKU - editable */}
-                              <div className="col-span-2 px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center w-full">
-                                  <span className="text-[10px] font-mono text-white/30 select-none whitespace-nowrap">
-                                    {skuValue}-
+                              {/* SKU - opens edit modal */}
+                              <div
+                                className="col-span-2 px-3 py-2.5 cursor-pointer group/sku"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setMatrixEditingVariantId(variant.id || null)
+                                  setModalSkuValue(variant.skuSuffix || "")
+                                  setIsEditSkuModalOpen(true)
+                                }}
+                              >
+                                {variant.skuSuffix ? (
+                                  <span className="text-[10px] font-mono text-slate-300 group-hover/sku:text-white transition-colors">
+                                    <span className="text-white/25">{skuValue}-</span>{variant.skuSuffix}
                                   </span>
-                                  <input
-                                    type="text"
-                                    value={variant.skuSuffix}
-                                    onChange={(e) => {
-                                      const newSuffix = e.target.value
-                                      setVariantItems((prev) =>
-                                        prev.map((v) => v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v)
-                                      )
-                                      const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-                                        ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
-                                      )
-                                      onFieldChange(selectedItem.id, "variants", updatedVariants)
-                                    }}
-                                    className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-white/20 focus:border-white/40 px-0 py-0.5 text-[10px] font-mono text-slate-300 focus:outline-none transition-colors"
-                                    placeholder="sufijo..."
-                                  />
-                                </div>
+                                ) : (
+                                  <span className="text-[10px] text-white/25 group-hover/sku:text-white/50 transition-colors">+agregar</span>
+                                )}
                               </div>
 
-                              {/* Código Universal - editable */}
-                              <div className="col-span-2 px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                                <input
-                                  type="text"
-                                  value={sourceVariant?.codigoUniversal || ""}
-                                  onChange={(e) => {
-                                    const newCodigo = e.target.value
-                                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-                                      ov.id === variant.id ? { ...ov, codigoUniversal: newCodigo } : ov
-                                    )
-                                    onFieldChange(selectedItem.id, "variants", updatedVariants)
-                                  }}
-                                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/20 focus:border-white/40 px-0 py-0.5 text-[10px] font-mono text-slate-300 focus:outline-none transition-colors"
-                                  placeholder="—"
-                                />
+                              {/* Código Universal - opens edit modal */}
+                              <div
+                                className="col-span-2 px-3 py-2.5 cursor-pointer group/cu"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setMatrixEditingVariantId(variant.id || null)
+                                  setModalCodigoUniversalValue(sourceVariant?.codigoUniversal || "")
+                                  setIsEditCodigoUniversalModalOpen(true)
+                                }}
+                              >
+                                {sourceVariant?.codigoUniversal ? (
+                                  <span className="text-[10px] font-mono text-slate-300 group-hover/cu:text-white transition-colors">{sourceVariant.codigoUniversal}</span>
+                                ) : (
+                                  <span className="text-[10px] text-white/25 group-hover/cu:text-white/50 transition-colors">+agregar</span>
+                                )}
                               </div>
 
-                              {/* Código Proveedor - editable */}
-                              <div className="col-span-2 px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                                <input
-                                  type="text"
-                                  value={sourceVariant?.codigoProveedor || ""}
-                                  onChange={(e) => {
-                                    const newCodigo = e.target.value
-                                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-                                      ov.id === variant.id ? { ...ov, codigoProveedor: newCodigo } : ov
-                                    )
-                                    onFieldChange(selectedItem.id, "variants", updatedVariants)
-                                  }}
-                                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/20 focus:border-white/40 px-0 py-0.5 text-[10px] font-mono text-slate-300 focus:outline-none transition-colors"
-                                  placeholder="—"
-                                />
+                              {/* Código Proveedor - opens edit modal */}
+                              <div
+                                className="col-span-2 px-3 py-2.5 cursor-pointer group/cp"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setMatrixEditingVariantId(variant.id || null)
+                                  setModalCodigoProveedorValue(sourceVariant?.codigoProveedor || "")
+                                  setIsEditCodigoProveedorModalOpen(true)
+                                }}
+                              >
+                                {sourceVariant?.codigoProveedor ? (
+                                  <span className="text-[10px] font-mono text-slate-300 group-hover/cp:text-white transition-colors">{sourceVariant.codigoProveedor}</span>
+                                ) : (
+                                  <span className="text-[10px] text-white/25 group-hover/cp:text-white/50 transition-colors">+agregar</span>
+                                )}
                               </div>
 
-                              {/* Descripción - clickable to open modal */}
+                              {/* Descripción - opens edit modal */}
                               <div
                                 className={`${hasTwo ? "col-span-1" : "col-span-3"} px-3 py-2.5 cursor-pointer group/desc`}
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  setExpandedMatrixDescModal({
-                                    open: true,
-                                    variant: { ...variant, sourceVariant },
-                                    value: sourceVariant?.descripcion || ""
-                                  })
+                                  setMatrixEditingVariantId(variant.id || null)
+                                  setModalDescripcionValue(sourceVariant?.descripcion || "")
+                                  setIsEditDescripcionModalOpen(true)
                                 }}
                               >
-                                <span className="text-[10px] text-slate-400 group-hover/desc:text-slate-200 transition-colors line-clamp-1">
-                                  {sourceVariant?.descripcion || <span className="text-white/20 italic">—</span>}
-                                </span>
+                                {sourceVariant?.descripcion ? (
+                                  <span className="text-[10px] text-slate-400 group-hover/desc:text-slate-200 transition-colors line-clamp-1">{sourceVariant.descripcion}</span>
+                                ) : (
+                                  <span className="text-[10px] text-white/25 group-hover/desc:text-white/50 transition-colors">+agregar</span>
+                                )}
                               </div>
                             </div>
                           )
@@ -3820,9 +3844,12 @@ export function CatalogoItemDetailPanel({
       )}
 
       {/* Editar SKU Modal */}
-      {isEditSkuModalOpen && (
+      {isEditSkuModalOpen && (() => {
+        const editingVariant = matrixEditingVariantId ? selectedItem?.variants?.find((v: any) => v.id === matrixEditingVariantId) : null
+        const closeSkuModal = () => { setIsEditSkuModalOpen(false); setMatrixEditingVariantId(null) }
+        return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditSkuModalOpen(false)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeSkuModal} />
           <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
             <div className="px-5 pt-4 pb-3 border-b border-slate-100">
               <div className="flex items-start justify-between gap-3">
@@ -3831,34 +3858,44 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-900">Editar SKU</h3>
-                    {selectedItem?.name && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.name}</p>}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h3 className="text-sm font-semibold text-slate-900">{selectedItem?.name}</h3>
+                      {editingVariant?.atributosPrincipales?.map((attr: any, i: number) => (
+                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">{attr.value}</span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">Editar SKU</p>
                   </div>
                 </div>
-                <button onClick={() => setIsEditSkuModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                <button onClick={closeSkuModal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
                   <X className="w-4 h-4 text-slate-400" />
                 </button>
               </div>
             </div>
             <div className="p-5">
-              {isChildItem && fatherItem ? (
+              {(matrixEditingVariantId || (isChildItem && fatherItem)) ? (
                 <>
                   <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Sufijo</label>
                   <div className="flex items-center gap-0 border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-slate-400">
                     <span className="px-3 py-2.5 text-sm font-mono text-slate-400 bg-slate-50 border-r border-slate-200 select-none whitespace-nowrap">
-                      {fatherItem.skuPrefix || fatherItem.sku || ""}-
+                      {matrixEditingVariantId ? (skuValue || selectedItem?.skuPrefix || selectedItem?.sku || "") : (fatherItem?.skuPrefix || fatherItem?.sku || "")}-
                     </span>
                     <input
                       type="text"
                       value={modalSkuValue}
                       onChange={(e) => setModalSkuValue(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") handleSaveSkuModal(); if (e.key === "Escape") setIsEditSkuModalOpen(false) }}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleSaveSkuModal(); if (e.key === "Escape") closeSkuModal() }}
                       className="flex-1 min-w-0 px-3 py-2.5 text-sm font-mono focus:outline-none bg-white"
                       placeholder="sufijo"
                       autoFocus
                     />
                   </div>
-                  <p className="text-xs text-slate-400 mt-1.5">SKU completo: <span className="font-mono">{fatherItem.skuPrefix || fatherItem.sku || ""}-{modalSkuValue}</span></p>
+                  <p className="text-xs text-slate-400 mt-1.5">
+                    SKU completo:{" "}
+                    <span className="font-mono">
+                      {matrixEditingVariantId ? (skuValue || selectedItem?.skuPrefix || selectedItem?.sku || "") : (fatherItem?.skuPrefix || fatherItem?.sku || "")}-{modalSkuValue}
+                    </span>
+                  </p>
                 </>
               ) : (
                 <>
@@ -3867,7 +3904,7 @@ export function CatalogoItemDetailPanel({
                     type="text"
                     value={modalSkuValue}
                     onChange={(e) => setModalSkuValue(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleSaveSkuModal(); if (e.key === "Escape") setIsEditSkuModalOpen(false) }}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSaveSkuModal(); if (e.key === "Escape") closeSkuModal() }}
                     className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
                     placeholder="SKU del producto"
                     autoFocus
@@ -3876,7 +3913,7 @@ export function CatalogoItemDetailPanel({
               )}
             </div>
             <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-              <button onClick={() => setIsEditSkuModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+              <button onClick={closeSkuModal} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
                 Cancelar
               </button>
               <button
@@ -3889,12 +3926,16 @@ export function CatalogoItemDetailPanel({
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* Editar Código Universal Modal */}
-      {isEditCodigoUniversalModalOpen && (
+      {isEditCodigoUniversalModalOpen && (() => {
+        const editingVariant = matrixEditingVariantId ? selectedItem?.variants?.find((v: any) => v.id === matrixEditingVariantId) : null
+        const closeCUModal = () => { setIsEditCodigoUniversalModalOpen(false); setMatrixEditingVariantId(null) }
+        return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditCodigoUniversalModalOpen(false)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeCUModal} />
           <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
             <div className="px-5 pt-4 pb-3 border-b border-slate-100">
               <div className="flex items-start justify-between gap-3">
@@ -3905,20 +3946,16 @@ export function CatalogoItemDetailPanel({
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 leading-tight">{selectedItem.name}</p>}
-                      {isChildItem && atributosPrincipales.map((attr, i) => (
-                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                          {attr.value}
-                        </span>
+                      {(editingVariant?.atributosPrincipales || (isChildItem ? atributosPrincipales : [])).map((attr: any, i: number) => (
+                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">{attr.value}</span>
                       ))}
                     </div>
                     {(selectedItem?.marca || selectedItem?.categoria) && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">
-                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
-                      </p>
+                      <p className="text-xs text-slate-400 truncate mt-0.5">{[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}</p>
                     )}
                   </div>
                 </div>
-                <button onClick={() => setIsEditCodigoUniversalModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                <button onClick={closeCUModal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
                   <X className="w-4 h-4 text-slate-400" />
                 </button>
               </div>
@@ -3929,7 +3966,7 @@ export function CatalogoItemDetailPanel({
                 type="text"
                 value={modalCodigoUniversalValue}
                 onChange={(e) => setModalCodigoUniversalValue(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleSaveCodigoUniversalModal(); if (e.key === "Escape") setIsEditCodigoUniversalModalOpen(false) }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveCodigoUniversalModal(); if (e.key === "Escape") closeCUModal() }}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
                 placeholder="7790001234567"
                 autoFocus
@@ -3937,7 +3974,7 @@ export function CatalogoItemDetailPanel({
               <p className="text-xs text-slate-400 mt-1.5">Número de 8 a 14 dígitos impreso bajo el código de barras.</p>
             </div>
             <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-              <button onClick={() => setIsEditCodigoUniversalModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+              <button onClick={closeCUModal} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
                 Cancelar
               </button>
               <button
@@ -3949,12 +3986,16 @@ export function CatalogoItemDetailPanel({
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* Editar Código Proveedor Modal */}
-      {isEditCodigoProveedorModalOpen && (
+      {isEditCodigoProveedorModalOpen && (() => {
+        const editingVariant = matrixEditingVariantId ? selectedItem?.variants?.find((v: any) => v.id === matrixEditingVariantId) : null
+        const closeCPModal = () => { setIsEditCodigoProveedorModalOpen(false); setMatrixEditingVariantId(null) }
+        return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditCodigoProveedorModalOpen(false)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeCPModal} />
           <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
             <div className="px-5 pt-4 pb-3 border-b border-slate-100">
               <div className="flex items-start justify-between gap-3">
@@ -3965,20 +4006,16 @@ export function CatalogoItemDetailPanel({
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 leading-tight">{selectedItem.name}</p>}
-                      {isChildItem && atributosPrincipales.map((attr, i) => (
-                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                          {attr.value}
-                        </span>
+                      {(editingVariant?.atributosPrincipales || (isChildItem ? atributosPrincipales : [])).map((attr: any, i: number) => (
+                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">{attr.value}</span>
                       ))}
                     </div>
                     {(selectedItem?.marca || selectedItem?.categoria) && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">
-                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
-                      </p>
+                      <p className="text-xs text-slate-400 truncate mt-0.5">{[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}</p>
                     )}
                   </div>
                 </div>
-                <button onClick={() => setIsEditCodigoProveedorModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                <button onClick={closeCPModal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
                   <X className="w-4 h-4 text-slate-400" />
                 </button>
               </div>
@@ -3989,7 +4026,7 @@ export function CatalogoItemDetailPanel({
                 type="text"
                 value={modalCodigoProveedorValue}
                 onChange={(e) => setModalCodigoProveedorValue(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleSaveCodigoProveedorModal(); if (e.key === "Escape") setIsEditCodigoProveedorModalOpen(false) }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveCodigoProveedorModal(); if (e.key === "Escape") closeCPModal() }}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
                 placeholder="Ej: JW-DBLACK-750"
                 autoFocus
@@ -3997,7 +4034,7 @@ export function CatalogoItemDetailPanel({
               <p className="text-xs text-slate-400 mt-1.5">Identificador único que el proveedor le asigna a este producto.</p>
             </div>
             <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-              <button onClick={() => setIsEditCodigoProveedorModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+              <button onClick={closeCPModal} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
                 Cancelar
               </button>
               <button
@@ -4009,12 +4046,16 @@ export function CatalogoItemDetailPanel({
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* Editar Descripción Modal */}
-      {isEditDescripcionModalOpen && (
+      {isEditDescripcionModalOpen && (() => {
+        const editingVariant = matrixEditingVariantId ? selectedItem?.variants?.find((v: any) => v.id === matrixEditingVariantId) : null
+        const closeDescModal = () => { setIsEditDescripcionModalOpen(false); setMatrixEditingVariantId(null) }
+        return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditDescripcionModalOpen(false)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeDescModal} />
           <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div className="px-5 pt-4 pb-3 border-b border-slate-100">
               <div className="flex items-start justify-between gap-3">
@@ -4025,20 +4066,16 @@ export function CatalogoItemDetailPanel({
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 leading-tight">{selectedItem.name}</p>}
-                      {isChildItem && atributosPrincipales.map((attr, i) => (
-                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                          {attr.value}
-                        </span>
+                      {(editingVariant?.atributosPrincipales || (isChildItem ? atributosPrincipales : [])).map((attr: any, i: number) => (
+                        <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">{attr.value}</span>
                       ))}
                     </div>
                     {(selectedItem?.marca || selectedItem?.categoria) && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">
-                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
-                      </p>
+                      <p className="text-xs text-slate-400 truncate mt-0.5">{[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}</p>
                     )}
                   </div>
                 </div>
-                <button onClick={() => setIsEditDescripcionModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                <button onClick={closeDescModal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
                   <X className="w-4 h-4 text-slate-400" />
                 </button>
               </div>
@@ -4048,7 +4085,7 @@ export function CatalogoItemDetailPanel({
               <textarea
                 value={modalDescripcionValue}
                 onChange={(e) => setModalDescripcionValue(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Escape") setIsEditDescripcionModalOpen(false) }}
+                onKeyDown={(e) => { if (e.key === "Escape") closeDescModal() }}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
                 placeholder="Descripción del producto..."
                 rows={5}
@@ -4056,7 +4093,7 @@ export function CatalogoItemDetailPanel({
               />
             </div>
             <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-              <button onClick={() => setIsEditDescripcionModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+              <button onClick={closeDescModal} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
                 Cancelar
               </button>
               <button
@@ -4068,7 +4105,8 @@ export function CatalogoItemDetailPanel({
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
         </div>{/* end max-w-6xl */}
     </>
   )
