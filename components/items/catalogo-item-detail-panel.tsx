@@ -1283,7 +1283,14 @@ export function CatalogoItemDetailPanel({
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer gap-2">
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer gap-2"
+                      onClick={() => {
+                        if (!isChildItem && selectedItem) {
+                          onDelete?.(selectedItem)
+                        }
+                      }}
+                    >
                       <Trash2 className="w-4 h-4" />
                       {isViewingContainer ? "Eliminar agrupador" : isChildItem ? "Eliminar variante" : "Eliminar item"}
                     </DropdownMenuItem>
@@ -1708,12 +1715,7 @@ export function CatalogoItemDetailPanel({
                     </button>
 
                     <div className="flex flex-col h-full pt-2 overflow-y-auto overflow-x-hidden">
-                      {/* Códigos Section */}
                       <div className="mb-5">
-                        <h3 className="text-sm font-medium uppercase tracking-wider mb-4 text-slate-50">
-                          Códigos
-                        </h3>
-
                         {/* Cod. Universal */}
                         <div className="mb-4 group/codUniversal">
                           <div className="flex items-center gap-1.5 mb-1.5">
@@ -2170,7 +2172,7 @@ export function CatalogoItemDetailPanel({
                         )}
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-1.5">
                           <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Atributos Informativos</h3>
                           <TooltipProvider delayDuration={200}>
@@ -3546,7 +3548,7 @@ export function CatalogoItemDetailPanel({
                             )}
                           </div>
                         ) : (
-                          <div className="flex flex-col gap-4">
+                          <div className="flex flex-col gap-2">
                             {/* Section header */}
                             <div className="flex items-center gap-1.5">
                               <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Atributos Informativos</h3>

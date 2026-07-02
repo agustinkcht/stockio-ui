@@ -425,16 +425,9 @@ export function useItems() {
   }
 
   const deleteItem = (itemToDelete: Item) => {
-    console.log("[v0] useItems - deleteItem called for:", itemToDelete.name)
     const originalIndex = items.findIndex((item) => item.id === itemToDelete.id || item.sku === itemToDelete.sku)
-    console.log("[v0] useItems - originalIndex:", originalIndex)
-    setDeletedItems((prev) => {
-      const newDeleted = [...prev, { item: itemToDelete, originalIndex }]
-      console.log("[v0] useItems - setDeletedItems, new count:", newDeleted.length)
-      return newDeleted
-    })
+    setDeletedItems((prev) => [...prev, { item: itemToDelete, originalIndex }])
     setItems((prevItems) => prevItems.filter((item) => item.sku !== itemToDelete.sku))
-    console.log("[v0] useItems - setting hasUnsavedDeletes to true")
     setHasUnsavedDeletes(true)
   }
 
