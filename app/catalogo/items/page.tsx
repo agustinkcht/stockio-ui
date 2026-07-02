@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
-import { Plus, Search, X, ListFilter, ArrowUpDown, CheckCircle2, Pause, Play, ChevronDown } from "lucide-react"
+import { Plus, Search, X, ListFilter, ArrowUpDown, CheckCircle2, Pause, Play, ChevronDown, Trash2 } from "lucide-react"
 import { useAccount } from "@/lib/contexts/account-context"
 
 import { Sidebar } from "@/components/layout/sidebar"
@@ -333,7 +333,7 @@ export default function CatalogoPage() {
     }
   }, [items, editField, editVariantField, forceSaveItems, updateItemsActiveStatus, showToast])
 
-  // ── Delete handlers ────────────────────────────────────────────────────────
+  // ── Delete handlers ─────────────────────────────────────��──────────────────
   const handleDeleteWithTracking = (item: Item) => setItemToDelete(item)
 
   const handleConfirmDelete = async () => {
@@ -919,39 +919,95 @@ export default function CatalogoPage() {
       )}
 
       {/* Delete modal */}
-      {itemToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]" onClick={handleCancelDelete}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
-                <img src={getItemPhoto(itemToDelete as any)} alt={itemToDelete?.nombre || ""} className="w-full h-full object-cover" />
+      {itemToDelete && (() => {
+        const isAgrupador = !!(itemToDelete as any).isAgrupador || !!(itemToDelete as any).hasVariants
+        const isVariante = !!(itemToDelete as any).isChild || !!(itemToDelete as any).skuSuffix
+        const entityLabel = isAgrupador ? "agrupador" : isVariante ? "variante" : "item"
+        const entityLabelCap = isAgrupador ? "Agrupador" : isVariante ? "Variante" : "Item"
+        return (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100010]" onClick={handleCancelDelete}>
+            <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              {/* Header — same structure as editar modal */}
+              <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                      <img src={getItemPhoto(itemToDelete as any)} alt={itemToDelete?.name || ""} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 leading-tight truncate">{itemToDelete?.name}</p>
+                      {(itemToDelete?.marca || itemToDelete?.categoria) && (
+                        <p className="text-xs text-slate-400 truncate mt-0.5">{[itemToDelete.marca, itemToDelete.categoria].filter(Boolean).join(" · ")}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button onClick={handleCancelDelete} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0 cursor-pointer">
+                    <X className="w-4 h-4 text-slate-400" />
+                  </button>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-900 truncate">{itemToDelete?.nombre}</p>
-                {(itemToDelete?.marca || itemToDelete?.categoria) && (
-                  <p className="text-xs text-slate-400 truncate">{[itemToDelete?.marca, itemToDelete?.categoria].filter(Boolean).join(" · ")}</p>
-                )}
+              {/* Body */}
+              <div className="px-5 py-5">
+                <h3 className="text-base font-semibold text-slate-900 mb-1.5">
+                  {`¿Seguro querés eliminar est${isVariante ? "a" : "e"} ${entityLabel}?`}
+                </h3>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  {isAgrupador
+                    ? "El agrupador y todas sus variantes dejarán de existir en el catálogo, pero seguirán formando parte del histórico de ventas y actividad."
+                    : `${entityLabelCap === "Item" ? "El item" : `La ${entityLabel}`} dejará de existir en el catálogo, pero seguirá formando parte del histórico de ventas y actividad.`
+                  }
+                </p>
               </div>
-            </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">¿Seguro deseas eliminar este item?</h3>
-            <p className="text-sm text-muted-foreground">Dejará de existir en la grilla, pero seguirá formando parte del histórico de ventas y actividad.</p>
-            <div className="flex items-center gap-3 justify-end mt-6">
-              <button onClick={handleCancelDelete} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer">Cancelar</button>
-              <button onClick={handleConfirmDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer">Eliminar item</button>
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+                <button onClick={handleCancelDelete} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                  Cancelar
+                </button>
+                <button onClick={handleConfirmDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors cursor-pointer">
+                  {`Eliminar ${entityLabel}`}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Batch delete modal */}
       {showBatchDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]" onClick={handleCancelBatchDelete}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-foreground mb-2">¿Seguro deseas eliminar los items seleccionados?</h3>
-            <p className="text-sm text-muted-foreground">Dejarán de existir en la grilla, pero seguirán formando parte del histórico de ventas y actividad.</p>
-            <div className="flex items-center gap-3 justify-end mt-6">
-              <button onClick={handleCancelBatchDelete} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer">Cancelar</button>
-              <button onClick={handleConfirmBatchDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer">Eliminar items</button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100010]" onClick={handleCancelBatchDelete}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 shrink-0 flex items-center justify-center">
+                    <Trash2 className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 leading-tight">
+                      {selectedItems.length} {selectedItems.length === 1 ? "item seleccionado" : "items seleccionados"}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">Eliminación múltiple</p>
+                  </div>
+                </div>
+                <button onClick={handleCancelBatchDelete} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0 cursor-pointer">
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+            {/* Body */}
+            <div className="px-5 py-5">
+              <h3 className="text-base font-semibold text-slate-900 mb-1.5">¿Seguro querés eliminar los items seleccionados?</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">Dejarán de existir en el catálogo, pero seguirán formando parte del histórico de ventas y actividad.</p>
+            </div>
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button onClick={handleCancelBatchDelete} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button onClick={handleConfirmBatchDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors cursor-pointer">
+                Eliminar items
+              </button>
             </div>
           </div>
         </div>

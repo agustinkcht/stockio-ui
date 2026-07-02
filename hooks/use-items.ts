@@ -425,9 +425,16 @@ export function useItems() {
   }
 
   const deleteItem = (itemToDelete: Item) => {
-    const originalIndex = items.findIndex((item) => item.id === itemToDelete.id || item.sku === itemToDelete.sku)
+    // Always use id as the primary key — agrupadores have no `sku` (only `skuPrefix`),
+    // so filtering by sku would remove ALL items with undefined sku.
+    const matchById = !!itemToDelete.id
+    const originalIndex = items.findIndex((item) =>
+      matchById ? item.id === itemToDelete.id : (item.sku === itemToDelete.sku && !!item.sku)
+    )
     setDeletedItems((prev) => [...prev, { item: itemToDelete, originalIndex }])
-    const remaining = items.filter((item) => item.sku !== itemToDelete.sku)
+    const remaining = items.filter((item) =>
+      matchById ? item.id !== itemToDelete.id : (item.sku !== itemToDelete.sku || !item.sku)
+    )
     setItems(remaining)
     // Persist immediately so a page navigation / reload reflects the deletion
     saveItems(remaining.filter(isValidItem))
