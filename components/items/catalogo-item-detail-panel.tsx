@@ -297,6 +297,10 @@ export function CatalogoItemDetailPanel({
   const [modalDescripcionValue, setModalDescripcionValue] = useState("")
   // When editing from the expanded matrix, track which variant is being edited
   const [matrixEditingVariantId, setMatrixEditingVariantId] = useState<string | null>(null)
+  // Edit atributo label (key) modal — tracks which atributo index (0 or 1)
+  const [editAtributoKeyModal, setEditAtributoKeyModal] = useState<{ open: boolean; attrIndex: number; value: string } | null>(null)
+  // Edit atributo value (tag) modal — tracks atributo index + old value to find the right tag
+  const [editAtributoValueModal, setEditAtributoValueModal] = useState<{ open: boolean; attrIndex: number; oldValue: string; value: string } | null>(null)
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
   const [proveedorSearch, setProveedorSearch] = useState("")
   const [isNuevoProveedorModalOpen, setIsNuevoProveedorModalOpen] = useState(false)
@@ -526,6 +530,60 @@ export function CatalogoItemDetailPanel({
     if (onFieldChange && selectedItem?.id) {
       onFieldChange(selectedItem.id, "containerAtributosPrincipales", updated)
     }
+  }
+
+  const handleSaveAtributoKey = () => {
+    if (!editAtributoKeyModal) return
+    const { attrIndex, value } = editAtributoKeyModal
+    const trimmed = value.trim()
+    if (!trimmed) { setEditAtributoKeyModal(null); return }
+    const updated = containerAtributosPrincipales.map((attr, i) =>
+      i === attrIndex ? { ...attr, key: trimmed } : attr
+    )
+    // Also update the key on all existing variants' atributosPrincipales
+    const updatedVariants = (selectedItem?.variants || []).map((v: any) => ({
+      ...v,
+      atributosPrincipales: (v.atributosPrincipales || []).map((ap: any, i: number) =>
+        i === attrIndex ? { ...ap, key: trimmed } : ap
+      ),
+    }))
+    handleContainerAtributosPrincipalesChange(updated)
+    if (onFieldChange && selectedItem?.id) {
+      onFieldChange(selectedItem.id, "variants", updatedVariants)
+    }
+    onSaveNow?.()
+    setEditAtributoKeyModal(null)
+  }
+
+  const handleSaveAtributoValue = () => {
+    if (!editAtributoValueModal) return
+    const { attrIndex, oldValue, value } = editAtributoValueModal
+    const trimmed = value.trim()
+    if (!trimmed) { setEditAtributoValueModal(null); return }
+    // Update the tag in containerAtributosPrincipales
+    const updated = containerAtributosPrincipales.map((attr, i) => {
+      if (i !== attrIndex) return attr
+      return { ...attr, variantes: attr.variantes.map((v) => v === oldValue ? trimmed : v) }
+    })
+    // Also update all variant atributosPrincipales values that matched oldValue at this index
+    const updatedVariants = (selectedItem?.variants || []).map((v: any) => ({
+      ...v,
+      atributosPrincipales: (v.atributosPrincipales || []).map((ap: any, i: number) =>
+        i === attrIndex && ap.value === oldValue ? { ...ap, value: trimmed } : ap
+      ),
+    }))
+    // Also update variantItems display state
+    setVariantItems((prev) => prev.map((vi) => {
+      if (attrIndex === 0 && vi.variant1 === oldValue) return { ...vi, variant1: trimmed }
+      if (attrIndex === 1 && vi.variant2 === oldValue) return { ...vi, variant2: trimmed }
+      return vi
+    }))
+    handleContainerAtributosPrincipalesChange(updated)
+    if (onFieldChange && selectedItem?.id) {
+      onFieldChange(selectedItem.id, "variants", updatedVariants)
+    }
+    onSaveNow?.()
+    setEditAtributoValueModal(null)
   }
 
   const prevItemIdRef = useRef<string | undefined>(undefined)
@@ -2396,7 +2454,21 @@ export function CatalogoItemDetailPanel({
                           <div className="flex items-center gap-1.5 group/skupadre px-3 py-1.5 border border-slate-200 rounded-full cursor-pointer hover:border-slate-400 hover:bg-slate-50 transition-colors"
                             onClick={(e) => { e.stopPropagation(); setEditingSkuPadre(true) }}
                           >
-                            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">Prefijo</span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">SKU Prefijo</span>
+                              <TooltipProvider delayDuration={300}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span onClick={(e) => e.stopPropagation()}>
+                                      <Info className="w-3 h-3 text-slate-400 cursor-default shrink-0" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="bottom" className="max-w-[220px] text-xs leading-relaxed">
+                                    Código base compartido por todas las variantes. Cada variante agrega su propio sufijo para formar el SKU completo — por ejemplo, <span className="font-mono">{skuValue || "VNO"}-S-ROJO</span>.
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>{/* end label+tooltip wrapper */}
                             {editingSkuPadre ? (
                               <input
                                 type="text"
@@ -2452,8 +2524,22 @@ export function CatalogoItemDetailPanel({
                       {/* Table Header */}
                       <div className={`grid ${gridCols} border-b border-white/10`}>
                         <div className="col-span-1 px-2 py-2.5" />
-                        <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider truncate">{attr1Label}</div>
-                        {hasTwo && <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider truncate">{attr2Label}</div>}
+                        <div
+                          className="col-span-2 px-3 py-2.5 flex items-center gap-1.5 group/atrlabel1 cursor-pointer"
+                          onClick={() => setEditAtributoKeyModal({ open: true, attrIndex: 0, value: attr1Label !== "Variante" ? attr1Label : containerAtributosPrincipales[0]?.key || "" })}
+                        >
+                          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider truncate group-hover/atrlabel1:text-slate-200 transition-colors">{attr1Label}</span>
+                          <Pencil className="w-2.5 h-2.5 text-slate-500 opacity-0 group-hover/atrlabel1:opacity-100 transition-opacity shrink-0" />
+                        </div>
+                        {hasTwo && (
+                          <div
+                            className="col-span-2 px-3 py-2.5 flex items-center gap-1.5 group/atrlabel2 cursor-pointer"
+                            onClick={() => setEditAtributoKeyModal({ open: true, attrIndex: 1, value: containerAtributosPrincipales[1]?.key || "" })}
+                          >
+                            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider truncate group-hover/atrlabel2:text-slate-200 transition-colors">{attr2Label}</span>
+                            <Pencil className="w-2.5 h-2.5 text-slate-500 opacity-0 group-hover/atrlabel2:opacity-100 transition-opacity shrink-0" />
+                          </div>
+                        )}
                         <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider">SKU</div>
                         <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider">Cód. Universal</div>
                         <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider">Cód. Proveedor</div>
@@ -2501,27 +2587,35 @@ export function CatalogoItemDetailPanel({
                                 </div>
                               </div>
 
-                              {/* Attr 1 tag — navigates to child */}
-                              <div
-                                className="col-span-2 px-3 py-2.5 cursor-pointer"
-                                onClick={() => { if (variant.id) router.push(`/catalogo/items/${variant.id}`) }}
-                              >
+                              {/* Attr 1 tag — click tag pencil to edit value, click row elsewhere to navigate */}
+                              <div className="col-span-2 px-3 py-2.5 flex items-center">
                                 {variant.variant1 && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-slate-200 border border-white/15 truncate max-w-[90px]">
-                                    {variant.variant1}
+                                  <span
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-slate-200 border border-white/15 truncate max-w-[90px] group/tag1 cursor-pointer hover:bg-white/20 hover:border-white/30 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setEditAtributoValueModal({ open: true, attrIndex: 0, oldValue: variant.variant1!, value: variant.variant1! })
+                                    }}
+                                  >
+                                    <span className="truncate">{variant.variant1}</span>
+                                    <Pencil className="w-2 h-2 shrink-0 opacity-0 group-hover/tag1:opacity-100 transition-opacity" />
                                   </span>
                                 )}
                               </div>
 
                               {/* Attr 2 tag (only if 2 atributos) */}
                               {hasTwo && (
-                                <div
-                                  className="col-span-2 px-3 py-2.5 cursor-pointer"
-                                  onClick={() => { if (variant.id) router.push(`/catalogo/items/${variant.id}`) }}
-                                >
+                                <div className="col-span-2 px-3 py-2.5 flex items-center">
                                   {variant.variant2 && (
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-slate-200 border border-white/15 truncate max-w-[90px]">
-                                      {variant.variant2}
+                                    <span
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-slate-200 border border-white/15 truncate max-w-[90px] group/tag2 cursor-pointer hover:bg-white/20 hover:border-white/30 transition-colors"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setEditAtributoValueModal({ open: true, attrIndex: 1, oldValue: variant.variant2!, value: variant.variant2! })
+                                      }}
+                                    >
+                                      <span className="truncate">{variant.variant2}</span>
+                                      <Pencil className="w-2 h-2 shrink-0 opacity-0 group-hover/tag2:opacity-100 transition-opacity" />
                                     </span>
                                   )}
                                 </div>
@@ -4107,6 +4201,114 @@ export function CatalogoItemDetailPanel({
         </div>
         )
       })()}
+
+      {/* Editar Atributo (Key/Label) Modal */}
+      {editAtributoKeyModal?.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditAtributoKeyModal(null)} />
+          <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                    <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 leading-tight">{selectedItem?.name}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Editar nombre del atributo</p>
+                  </div>
+                </div>
+                <button onClick={() => setEditAtributoKeyModal(null)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5">
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Nombre del Atributo</label>
+              <input
+                type="text"
+                value={editAtributoKeyModal.value}
+                onChange={(e) => setEditAtributoKeyModal({ ...editAtributoKeyModal, value: e.target.value })}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveAtributoKey(); if (e.key === "Escape") setEditAtributoKeyModal(null) }}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                placeholder="Ej: Sabor, Talle, Color..."
+                autoFocus
+              />
+              <p className="text-xs text-slate-400 mt-1.5">Este es el nombre de la dimensión de variación — el tipo de diferencia entre las variantes.</p>
+            </div>
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button onClick={() => setEditAtributoKeyModal(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveAtributoKey}
+                disabled={!editAtributoKeyModal.value.trim()}
+                className={`px-5 py-2 text-sm font-medium rounded-lg transition-all ${editAtributoKeyModal.value.trim() ? "bg-slate-900 hover:bg-slate-800 text-white cursor-pointer" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Editar Valor del Atributo (Tag) Modal */}
+      {editAtributoValueModal?.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditAtributoValueModal(null)} />
+          <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                    <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-sm font-semibold text-slate-900 leading-tight">{selectedItem?.name}</p>
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                        {containerAtributosPrincipales[editAtributoValueModal.attrIndex]?.key || `Atributo ${editAtributoValueModal.attrIndex + 1}`}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">Editar valor del atributo</p>
+                  </div>
+                </div>
+                <button onClick={() => setEditAtributoValueModal(null)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5">
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Valor</label>
+              <input
+                type="text"
+                value={editAtributoValueModal.value}
+                onChange={(e) => setEditAtributoValueModal({ ...editAtributoValueModal, value: e.target.value })}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveAtributoValue(); if (e.key === "Escape") setEditAtributoValueModal(null) }}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                placeholder="Ej: Original, Rojo, XL..."
+                autoFocus
+              />
+              <p className="text-xs text-slate-400 mt-1.5">
+                Se actualizará en todas las variantes que usen el valor <span className="font-mono text-slate-500">{editAtributoValueModal.oldValue}</span>.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button onClick={() => setEditAtributoValueModal(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveAtributoValue}
+                disabled={!editAtributoValueModal.value.trim()}
+                className={`px-5 py-2 text-sm font-medium rounded-lg transition-all ${editAtributoValueModal.value.trim() ? "bg-slate-900 hover:bg-slate-800 text-white cursor-pointer" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
         </div>{/* end max-w-6xl */}
     </>
   )
