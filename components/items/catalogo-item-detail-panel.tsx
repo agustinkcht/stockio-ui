@@ -2335,147 +2335,109 @@ export function CatalogoItemDetailPanel({
                 {isViewingContainer && isExpandedMatrixOpen ? (
                   // Expanded Variant Matrix View (single card mode)
                   <div className="h-full flex flex-col py-2">
-                    {/* Atributos de Variantes section - 50% width - ABOVE matrix */}
-                    <div className="mb-6 pb-6 border-b border-gray-200 w-1/2">
-                      {!showAtributosView ? (
-                        <div className="flex flex-col items-center justify-center gap-4 py-8">
-                          <p className="text-gray-500 text-sm">No hay atributos configurados</p>
-                          <button
-                            onClick={() => setShowAtributosView(true)}
-                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
-                          >
-                            Agregar atributo
-                          </button>
-                        </div>
-                      ) : (
-                        <div>
-                          {/* Collapsible header */}
-                          <button
-                            onClick={() => setIsAtributosCollapsed((prev) => !prev)}
-                            className="w-full flex items-center justify-between mb-3 group/atributos-header cursor-pointer"
-                          >
-                            <div className="text-left">
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
-                                Atributos de Variantes
-                              </h3>
-                              {!isAtributosCollapsed && (
-                                <p className="text-xs text-gray-500 italic">
-                                  Atributos que definen las variantes del producto (máximo 2)
-                                </p>
-                              )}
-                            </div>
-                            <ChevronDown
-                              className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isAtributosCollapsed ? "" : "rotate-180"}`}
-                            />
-                          </button>
-
-                          {/* Collapsible content */}
-                          {!isAtributosCollapsed && (
-                            <div className="flex flex-col gap-3">
-                              {containerAtributosPrincipales.map((attr, index) => (
-                                <div key={index} className="flex items-start gap-3">
-                                  <div className="flex-1">
-                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                    <input
-                                      type="text"
-                                      value={attr.key}
-                                      onChange={(e) => {
-                                        const updated = [...containerAtributosPrincipales]
-                                        updated[index].key = e.target.value
-                                        handleContainerAtributosPrincipalesChange(updated)
-                                      }}
-                                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
-                                      placeholder="Ej: Color"
-                                    />
-                                  </div>
-
-                                  <div className="flex-1">
-                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
-                                    <div className="space-y-2">
-                                      <input
-                                        type="text"
-                                        value={varianteInput[index] || ""}
-                                        onChange={(e) =>
-                                          setVarianteInput({ ...varianteInput, [index]: e.target.value })
-                                        }
-                                        onKeyDown={(e) => {
-                                          if (e.key === "Enter" && varianteInput[index]?.trim()) {
-                                            const newTag = varianteInput[index].trim()
-                                            const updated = [...containerAtributosPrincipales]
-                                            const isDuplicate = updated[index].variantes.some(
-                                              (existing) => existing.toLowerCase() === newTag.toLowerCase()
-                                            )
-                                            if (!isDuplicate) {
-                                              updated[index].variantes.push(newTag)
+                    {/* Variantes header: x Variantes + Minimizar + Nueva Variante */}
+                    {variantItems.length > 0 && (
+                      <>
+                        {false && (
+                          <div>
+                            {!showAtributosView ? (
+                              <div className="flex flex-col items-center justify-center gap-4 py-8">
+                              </div>
+                            ) : (
+                              <div>
+                                {!isAtributosCollapsed && (
+                                  <div className="flex flex-col gap-3">
+                                    {containerAtributosPrincipales.map((attr, index) => (
+                                      <div key={index} className="flex items-start gap-3">
+                                        <div className="flex-1">
+                                          <input
+                                            type="text"
+                                            value={attr.key}
+                                            onChange={(e) => {
+                                              const updated = [...containerAtributosPrincipales]
+                                              updated[index].key = e.target.value
                                               handleContainerAtributosPrincipalesChange(updated)
-                                              setDuplicateTagError({ ...duplicateTagError, [index]: false })
-                                            } else {
-                                              setDuplicateTagError({ ...duplicateTagError, [index]: true })
-                                              setTimeout(() => {
-                                                setDuplicateTagError((prev) => ({ ...prev, [index]: false }))
-                                              }, 2000)
-                                            }
-                                            setVarianteInput({ ...varianteInput, [index]: "" })
-                                          }
-                                        }}
-                                        onFocus={() => setDuplicateTagError({ ...duplicateTagError, [index]: false })}
-                                        placeholder="Ej: Rojo"
-                                        className={`w-full px-3 py-2.5 bg-white border rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 transition-all hover:border-slate-300 text-sm ${duplicateTagError[index]
-                                          ? "border-red-400 focus:ring-red-400"
-                                          : "border-slate-200 focus:ring-slate-300"
-                                          }`}
-                                      />
-
-                                      {duplicateTagError[index] && (
-                                        <p className="text-red-500 text-xs mt-1 font-medium animate-pulse">
-                                          Este tag ya existe
-                                        </p>
-                                      )}
-
-                                      <div className="flex flex-wrap gap-2">
-                                        {attr.variantes.map((variante, vIndex) => {
-                                          const existingVariants = selectedItem?.variants || []
-                                          const otherAttrIndex = index === 0 ? 1 : 0
-                                          const otherAttr = containerAtributosPrincipales[otherAttrIndex]
-                                          let isComplete = true
-                                          if (existingVariants.length > 0 && otherAttr && otherAttr.variantes.length > 0) {
-                                            for (const otherValue of otherAttr.variantes) {
-                                              const hasCombination = existingVariants.some((v: any) => {
-                                                if (!v.atributosPrincipales) return false
-                                                const attr1Val = v.atributosPrincipales[0]?.value
-                                                const attr2Val = v.atributosPrincipales[1]?.value
-                                                if (index === 0) {
-                                                  return attr1Val === variante && attr2Val === otherValue
-                                                } else {
-                                                  return attr1Val === otherValue && attr2Val === variante
-                                                }
-                                              })
-                                              if (!hasCombination) { isComplete = false; break }
-                                            }
-                                          } else if (existingVariants.length > 0 && containerAtributosPrincipales.length === 1) {
-                                            isComplete = existingVariants.some((v: any) => {
-                                              if (!v.atributosPrincipales) return false
-                                              return v.atributosPrincipales[0]?.value === variante
-                                            })
-                                          } else if (existingVariants.length === 0) {
-                                            isComplete = false
-                                          }
-                                          return (
-                                            <span
-                                              key={vIndex}
-                                              className={`px-3 py-1.5 bg-white rounded-md text-sm flex items-center gap-2 ${isComplete
-                                                ? "border border-gray-300 text-gray-900"
-                                                : "border-2 border-dashed border-gray-300 text-gray-500"
-                                                }`}
-                                            >
-                                              {variante}
-                                              <button
-                                                onClick={() => {
+                                            }}
+                                            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                            placeholder="Ej: Color"
+                                          />
+                                        </div>
+                                        <div className="flex-1">
+                                          <div className="space-y-2">
+                                            <input
+                                              type="text"
+                                              value={varianteInput[index] || ""}
+                                              onChange={(e) =>
+                                                setVarianteInput({ ...varianteInput, [index]: e.target.value })
+                                              }
+                                              onKeyDown={(e) => {
+                                                if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                                  const newTag = varianteInput[index].trim()
                                                   const updated = [...containerAtributosPrincipales]
-                                                  updated[index].variantes = updated[index].variantes.filter((_, i) => i !== vIndex)
-                                                  const updatedVariants = (selectedItem?.variants || []).filter((v: any) => {
-                                                    if (!v.atributosPrincipales) return true
-                                                    if (index === 0) return v.atributosPrincipales[0]?.value !== variante
+                                                  const isDuplicate = updated[index].variantes.some(
+                                                    (existing) => existing.toLowerCase() === newTag.toLowerCase()
+                                                  )
+                                                  if (!isDuplicate) {
+                                                    updated[index].variantes.push(newTag)
+                                                    handleContainerAtributosPrincipalesChange(updated)
+                                                    setDuplicateTagError({ ...duplicateTagError, [index]: false })
+                                                  } else {
+                                                    setDuplicateTagError({ ...duplicateTagError, [index]: true })
+                                                    setTimeout(() => {
+                                                      setDuplicateTagError((prev) => ({ ...prev, [index]: false }))
+                                                    }, 2000)
+                                                  }
+                                                  setVarianteInput({ ...varianteInput, [index]: "" })
+                                                }
+                                              }}
+                                              onFocus={() => setDuplicateTagError({ ...duplicateTagError, [index]: false })}
+                                              placeholder="Ej: Rojo"
+                                              className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 transition-all hover:border-slate-300 text-sm"
+                                            />
+                                            <div className="flex flex-wrap gap-2">
+                                              {attr.variantes.map((variante, vIndex) => {
+                                                const existingVariants = selectedItem?.variants || []
+                                                const otherAttrIndex = index === 0 ? 1 : 0
+                                                const otherAttr = containerAtributosPrincipales[otherAttrIndex]
+                                                let isComplete = true
+                                                if (existingVariants.length > 0 && otherAttr && otherAttr.variantes.length > 0) {
+                                                  for (const otherValue of otherAttr.variantes) {
+                                                    const hasCombination = existingVariants.some((v: any) => {
+                                                      if (!v.atributosPrincipales) return false
+                                                      const attr1Val = v.atributosPrincipales[0]?.value
+                                                      const attr2Val = v.atributosPrincipales[1]?.value
+                                                      if (index === 0) {
+                                                        return attr1Val === variante && attr2Val === otherValue
+                                                      } else {
+                                                        return attr1Val === otherValue && attr2Val === variante
+                                                      }
+                                                    })
+                                                    if (!hasCombination) { isComplete = false; break }
+                                                  }
+                                              } else if (existingVariants.length > 0 && containerAtributosPrincipales.length === 1) {
+                                                isComplete = existingVariants.some((v: any) => {
+                                                  if (!v.atributosPrincipales) return false
+                                                  return v.atributosPrincipales[0]?.value === variante
+                                                })
+                                              } else if (existingVariants.length === 0) {
+                                                isComplete = false
+                                              }
+                                              return (
+                                                <span
+                                                  key={vIndex}
+                                                  className={`px-3 py-1.5 bg-white rounded-md text-sm flex items-center gap-2 ${isComplete
+                                                    ? "border border-gray-300 text-gray-900"
+                                                    : "border-2 border-dashed border-gray-300 text-gray-500"
+                                                    }`}
+                                                >
+                                                  {variante}
+                                                  <button
+                                                    onClick={() => {
+                                                      const updated = [...containerAtributosPrincipales]
+                                                      updated[index].variantes = updated[index].variantes.filter((_, i) => i !== vIndex)
+                                                      const updatedVariants = (selectedItem?.variants || []).filter((v: any) => {
+                                                        if (!v.atributosPrincipales) return true
+                                                        if (index === 0) return v.atributosPrincipales[0]?.value !== variante
                                                     else return v.atributosPrincipales[1]?.value !== variante
                                                   })
                                                   setContainerAtributosPrincipales(updated)
@@ -2556,29 +2518,29 @@ export function CatalogoItemDetailPanel({
                       )}
                     </div>
 
-                    {/* Variantes header with Nueva Variante button */}
+                    {/* Variantes header with Minimizar + Nueva Variante */}
                     {variantItems.length > 0 && (
-                      <div className="mt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider">
-                            {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
-                          </h3>
+                      <div className="mt-0">
+                        <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setIsExpandedMatrixOpen(false)}
-                              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                              title="Minimizar"
-                            >
-                              <Minimize2 className="w-4 h-4" />
-                            </button>
+                            <span className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                              {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
+                            </span>
                             <button
                               onClick={() => setIsNuevaVarianteModalOpen(true)}
-                              className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
+                              className="px-3 py-1.5 border border-slate-200 rounded-full text-slate-500 hover:text-slate-900 hover:border-slate-400 hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
                             >
                               <Plus className="w-3.5 h-3.5" />
                               <span>Nueva Variante</span>
                             </button>
                           </div>
+                          <button
+                            onClick={() => setIsExpandedMatrixOpen(false)}
+                            className="px-3 py-1.5 border border-slate-200 rounded-full text-slate-500 hover:text-slate-900 hover:border-slate-400 hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+                          >
+                            <Minimize2 className="w-3.5 h-3.5" />
+                            <span>Minimizar</span>
+                          </button>
                         </div>
 
                         {/* SKU Prefijo */}
@@ -2632,20 +2594,27 @@ export function CatalogoItemDetailPanel({
                     )}
 
                     {/* Variant Matrix Table */}
-                    <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                    {(() => {
+                      const hasTwo = containerAtributosPrincipales.length >= 2
+                      const attr1Label = containerAtributosPrincipales[0]?.key || "Variante"
+                      const attr2Label = containerAtributosPrincipales[1]?.key || ""
+                      // grid-cols-12: thumb(1) + attr1(2) + [attr2(2)] + sku(2) + universal(2) + proveedor(2) + desc(1 or 3)
+                      const gridCols = "grid-cols-12"
+                      return (
+                    <div className="bg-slate-900 rounded-lg overflow-hidden">
                       {/* Table Header */}
-                      <div className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(100px,0.8fr)_100px_100px_1fr] bg-slate-50 border-b border-border/30">
-                        <div className="px-2 py-3" />
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">SKU</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Cód. Universal</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-right">Precio Final</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-center">Stock Disp.</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Descripción</div>
+                      <div className={`grid ${gridCols} border-b border-white/10`}>
+                        <div className="col-span-1 px-2 py-2.5" />
+                        <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider truncate">{attr1Label}</div>
+                        {hasTwo && <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider truncate">{attr2Label}</div>}
+                        <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider">SKU</div>
+                        <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider">Cód. Universal</div>
+                        <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider">Cód. Proveedor</div>
+                        <div className={`${hasTwo ? "col-span-1" : "col-span-3"} px-3 py-2.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider`}>Descripción</div>
                       </div>
 
                       {/* Table Body */}
-                      <div className="divide-y divide-border/30">
+                      <div className="divide-y divide-white/[0.06]">
                         {variantItems.map((variant) => {
                           const sourceVariant = selectedItem?.variants?.find((v: any) => {
                             if (!v.atributosPrincipales) return false
@@ -2661,12 +2630,12 @@ export function CatalogoItemDetailPanel({
                           return (
                             <div
                               key={variant.id || variant.skuSuffix || variant.sku}
-                              className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(100px,0.8fr)_100px_100px_1fr] items-center hover:bg-accent/30 transition-colors"
+                              className={`grid ${gridCols} items-center hover:bg-white/[0.03] transition-colors`}
                             >
-                              {/* Thumbnail - with edit pencil on hover */}
-                              <div className="px-2 py-2 flex items-center justify-center">
+                              {/* Thumbnail */}
+                              <div className="col-span-1 px-2 py-2.5 flex items-center justify-center">
                                 <div
-                                  className="relative w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center group/thumb cursor-pointer"
+                                  className="relative w-8 h-8 rounded-md bg-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center group/thumb cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     setExpandedMatrixMediaModal({ open: true, variant: { ...variant, sourceVariant } })
@@ -2677,39 +2646,44 @@ export function CatalogoItemDetailPanel({
                                     alt={selectedItem?.categoria || ""}
                                     width={32}
                                     height={32}
-                                    className={`w-full h-full object-cover ${!sourceVariant?.imagenUrl ? "w-5 h-5 object-contain opacity-60" : ""}`}
+                                    className="w-full h-full object-cover"
                                   />
-                                  {/* Edit pencil overlay */}
-                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Pencil className="w-3.5 h-3.5 text-white" />
+                                  <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/40 transition-colors flex items-center justify-center">
+                                    <Pencil className="w-3 h-3 text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity" />
                                   </div>
                                 </div>
                               </div>
 
-                              {/* Variant tags - clickable to navigate to child */}
+                              {/* Attr 1 tag — navigates to child */}
                               <div
-                                className="px-3 py-2 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 rounded transition-colors"
+                                className="col-span-2 px-3 py-2.5 cursor-pointer"
                                 onClick={() => { if (variant.id) router.push(`/catalogo/items/${variant.id}`) }}
                               >
                                 {variant.variant1 && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-slate-200 border border-white/15 truncate max-w-[90px]">
                                     {variant.variant1}
-                                  </span>
-                                )}
-                                {variant.variant1 && variant.variant2 && (
-                                  <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
-                                )}
-                                {variant.variant2 && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
-                                    {variant.variant2}
                                   </span>
                                 )}
                               </div>
 
+                              {/* Attr 2 tag (only if 2 atributos) */}
+                              {hasTwo && (
+                                <div
+                                  className="col-span-2 px-3 py-2.5 cursor-pointer"
+                                  onClick={() => { if (variant.id) router.push(`/catalogo/items/${variant.id}`) }}
+                                >
+                                  {variant.variant2 && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-slate-200 border border-white/15 truncate max-w-[90px]">
+                                      {variant.variant2}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+
                               {/* SKU - editable */}
-                              <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                              <div className="col-span-2 px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex items-center w-full">
-                                  <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
+                                  <span className="text-[10px] font-mono text-white/30 select-none whitespace-nowrap">
                                     {skuValue}-
                                   </span>
                                   <input
@@ -2725,14 +2699,14 @@ export function CatalogoItemDetailPanel({
                                       )
                                       onFieldChange(selectedItem.id, "variants", updatedVariants)
                                     }}
-                                    className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                    className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-white/20 focus:border-white/40 px-0 py-0.5 text-[10px] font-mono text-slate-300 focus:outline-none transition-colors"
                                     placeholder="sufijo..."
                                   />
                                 </div>
                               </div>
 
                               {/* Código Universal - editable */}
-                              <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                              <div className="col-span-2 px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
                                 <input
                                   type="text"
                                   value={sourceVariant?.codigoUniversal || ""}
@@ -2743,62 +2717,31 @@ export function CatalogoItemDetailPanel({
                                     )
                                     onFieldChange(selectedItem.id, "variants", updatedVariants)
                                   }}
-                                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
-                                  placeholder="Ej: 7790001234567"
+                                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/20 focus:border-white/40 px-0 py-0.5 text-[10px] font-mono text-slate-300 focus:outline-none transition-colors"
+                                  placeholder="—"
                                 />
                               </div>
 
-                              {/* Precio Final - clickable */}
-                              <div
-                                className="px-3 py-2 text-right cursor-pointer hover:bg-slate-100 rounded transition-colors group/precio"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  const precio = sourceVariant?.precio || { costo: 0, margen: 0, iva: 0, precioFinal: 0 }
-                                  setExpandedMatrixPrecioValues({
-                                    costo: precio.costo || 0,
-                                    margen: precio.margen || 0,
-                                    iva: precio.iva || 0,
-                                    precioFinal: precio.precioFinal || 0,
-                                  })
-                                  setExpandedMatrixPrecioModal({ open: true, variant: { ...variant, sourceVariant } })
-                                }}
-                              >
-                                <span className="text-sm font-medium text-foreground group-hover/precio:text-blue-600 transition-colors">
-                                  ${Math.round(sourceVariant?.precio?.precioFinal || 0).toLocaleString("es-AR")}
-                                </span>
-                              </div>
-
-                              {/* Stock Disponible - clickable */}
-                              <div
-                                className="px-3 py-2 text-center cursor-pointer hover:bg-slate-100 rounded transition-colors group/stock"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  const stock = sourceVariant?.stock || { enStock: "0", reservado: "0" }
-                                  setExpandedMatrixStockValues({
-                                    total: parseInt((stock as any).enStock || (stock as any).total || "0") || 0,
-                                    reservado: parseInt(stock.reservado) || 0,
-                                  })
-                                  setExpandedMatrixActiveStockEdit("total")
-                                  setExpandedMatrixStockModification({
-                                    total: { operation: "agregar", value: "" },
-                                    reservado: { operation: "agregar", value: "" },
-                                  })
-                                  setExpandedMatrixStockModal({ open: true, variant: { ...variant, sourceVariant } })
-                                }}
-                              >
-                                <span className={`text-sm font-medium tabular-nums group-hover/stock:text-blue-600 transition-colors ${(sourceVariant?.stock?.disponible ?? 0) > 0
-                                  ? "text-foreground"
-                                  : (sourceVariant?.stock?.disponible ?? 0) < 0
-                                    ? "text-red-500"
-                                    : "text-muted-foreground"
-                                  }`}>
-                                  {sourceVariant?.stock?.disponible ?? 0}
-                                </span>
+                              {/* Código Proveedor - editable */}
+                              <div className="col-span-2 px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="text"
+                                  value={sourceVariant?.codigoProveedor || ""}
+                                  onChange={(e) => {
+                                    const newCodigo = e.target.value
+                                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                                      ov.id === variant.id ? { ...ov, codigoProveedor: newCodigo } : ov
+                                    )
+                                    onFieldChange(selectedItem.id, "variants", updatedVariants)
+                                  }}
+                                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-white/20 focus:border-white/40 px-0 py-0.5 text-[10px] font-mono text-slate-300 focus:outline-none transition-colors"
+                                  placeholder="—"
+                                />
                               </div>
 
                               {/* Descripción - clickable to open modal */}
                               <div
-                                className="px-3 py-2 cursor-pointer hover:bg-slate-100 rounded transition-colors group/desc"
+                                className={`${hasTwo ? "col-span-1" : "col-span-3"} px-3 py-2.5 cursor-pointer group/desc`}
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   setExpandedMatrixDescModal({
@@ -2808,8 +2751,8 @@ export function CatalogoItemDetailPanel({
                                   })
                                 }}
                               >
-                                <span className="text-[11px] text-foreground group-hover/desc:text-blue-600 transition-colors line-clamp-1">
-                                  {sourceVariant?.descripcion || <span className="text-muted-foreground italic">Descripción...</span>}
+                                <span className="text-[10px] text-slate-400 group-hover/desc:text-slate-200 transition-colors line-clamp-1">
+                                  {sourceVariant?.descripcion || <span className="text-white/20 italic">—</span>}
                                 </span>
                               </div>
                             </div>
@@ -2817,6 +2760,8 @@ export function CatalogoItemDetailPanel({
                         })}
                       </div>
                     </div>
+                      )
+                    })()}
                   </div>
                 ) : isViewingContainer ? (
                   // Container item tab content (dual card mode)
@@ -2824,7 +2769,7 @@ export function CatalogoItemDetailPanel({
                     {selectedDetailTab === "info" && (
                       <div className="h-full flex flex-col py-2">
                         {showAtributosView && (
-                          <div className="mb-6">
+                          <div>
                             {/* Collapsible content always shown */}
                             {!isAtributosCollapsed && (
                               <div className="flex flex-col gap-3">
