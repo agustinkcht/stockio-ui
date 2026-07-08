@@ -347,19 +347,17 @@ export default function ListaDePreciosPage() {
         {/* Panel */}
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
 
-          {/* ── Utility bar ────────────────────────────────────────────────── */}
-          <div className="relative h-[44px] bg-white z-[100004] shrink-0">
-            <div className="px-8 h-full flex items-center justify-between">
-              <Breadcrumb items={breadcrumbs} />
-                            <div className="min-w-[200px]" />
-            </div>
-          </div>
-
           {/* ── Scrollable region ──────────────────────────────────────────── */}
           <div className="flex-1 overflow-y-auto bg-panel-content">
 
+            {/* Breadcrumb + Profile */}
+            <div className="px-8 pt-5 pb-0 flex items-center justify-between">
+              <Breadcrumb items={breadcrumbs} />
+              <UserPanel />
+            </div>
+
             {/* Top row */}
-            <div className="px-8 pt-12 pb-8">
+            <div className="px-8 pt-8 pb-8">
               <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
                 <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
                   Lista de Precios

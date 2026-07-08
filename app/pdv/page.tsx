@@ -203,14 +203,11 @@ export default function PuntoDeVentaPage() {
 
         {/* Main Content with integrated navbar */}
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
-          <div className="relative h-[44px] bg-white">
-            <div className="px-8 h-full flex items-center justify-between">
-              {/* Left: Breadcrumbs */}
-              <div className="flex items-center">
-                <Breadcrumb items={breadcrumbs} />
-              </div>
-
-              <UserPanel />
+          {/* Breadcrumb + Profile */}
+          <div className="px-8 pt-5 pb-0 flex items-center justify-between shrink-0">
+            <Breadcrumb items={breadcrumbs} />
+            <UserPanel />
+          </div>
               </div>
           </div>
 
