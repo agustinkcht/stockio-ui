@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useAccount } from "@/lib/contexts/account-context"
-import { LogOut, UserCog } from "lucide-react"
+import { LogOut, ChevronDown, UserCog } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
@@ -30,7 +30,6 @@ export function UserPanel() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-3 border py-1 hover:bg-[#3E3F46] transition-all cursor-pointer rounded-sm bg-[#2E2F35] px-4 mt-0 border-[#3E3F46]"
       >
-        <span className="text-sm font-medium text-white">{currentUser.businessName}</span>
         <div className="w-7 h-7 rounded-md overflow-hidden bg-muted">
           <Image
             src={currentUser.avatar || "/placeholder.svg"}
@@ -40,6 +39,8 @@ export function UserPanel() {
             className="w-full h-full object-cover"
           />
         </div>
+        <span className="text-sm font-medium text-white">{currentUser.businessName}</span>
+        <ChevronDown className={`w-4 h-4 text-[#9A9BA3] transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {/* Dropdown */}

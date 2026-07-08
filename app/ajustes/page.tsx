@@ -143,8 +143,8 @@ export default function AjustesPage() {
           if (pendingHrefRef.current) router.push(pendingHrefRef.current)
         }}
       />
-      <div className="flex h-screen" onClick={handleCloseDropdowns}>
-        <div onClick={(e) => e.stopPropagation()} className="relative h-screen sticky top-0 z-[100003]">
+      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
+        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
             bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -156,7 +156,7 @@ export default function AjustesPage() {
 
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white rounded-lg shadow-sm h-[calc(100vh-12px)]">
           {/* Header */}
-          <div className="relative h-[44px] bg-transparent">
+          <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20]">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={[{ label: "Ajustes", href: "/ajustes" }]} />

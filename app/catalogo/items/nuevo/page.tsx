@@ -367,8 +367,8 @@ export default function NuevoItemPage() {
   if (selectedType === "individual" && createdItemId) {
     return (
       <div className="min-h-screen bg-[rgb(243,242,238)]">
-        <div className="flex h-screen">
-          <div className="relative h-screen sticky top-0 z-[100003]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
             <Sidebar
               sidebarItems={SIDEBAR_ITEMS}
               bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -378,9 +378,9 @@ export default function NuevoItemPage() {
             />
           </div>
 
-          <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
             {/* Header */}
-            <div className="relative h-[44px] bg-transparent z-[100004]">
+            <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20] z-[100004]">
               <div className="px-4 flex items-center justify-between h-full">
                 <div className="flex items-center gap-3">
                   <Breadcrumb items={breadcrumbs} />
@@ -467,8 +467,8 @@ export default function NuevoItemPage() {
   if (selectedType === "variantes" && createdItemId) {
     return (
       <div className="min-h-screen bg-[rgb(243,242,238)]">
-        <div className="flex h-screen">
-          <div className="relative h-screen sticky top-0 z-[100003]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
             <Sidebar
               sidebarItems={SIDEBAR_ITEMS}
               bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -478,9 +478,9 @@ export default function NuevoItemPage() {
             />
           </div>
 
-          <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
             {/* Header */}
-            <div className="relative h-[44px] bg-transparent z-[100004]">
+            <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20] z-[100004]">
               <div className="px-4 flex items-center justify-between h-full">
                 <div className="flex items-center gap-3">
                   <Breadcrumb items={breadcrumbs} />
@@ -568,8 +568,8 @@ export default function NuevoItemPage() {
     return (
       <>
       <div className="min-h-screen bg-[rgb(243,242,238)]">
-        <div className="flex h-screen">
-          <div className="relative h-screen sticky top-0 z-[100003]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
             <Sidebar
               sidebarItems={SIDEBAR_ITEMS}
               bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -579,9 +579,9 @@ export default function NuevoItemPage() {
             />
           </div>
 
-          <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
             {/* Header */}
-            <div className="relative h-[44px] bg-transparent z-[100004]">
+            <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20] z-[100004]">
               <div className="px-4 flex items-center justify-between h-full">
                 <div className="flex items-center gap-3">
                   <Breadcrumb items={breadcrumbs} />
@@ -1947,8 +1947,8 @@ export default function NuevoItemPage() {
   if (selectedType === "individual") {
     return (
       <div className="min-h-screen bg-[rgb(243,242,238)]">
-        <div className="flex h-screen">
-          <div className="relative h-screen sticky top-0 z-[100003]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
             <Sidebar
               sidebarItems={SIDEBAR_ITEMS}
               bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -1958,9 +1958,9 @@ export default function NuevoItemPage() {
             />
           </div>
 
-          <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
             {/* Header */}
-            <div className="relative h-[44px] bg-transparent z-[100004]">
+            <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20] z-[100004]">
               <div className="px-4 flex items-center justify-between h-full">
                 <div className="flex items-center gap-3">
                   <Breadcrumb items={breadcrumbs} />
@@ -2787,8 +2787,8 @@ export default function NuevoItemPage() {
   // Initial view - Type selection
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
-      <div className="flex h-screen">
-        <div className="relative h-screen sticky top-0 z-[100003]">
+      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+        <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
             bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -2798,9 +2798,9 @@ export default function NuevoItemPage() {
           />
         </div>
 
-        <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
+        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
           {/* Header */}
-          <div className="relative h-[44px] bg-transparent z-[100004]">
+          <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20] z-[100004]">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center gap-3">
                 <Breadcrumb items={breadcrumbs} />

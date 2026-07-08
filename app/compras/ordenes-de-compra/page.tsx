@@ -389,8 +389,8 @@ export default function OrdenesDeCompraPage() {
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
-      <div className="flex h-screen" onClick={handleCloseDropdowns}>
-        <div onClick={(e) => e.stopPropagation()} className="relative h-screen sticky top-0 z-[100003]">
+      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
+        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
             bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -400,9 +400,9 @@ export default function OrdenesDeCompraPage() {
           />
         </div>
 
-        <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
+        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
           {/* Utility Bar */}
-          <div className="relative h-[44px] bg-transparent">
+          <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20]">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
