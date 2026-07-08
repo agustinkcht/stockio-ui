@@ -739,7 +739,7 @@ export default function VentasPage() {
 
                 {/* Row 2: Bulk actions — straight borders, flush below search bar */}
                 <div className="px-8 bg-panel-content/95 backdrop-blur-sm pb-2">
-                  <div className="max-w-6xl mx-auto bg-white border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md">
+                  <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
                       {/* All-selector checkbox — width matches col-span-4 of grid-cols-100 in item rows */}
                       <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
