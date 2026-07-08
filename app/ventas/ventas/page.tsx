@@ -371,7 +371,7 @@ export default function VentasPage() {
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
-                            <div />
+                            <UserPanel />
             </div>
           </div>
 

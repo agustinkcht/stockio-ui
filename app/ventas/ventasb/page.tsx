@@ -239,11 +239,7 @@ function VentasContent() {
                 <Breadcrumb items={breadcrumbs} />
               </div>
 
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
-                <UserPanel />
-              </div>
-
-              <div />
+              <UserPanel />
             </div>
           </div>
 

@@ -319,7 +319,7 @@ export default function PresupuestosPage() {
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
-                            <div />
+                            <UserPanel />
             </div>
           </div>
 

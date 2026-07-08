@@ -620,7 +620,7 @@ export default function NuevaCompraPage() {
             <div className="relative h-[44px] bg-white">
               <div className="px-8 flex items-center justify-between h-full">
                 <Breadcrumb items={breadcrumbs} />
-                                <div />
+                                <UserPanel />
               </div>
             </div>
             <main className="flex-1 flex items-center justify-center bg-[rgba(250,251,253,1)]">

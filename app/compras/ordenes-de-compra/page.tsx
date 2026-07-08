@@ -407,7 +407,7 @@ export default function OrdenesDeCompraPage() {
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
-                            <div />
+                            <UserPanel />
             </div>
           </div>
 

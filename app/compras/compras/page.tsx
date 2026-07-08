@@ -295,7 +295,7 @@ export default function ComprasPage() {
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
-                            <div />
+                            <UserPanel />
             </div>
           </div>
 
