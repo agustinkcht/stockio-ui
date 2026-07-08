@@ -567,7 +567,7 @@ export default function NuevaVentaPage() {
             />
           </div>
           <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
-            <div className="relative border-b border-border h-[44px] bg-white">
+            <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20]">
               <div className="px-4 flex items-center justify-between h-full">
                 <Breadcrumb items={breadcrumbs} />
                 <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
@@ -624,7 +624,7 @@ export default function NuevaVentaPage() {
 
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
           {/* Header */}
-          <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
+          <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20] z-[100004]">
             <div className="px-4 flex items-center justify-between h-full">
               <Breadcrumb items={breadcrumbs} />
               <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
