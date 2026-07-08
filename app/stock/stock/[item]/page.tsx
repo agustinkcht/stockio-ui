@@ -172,8 +172,8 @@ export default function ItemDetailPage() {
         </div>
 
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
-          <div className="relative h-[44px] bg-white">
-            <div className="px-8 h-full flex items-center justify-between">
+          <div className="relative h-[44px] bg-transparent">
+            <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
@@ -209,7 +209,7 @@ export default function ItemDetailPage() {
                     </button>
                   </>
                 )}
-              <UserPanel />
+              </div>
             </div>
           </div>
 

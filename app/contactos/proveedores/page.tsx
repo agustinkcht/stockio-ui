@@ -182,17 +182,20 @@ function ProveedoresContent() {
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
 
           {/* ── Utility bar ────────────────────────────────────────────────── */}
-          <div className="relative h-[44px] bg-white z-[100004] shrink-0">
-            <div className="px-8 h-full flex items-center justify-between">
+          <div className="relative h-[44px] bg-transparent z-[100004] shrink-0">
+            <div className="px-4 flex items-center justify-between h-full">
               <Breadcrumb items={breadcrumbs} />
-                            <div className="flex items-center gap-2 min-w-[200px] justify-end">
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
+                <UserPanel />
+              </div>
+              <div className="flex items-center gap-2 min-w-[200px] justify-end">
                 {showSaveSuccess && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
                     <CheckCircle2 className="w-4 h-4 text-green-600" />
                     <span className="text-sm text-green-700 font-medium">Cambios guardados</span>
                   </div>
                 )}
-              <UserPanel />
+              </div>
             </div>
           </div>
 

@@ -955,8 +955,8 @@ export default function CreadorMasivoPage() {
 
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
           {/* Header */}
-          <div className="relative h-[44px] bg-white z-[100004]">
-            <div className="px-8 h-full flex items-center justify-between">
+          <div className="relative h-[44px] bg-transparent z-[100004]">
+            <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>

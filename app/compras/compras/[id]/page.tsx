@@ -754,19 +754,22 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
 
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
           {/* Utility Bar */}
-          <div className="relative h-[44px] bg-white">
-            <div className="px-8 h-full flex items-center justify-between">
+          <div className="relative h-[44px] bg-transparent">
+            <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
-                            <div className="flex items-center gap-2 min-w-[200px] justify-end">
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
+                <UserPanel />
+              </div>
+              <div className="flex items-center gap-2 min-w-[200px] justify-end">
                 {showSaveSuccess && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">
                     <CheckCircle2 className="w-4 h-4 text-green-600" />
                     <span className="text-sm text-green-700 font-medium">Cambios guardados</span>
                   </div>
                 )}
-              <UserPanel />
+              </div>
             </div>
           </div>
 

@@ -348,10 +348,13 @@ export default function ListaDePreciosPage() {
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
 
           {/* ── Utility bar ────────────────────────────────────────────────── */}
-          <div className="relative h-[44px] bg-white z-[100004] shrink-0">
-            <div className="px-8 h-full flex items-center justify-between">
+          <div className="relative h-[44px] bg-transparent z-[100004] shrink-0">
+            <div className="px-4 flex items-center justify-between h-full">
               <Breadcrumb items={breadcrumbs} />
-                            <div className="min-w-[200px]" />
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
+                <UserPanel />
+              </div>
+              <div className="min-w-[200px]" />
             </div>
           </div>
 
