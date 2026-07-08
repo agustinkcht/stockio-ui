@@ -400,7 +400,7 @@ export default function CatalogoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(243,242,238)]">
+    <div className="min-h-screen bg-[#1e1e1e]">
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
 
         {/* Sidebar */}
