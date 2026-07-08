@@ -405,8 +405,8 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
   if (!presupuesto) {
     return (
       <div className="min-h-screen bg-[rgb(243,242,238)]">
-        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
-          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+        <div className="flex h-screen">
+          <div className="relative h-screen sticky top-0 z-[100003]">
             <Sidebar
               sidebarItems={SIDEBAR_ITEMS}
               bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -415,7 +415,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
               onDropdownClose={handleDropdownMouseLeave}
             />
           </div>
-          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden items-center justify-center">
+          <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden items-center justify-center">
             <Package className="w-12 h-12 text-slate-200 mb-3" />
             <p className="text-slate-500 mb-1">Presupuesto no encontrado</p>
             <p className="text-xs text-slate-400 mb-4">El presupuesto {id} no existe</p>
@@ -685,8 +685,8 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
-      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
-        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+      <div className="flex h-screen" onClick={handleCloseDropdowns}>
+        <div onClick={(e) => e.stopPropagation()} className="relative h-screen sticky top-0 z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
             bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -697,7 +697,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
           />
         </div>
 
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+        <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
           {/* Utility Bar */}
           <div className="relative h-[44px] bg-transparent">
             <div className="px-4 flex items-center justify-between h-full">

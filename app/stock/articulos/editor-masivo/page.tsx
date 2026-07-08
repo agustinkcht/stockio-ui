@@ -701,8 +701,8 @@ export default function EditorMasivoPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
-        <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+      <div className="flex h-screen">
+        <div className="relative h-screen sticky top-0 z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
             bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -712,7 +712,7 @@ export default function EditorMasivoPage() {
           />
         </div>
 
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+        <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
           {/* Header */}
           <div className="relative h-[44px] bg-transparent z-[100004]">
             <div className="px-4 flex items-center justify-between h-full">

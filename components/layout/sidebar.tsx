@@ -72,7 +72,7 @@ export function Sidebar({
   }
 
   return (
-    <div ref={containerRef} className="h-full flex flex-col z-[99999] bg-sidebar rounded-lg w-20">
+    <div ref={containerRef} className="h-full flex flex-col z-[99999] bg-sidebar w-20">
       {/* Main Navigation */}
       <nav className="flex-1 space-y-1 px-2 pt-4">
       {sidebarItems.map((item, index) => {

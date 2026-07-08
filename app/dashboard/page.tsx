@@ -449,8 +449,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
-      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
-        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+      <div className="flex h-screen" onClick={handleCloseDropdowns}>
+        <div onClick={(e) => e.stopPropagation()} className="relative h-screen sticky top-0 z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
             bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}

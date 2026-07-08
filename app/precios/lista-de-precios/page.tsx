@@ -330,8 +330,8 @@ export default function ListaDePreciosPage() {
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
-      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
-        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+      <div className="flex h-screen" onClick={handleCloseDropdowns}>
+        <div onClick={(e) => e.stopPropagation()} className="relative h-screen sticky top-0 z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
             bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -340,12 +340,12 @@ export default function ListaDePreciosPage() {
             onDropdownClose={handleDropdownMouseLeave}
           />
           {(showNuevoItemModal || showNuevoItemConVariantesModal) && (
-            <div className="absolute top-0 left-0 h-full w-full bg-black/50 z-[60] pointer-events-none rounded-lg" />
+            <div className="absolute top-0 left-0 h-full w-full bg-black/50 z-[60] pointer-events-none" />
           )}
         </div>
 
         {/* Panel */}
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+        <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
 
           {/* ── Utility bar ────────────────────────────────────────────────── */}
           <div className="relative h-[44px] bg-transparent z-[100004] shrink-0">
