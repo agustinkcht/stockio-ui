@@ -955,11 +955,14 @@ export default function CreadorMasivoPage() {
 
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
           {/* Header */}
-          {/* Breadcrumb + Profile */}
-          <div className="px-8 pt-5 pb-0 flex items-center justify-between shrink-0">
-            <Breadcrumb items={breadcrumbs} />
-            <UserPanel />
-          </div>
+          <div className="relative h-[44px] bg-white z-[100004]">
+            <div className="px-8 h-full flex items-center justify-between">
+              <div className="flex items-center">
+                <Breadcrumb items={breadcrumbs} />
+              </div>
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                <UserPanel />
+              </div>
               <div className="flex items-center gap-2 min-w-[280px] justify-end">
                 {/* Future: Save/Create buttons */}
               </div>

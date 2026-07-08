@@ -401,16 +401,22 @@ export default function OrdenesDeCompraPage() {
         </div>
 
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
-                    <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Utility Bar */}
+          <div className="relative h-[44px] bg-white">
+            <div className="px-8 h-full flex items-center justify-between">
+              <div className="flex items-center">
+                <Breadcrumb items={breadcrumbs} />
+              </div>
+                            <UserPanel />
+              </div>
+          </div>
+
+          <main className="flex-1 flex flex-col overflow-hidden">
             {/* Scroll container */}
             <div className="flex-1 overflow-y-auto bg-panel-content">
-              {/* Breadcrumb + Profile */}
-              <div className="px-8 pt-5 pb-0 flex items-center justify-between">
-                <Breadcrumb items={breadcrumbs} />
-                <UserPanel />
-              </div>
+
               {/* Title row — scrolls away */}
-              <div className="px-8 pt-8 pb-8">
+              <div className="px-8 pt-12 pb-8">
                 <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
                   <div className="flex items-center gap-4">
                     <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
