@@ -467,9 +467,6 @@ export default function DashboardPage() {
             <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }]} />
             <UserPanel />
           </div>
-              <div className="flex items-center gap-2 min-w-[200px] justify-end" />
-            </div>
-          </div>
 
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto bg-slate-50">
