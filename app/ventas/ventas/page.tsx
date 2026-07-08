@@ -380,7 +380,7 @@ export default function VentasPage() {
 
           <main className="flex-1 flex flex-col overflow-hidden">
             {/* Scroll container — title + period + widgets + search bar + rows */}
-            <div className="flex-1 overflow-y-auto bg-slate-50">
+            <div className="flex-1 overflow-y-auto bg-panel-content">
               {/* Title row — scrolls away */}
               <div className="px-8 pt-12 pb-8">
                 <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
@@ -422,7 +422,7 @@ export default function VentasPage() {
                   <button
                     type="button"
                     onClick={() => router.push("/ventas/ventas/nueva")}
-                    className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                    className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-panel-content cursor-pointer mt-1"
                   >
                     <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
                     Nueva Venta
@@ -441,7 +441,7 @@ export default function VentasPage() {
                 const countCanceladas = periodVentas.filter(v => v.estado === "cancelada").length
 
                 const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
-                  if (disabled) return "border rounded-xl px-6 py-5 shadow-sm text-left border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed w-full"
+                  if (disabled) return "border rounded-xl px-6 py-5 shadow-sm text-left border-slate-100 bg-panel-content opacity-40 cursor-not-allowed w-full"
                   if (active) return `border rounded-xl px-6 py-5 shadow-sm text-left transition-all cursor-pointer w-full ${activeColor}`
                   return `border rounded-xl px-6 py-5 shadow-sm text-left transition-all cursor-pointer w-full bg-white border-slate-200/80 ${hoverColor}`
                 }
@@ -539,7 +539,7 @@ export default function VentasPage() {
               <div className="sticky top-0 z-20">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 py-2">
+                <div className="relative z-10 bg-panel-content/95 backdrop-blur-sm px-8 py-2">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
                       {/* Search input with clear X */}
@@ -663,7 +663,7 @@ export default function VentasPage() {
                             className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
                               hasActiveFilters
                                 ? "border-blue-400 text-blue-600 bg-blue-50"
-                                : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
+                                : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-panel-content"
                             }`}
                           >
                             <ListFilter className="w-3.5 h-3.5" />
@@ -713,7 +713,7 @@ export default function VentasPage() {
                             type="button"
                             onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
                             title={sortDir === "asc" ? "Ascendente" : "Descendente"}
-                            className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                            className="px-2.5 h-full hover:bg-panel-content transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
                           >
                             <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
                           </button>
@@ -863,7 +863,7 @@ export default function VentasPage() {
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); if (venta.cliente.tipo === "cuenta") setViewingClienteId(venta.cliente.id) }}
-                            className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer shrink-0 shadow-sm"
+                            className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border border-slate-200 bg-panel-content hover:bg-slate-100 transition-colors cursor-pointer shrink-0 shadow-sm"
                           >
                             <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
                               <span className="text-[9px] font-bold text-white uppercase">{getClienteNombre(venta).charAt(0)}</span>
@@ -889,7 +889,7 @@ export default function VentasPage() {
                             >
                               {venta.estado === "en_curso" && (
                                 <button
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-panel-content transition-colors text-left"
                                   onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); setFinalizarModalVenta(venta); setFinalizarMedioPago("no_especificado") }}
                                 >
                                   <CheckCheck className="w-4 h-4 text-slate-400" />
@@ -897,14 +897,14 @@ export default function VentasPage() {
                                 </button>
                               )}
                               <button
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-panel-content transition-colors text-left"
                                 onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); downloadVentasPDF([venta], miNegocio) }}
                               >
                                 <FileDown className="w-4 h-4 text-slate-400" />
                                 Descargar PDF
                               </button>
                               <button
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-panel-content transition-colors text-left"
                                 onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/ventas/ventas/nueva?duplicar=${venta.id}`) }}
                               >
                                 <Copy className="w-4 h-4 text-slate-400" />
@@ -1042,7 +1042,7 @@ export default function VentasPage() {
                             <div className="col-span-4" />
 
                             {/* ITEM cell — col-span-32 for all row types */}
-                            <div className={`col-span-32 bg-slate-50 ${isExpanded ? "rounded-tl-md" : "rounded-l-md"} py-2.5 pl-3 pr-2 flex items-center gap-2`}>
+                            <div className={`col-span-32 bg-panel-content ${isExpanded ? "rounded-tl-md" : "rounded-l-md"} py-2.5 pl-3 pr-2 flex items-center gap-2`}>
                               {isMulti && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); toggleExpandVenta(venta.id) }}
@@ -1101,7 +1101,7 @@ export default function VentasPage() {
                             </div>
 
                             {/* UNIDADES ���� col-span-20: qty for single, summary for multi */}
-                            <div className="col-span-20 bg-slate-50 flex items-center px-3">
+                            <div className="col-span-20 bg-panel-content flex items-center px-3">
                               {!isMulti && firstItem ? (
                                 <QtyCell item={firstItem} />
                               ) : (
@@ -1113,12 +1113,12 @@ export default function VentasPage() {
                             </div>
 
                             {/* PRECIO UNITARIO — col-span-16 */}
-                            <div className="col-span-16 bg-slate-50 flex items-center px-3">
+                            <div className="col-span-16 bg-panel-content flex items-center px-3">
                               {!isMulti && firstItem && <PrecioCell item={firstItem} />}
                             </div>
 
                             {/* TOTAL — col-span-24, left-aligned to match subtotal column */}
-                            <div className={`col-span-24 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
+                            <div className={`col-span-24 bg-panel-content ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
                               <span className="text-sm font-semibold text-slate-800">Total: ${venta.total.toLocaleString("es-AR")}</span>
                             </div>
                             <div className="col-span-4" />
@@ -1131,7 +1131,7 @@ export default function VentasPage() {
                                 <Fragment key={`${venta.id}-exp-${idx}`}>
                                   <div className="col-span-4" />
                                   {/* Item name */}
-                                  <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60`}>
+                                  <div className={`col-span-32 bg-panel-content border-t border-slate-200/60`}>
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); setViewingItem(item) }}
@@ -1162,15 +1162,15 @@ export default function VentasPage() {
                                     </button>
                                   </div>
                                   {/* Unidades */}
-                                  <div className="col-span-20 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                  <div className="col-span-20 bg-panel-content px-3 py-2 border-t border-slate-200/60 flex items-center">
                                     <QtyCell item={item} />
                                   </div>
                                   {/* Precio unitario */}
-                                  <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                  <div className="col-span-16 bg-panel-content px-3 py-2 border-t border-slate-200/60 flex items-center">
                                     <PrecioCell item={item} />
                                   </div>
                                   {/* Subtotal — empty cell to preserve grid structure */}
-                                  <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60`} />
+                                  <div className={`col-span-24 bg-panel-content border-t border-slate-200/60`} />
                                   <div className="col-span-4" />
                                 </Fragment>
                               )
@@ -1312,7 +1312,7 @@ export default function VentasPage() {
                           className={`px-3 py-2.5 rounded-lg border text-sm font-medium text-left transition-colors ${
                             finalizarMedioPago === opt.value
                               ? "border-slate-900 bg-slate-900 text-white"
-                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                              : "border-slate-200 bg-white text-slate-700 hover:bg-panel-content"
                           }`}
                         >
                           {opt.label}
@@ -1324,7 +1324,7 @@ export default function VentasPage() {
               </div>
 
               {/* Footer */}
-              <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 flex items-center justify-between">
+              <div className="border-t border-slate-200 bg-panel-content px-5 py-3 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={closeModal}
@@ -1484,7 +1484,7 @@ function VentasPeriodSelector({
               type="button"
               onClick={() => onSelect("ninguno" as PeriodKey)}
               className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
-                noPeriod ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
+                noPeriod ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-panel-content"
               }`}
             >
               Ninguno
@@ -1501,7 +1501,7 @@ function VentasPeriodSelector({
                 className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer flex items-center justify-between ${
                   !noPeriod && currentKey === opt.key
                     ? "bg-slate-900 text-white"
-                    : "text-slate-700 hover:bg-slate-50"
+                    : "text-slate-700 hover:bg-panel-content"
                 }`}
               >
                 <span>{opt.label}</span>
@@ -1526,7 +1526,7 @@ function VentasPeriodSelector({
                 className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
                   !noPeriod && currentKey === opt.key
                     ? "bg-slate-900 text-white"
-                    : "text-slate-700 hover:bg-slate-50"
+                    : "text-slate-700 hover:bg-panel-content"
                 }`}
               >
                 {opt.label}
@@ -1633,7 +1633,7 @@ function VentasRangeCalendarDialog({
                     ? "bg-slate-100 text-slate-700"
                     : isFuture
                     ? "text-slate-300 cursor-not-allowed"
-                    : "text-slate-700 hover:bg-slate-50"
+                    : "text-slate-700 hover:bg-panel-content"
                 }`}
               >
                 {d.getDate()}
@@ -1642,7 +1642,7 @@ function VentasRangeCalendarDialog({
           })}
         </div>
         <div className="mt-4 flex gap-2">
-          <button type="button" onClick={onCancel} className="flex-1 h-9 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors">
+          <button type="button" onClick={onCancel} className="flex-1 h-9 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-panel-content cursor-pointer transition-colors">
             Cancelar
           </button>
           <button

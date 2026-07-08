@@ -200,7 +200,7 @@ function ProveedoresContent() {
           </div>
 
           {/* ── Scrollable region ──────────────────────────────────────────── */}
-          <div className="flex-1 overflow-y-auto bg-slate-50">
+          <div className="flex-1 overflow-y-auto bg-panel-content">
 
             {/* Top row */}
             <div className="px-8 pt-12 pb-8">
@@ -211,7 +211,7 @@ function ProveedoresContent() {
                 <button
                   type="button"
                   onClick={() => setShowNuevo(true)}
-                  className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                  className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-panel-content cursor-pointer mt-1"
                 >
                   <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
                   Nuevo Proveedor
@@ -223,7 +223,7 @@ function ProveedoresContent() {
             <div className="sticky top-0 z-20">
 
               {/* Row 1 — Search + tags + filtrar/ordenar + count */}
-              <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 pt-2 pb-0">
+              <div className="relative z-10 bg-panel-content/95 backdrop-blur-sm px-8 pt-2 pb-0">
                 <div className="max-w-6xl mx-auto border-b border-slate-100 pb-2">
                   <div className="flex items-center gap-2">
 
@@ -279,7 +279,7 @@ function ProveedoresContent() {
                           className={`h-9 text-xs border shadow-sm px-3 rounded-md flex items-center gap-1.5 cursor-pointer transition-colors ${
                             hasFilters
                               ? "border-blue-400 text-blue-600 bg-blue-50"
-                              : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50 text-slate-600"
+                              : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-panel-content text-slate-600"
                           }`}
                         >
                           <ListFilter className="w-3.5 h-3.5" />
@@ -346,7 +346,7 @@ function ProveedoresContent() {
                           type="button"
                           onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
                           title={sortDir === "asc" ? "Ascendente" : "Descendente"}
-                          className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                          className="px-2.5 h-full hover:bg-panel-content transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
                         >
                           <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
                         </button>
@@ -374,7 +374,7 @@ function ProveedoresContent() {
               </div>
 
               {/* Row 2 — Bulk actions + Tab header together, same bg */}
-              <div className="px-8 bg-slate-50/95 backdrop-blur-sm pb-2">
+              <div className="px-8 bg-panel-content/95 backdrop-blur-sm pb-2">
                 <div className="max-w-6xl mx-auto">
                   {/* Bulk actions */}
                   <div className="bg-white border border-slate-200/80 rounded-lg">
@@ -410,7 +410,7 @@ function ProveedoresContent() {
                     </div>
                   </div>
                   {/* Tab header */}
-                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 bg-slate-50 rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 bg-panel-content rounded-lg overflow-hidden">
                     <div className="col-span-5 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider pl-4">Proveedor</div>
                     <div className="col-span-3 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Email</div>
                     <div className="col-span-2 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Teléfono</div>

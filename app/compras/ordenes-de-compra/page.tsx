@@ -416,7 +416,7 @@ export default function OrdenesDeCompraPage() {
 
           <main className="flex-1 flex flex-col overflow-hidden">
             {/* Scroll container */}
-            <div className="flex-1 overflow-y-auto bg-slate-50">
+            <div className="flex-1 overflow-y-auto bg-panel-content">
 
               {/* Title row — scrolls away */}
               <div className="px-8 pt-12 pb-8">
@@ -459,7 +459,7 @@ export default function OrdenesDeCompraPage() {
                   <button
                     type="button"
                     onClick={() => router.push("/compras/ordenes-de-compra/nueva")}
-                    className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                    className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-panel-content cursor-pointer mt-1"
                   >
                     <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
                     Nueva Orden
@@ -475,7 +475,7 @@ export default function OrdenesDeCompraPage() {
                     const countBorrador  = periodOrdenesByDate.filter(o => o.estado === "borrador").length
 
                     const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
-                      if (disabled) return "border rounded-xl px-6 py-5 shadow-sm text-left border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed w-full"
+                      if (disabled) return "border rounded-xl px-6 py-5 shadow-sm text-left border-slate-100 bg-panel-content opacity-40 cursor-not-allowed w-full"
                       if (active) return `border rounded-xl px-6 py-5 shadow-sm text-left transition-all cursor-pointer w-full ${activeColor}`
                       return `border rounded-xl px-6 py-5 shadow-sm text-left transition-all cursor-pointer w-full bg-white border-slate-200/80 ${hoverColor}`
                     }
@@ -534,7 +534,7 @@ export default function OrdenesDeCompraPage() {
               <div className="sticky top-0 z-20">
 
                 {/* Row 1: Search + tags + Filtrar/Ordenar */}
-                <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 py-2">
+                <div className="relative z-10 bg-panel-content/95 backdrop-blur-sm px-8 py-2">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
                       {/* Search input */}
@@ -631,7 +631,7 @@ export default function OrdenesDeCompraPage() {
                             className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
                               hasActiveFilters
                                 ? "border-blue-400 text-blue-600 bg-blue-50"
-                                : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
+                                : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-panel-content"
                             }`}
                           >
                             <ListFilter className="w-3.5 h-3.5" />
@@ -672,7 +672,7 @@ export default function OrdenesDeCompraPage() {
                             type="button"
                             onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
                             title={sortDir === "asc" ? "Ascendente" : "Descendente"}
-                            className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                            className="px-2.5 h-full hover:bg-panel-content transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
                           >
                             <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
                           </button>
@@ -814,7 +814,7 @@ export default function OrdenesDeCompraPage() {
                                   <button
                                     type="button"
                                     onClick={() => prov && setViewingProveedorId(prov.id)}
-                                    className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border border-slate-200 bg-slate-50 shadow-sm shrink-0 hover:border-slate-300 hover:bg-slate-100 transition-colors cursor-pointer"
+                                    className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border border-slate-200 bg-panel-content shadow-sm shrink-0 hover:border-slate-300 hover:bg-slate-100 transition-colors cursor-pointer"
                                   >
                                     <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
                                       <span className="text-[9px] font-bold text-white uppercase">{orden.proveedorNombre.charAt(0)}</span>
@@ -850,14 +850,14 @@ export default function OrdenesDeCompraPage() {
                                     </button>
                                   )}
                                   <button
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-panel-content transition-colors text-left"
                                     onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); downloadOrdenCompraPDF([orden], miNegocio) }}
                                   >
                                     <FileDown className="w-4 h-4 text-slate-400" />
                                     Descargar PDF
                                   </button>
                                   <button
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-panel-content transition-colors text-left"
                                     onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/compras/ordenes-de-compra/nueva?duplicar=${orden.id}`) }}
                                   >
                                     <Copy className="w-4 h-4 text-slate-400" />
@@ -920,7 +920,7 @@ export default function OrdenesDeCompraPage() {
                                 <div className="col-span-4" />
 
                                 {/* ITEM cell */}
-                                <div className={`col-span-32 bg-slate-50 ${isExpanded ? "rounded-tl-md" : "rounded-l-md"} py-2.5 pl-3 pr-2 flex items-center gap-2`}>
+                                <div className={`col-span-32 bg-panel-content ${isExpanded ? "rounded-tl-md" : "rounded-l-md"} py-2.5 pl-3 pr-2 flex items-center gap-2`}>
                                   {isMulti && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); toggleExpandOrden(orden.id) }}
@@ -978,7 +978,7 @@ export default function OrdenesDeCompraPage() {
                                 </div>
 
                                 {/* UNIDADES */}
-                                <div className="col-span-20 bg-slate-50 flex items-center px-3">
+                                <div className="col-span-20 bg-panel-content flex items-center px-3">
                                   {!isMulti && firstItem ? (
                                     <QtyCell item={firstItem} />
                                   ) : (
@@ -990,12 +990,12 @@ export default function OrdenesDeCompraPage() {
                                 </div>
 
                                 {/* PRECIO UNITARIO */}
-                                <div className="col-span-16 bg-slate-50 flex items-center px-3">
+                                <div className="col-span-16 bg-panel-content flex items-center px-3">
                                   {!isMulti && firstItem && <PrecioCell item={firstItem} />}
                                 </div>
 
                                 {/* TOTAL */}
-                                <div className={`col-span-24 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
+                                <div className={`col-span-24 bg-panel-content ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
                                   <span className="text-sm font-semibold text-slate-800">Total est.: ${orden.importeEstimado.toLocaleString("es-AR")}</span>
                                 </div>
                                 <div className="col-span-4" />
@@ -1006,7 +1006,7 @@ export default function OrdenesDeCompraPage() {
                                   return (
                                     <Fragment key={`${orden.id}-exp-${idx}`}>
                                       <div className="col-span-4" />
-                                      <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60`}>
+                                      <div className={`col-span-32 bg-panel-content border-t border-slate-200/60`}>
                                         <div
                                           className="w-full px-3 py-2 flex items-start gap-3 rounded hover:bg-slate-100/70 transition-colors cursor-pointer"
                                           onClick={(e) => { e.stopPropagation(); setViewingItem(item as unknown as VentaItem) }}
@@ -1035,13 +1035,13 @@ export default function OrdenesDeCompraPage() {
                                           </div>
                                         </div>
                                       </div>
-                                      <div className="col-span-20 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                      <div className="col-span-20 bg-panel-content px-3 py-2 border-t border-slate-200/60 flex items-center">
                                         <QtyCell item={item} />
                                       </div>
-                                      <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                      <div className="col-span-16 bg-panel-content px-3 py-2 border-t border-slate-200/60 flex items-center">
                                         <PrecioCell item={item} />
                                       </div>
-                                      <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60`} />
+                                      <div className={`col-span-24 bg-panel-content border-t border-slate-200/60`} />
                                       <div className="col-span-4" />
                                     </Fragment>
                                   )
@@ -1087,7 +1087,7 @@ export default function OrdenesDeCompraPage() {
                     </p>
                   </div>
                   <div className="bg-white border-t border-amber-100">
-                    <div className="grid grid-cols-[36px_1fr_auto_auto] h-9 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-50 border-b border-slate-200">
+                    <div className="grid grid-cols-[36px_1fr_auto_auto] h-9 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-panel-content border-b border-slate-200">
                       <div className="flex items-center justify-center">
                         <input
                           type="checkbox"
@@ -1114,7 +1114,7 @@ export default function OrdenesDeCompraPage() {
                       return (
                         <div
                           key={diff.sku}
-                          className={`grid grid-cols-[36px_1fr_auto_auto] border-b border-slate-100 last:border-b-0 py-2.5 cursor-pointer transition-colors ${isChecked ? "bg-slate-50/70" : "hover:bg-slate-50/40"}`}
+                          className={`grid grid-cols-[36px_1fr_auto_auto] border-b border-slate-100 last:border-b-0 py-2.5 cursor-pointer transition-colors ${isChecked ? "bg-panel-content/70" : "hover:bg-panel-content/40"}`}
                           onClick={() => toggleOneCosto(diff.sku, !isChecked)}
                         >
                           <div className="flex items-center justify-center">
@@ -1280,7 +1280,7 @@ function OrdenesComprasPeriodSelector({
               type="button"
               onClick={() => onSelect("ninguno" as PeriodKey)}
               className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
-                noPeriod ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
+                noPeriod ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-panel-content"
               }`}
             >
               Ninguno
@@ -1297,7 +1297,7 @@ function OrdenesComprasPeriodSelector({
                 className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer flex items-center justify-between ${
                   !noPeriod && currentKey === opt.key
                     ? "bg-slate-900 text-white"
-                    : "text-slate-700 hover:bg-slate-50"
+                    : "text-slate-700 hover:bg-panel-content"
                 }`}
               >
                 <span>{opt.label}</span>
@@ -1322,7 +1322,7 @@ function OrdenesComprasPeriodSelector({
                 className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
                   !noPeriod && currentKey === opt.key
                     ? "bg-slate-900 text-white"
-                    : "text-slate-700 hover:bg-slate-50"
+                    : "text-slate-700 hover:bg-panel-content"
                 }`}
               >
                 {opt.label}
@@ -1429,7 +1429,7 @@ function OrdenesComprasRangeCalendarDialog({
                     ? "bg-slate-100 text-slate-700"
                     : isFuture
                     ? "text-slate-300 cursor-not-allowed"
-                    : "text-slate-700 hover:bg-slate-50"
+                    : "text-slate-700 hover:bg-panel-content"
                 }`}
               >
                 {d.getDate()}
@@ -1438,7 +1438,7 @@ function OrdenesComprasRangeCalendarDialog({
           })}
         </div>
         <div className="mt-4 flex gap-2">
-          <button type="button" onClick={onCancel} className="flex-1 h-9 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors">
+          <button type="button" onClick={onCancel} className="flex-1 h-9 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-panel-content cursor-pointer transition-colors">
             Cancelar
           </button>
           <button

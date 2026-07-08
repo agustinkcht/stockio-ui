@@ -57,6 +57,12 @@
   --container-item-foreground: oklch(0.25 0 0);
   --container-item-accent: oklch(0.87 0.002 240);
 
+  /* ===== PANEL CONTENT BACKGROUND ===== */
+  /* Shared background for the scrollable content area of all main list views */
+  /* (Catálogo, Lista de Precios, Stock, Clientes, Proveedores, Compras, Ventas, Presupuestos, Órdenes de Compra) */
+  /* Change this single value to retheme all of them at once */
+  --panel-content: #e8e7e3;
+
   /* ===== SURFACE VARIANTS ===== */
   --surface-elevated: oklch(0.99 0.001 85); /* Elevated surfaces like cards */
   --surface-hover: oklch(0.94 0.002 85); /* Hover state for interactive surfaces */
@@ -229,6 +235,9 @@
   --color-container-item: var(--container-item);
   --color-container-item-foreground: var(--container-item-foreground);
   --color-container-item-accent: var(--container-item-accent);
+
+  /* ===== PANEL CONTENT ===== */
+  --color-panel-content: var(--panel-content);
 
   /* ===== SURFACE VARIANTS ===== */
   --color-surface-elevated: var(--surface-elevated);

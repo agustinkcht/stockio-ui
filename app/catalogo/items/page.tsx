@@ -447,7 +447,7 @@ export default function CatalogoPage() {
           </div>
 
           {/* Scrollable content */}
-          <main className="flex-1 flex bg-[#e8e7e3] overflow-hidden">
+          <main className="flex-1 flex bg-panel-content overflow-hidden">
             <div className="flex-1 flex flex-col overflow-auto">
 
               {/* Title row — scrolls away */}
@@ -461,7 +461,7 @@ export default function CatalogoPage() {
                       <button
                         type="button"
                         onClick={() => setNuevoItemDropdownOpen(v => !v)}
-                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-panel-content cursor-pointer"
                       >
                         <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
                         Nuevo Item
@@ -473,14 +473,14 @@ export default function CatalogoPage() {
                             <button
                               type="button"
                               onClick={() => { setNuevoItemDropdownOpen(false); router.push("/catalogo/items/nuevo") }}
-                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-panel-content transition-colors cursor-pointer"
                             >
                               Creación Individual
                             </button>
                             <button
                               type="button"
                               onClick={() => { setNuevoItemDropdownOpen(false); router.push("/catalogo/creador-masivo") }}
-                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-panel-content transition-colors cursor-pointer"
                             >
                               Creador Masivo
                             </button>
@@ -496,7 +496,7 @@ export default function CatalogoPage() {
               <div className="sticky top-0 z-20">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 bg-[#e8e7e3]/95 backdrop-blur-sm px-8 py-2">
+                <div className="relative z-10 bg-panel-content/95 backdrop-blur-sm px-8 py-2">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
 
@@ -573,7 +573,7 @@ export default function CatalogoPage() {
                         <button
                           type="button"
                           onClick={() => { openFilterModal(); setSortOpen(false) }}
-                          className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${hasActiveFilters ? "border-blue-400 text-blue-600 bg-blue-50" : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"}`}
+                          className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${hasActiveFilters ? "border-blue-400 text-blue-600 bg-blue-50" : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-panel-content"}`}
                         >
                           <ListFilter className="w-3.5 h-3.5" />
                           <span>Filtros</span>
@@ -585,7 +585,7 @@ export default function CatalogoPage() {
                             type="button"
                             onClick={() => setSortDir(sortDir === "asc" ? "desc" : "asc")}
                             title={sortDir === "asc" ? "Ascendente" : "Descendente"}
-                            className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                            className="px-2.5 h-full hover:bg-panel-content transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
                           >
                             <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
                           </button>
@@ -612,7 +612,7 @@ export default function CatalogoPage() {
                 </div>
 
                 {/* Row 2: Bulk actions + tab header */}
-                <div className="px-8 bg-[#e8e7e3]/95 backdrop-blur-sm pb-2">
+                <div className="px-8 bg-panel-content/95 backdrop-blur-sm pb-2">
                   <div className="max-w-6xl mx-auto">
                   <div className="bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
@@ -907,7 +907,7 @@ export default function CatalogoPage() {
 
             {/* Footer */}
             <div className="px-5 py-4 border-t border-slate-100 flex items-center gap-2 shrink-0">
-              <button type="button" onClick={clearFilters} className="flex-1 h-9 text-xs font-medium rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors cursor-pointer">
+              <button type="button" onClick={clearFilters} className="flex-1 h-9 text-xs font-medium rounded-lg border border-slate-200 text-slate-500 hover:bg-panel-content hover:text-slate-700 transition-colors cursor-pointer">
                 Limpiar filtros
               </button>
               <button type="button" onClick={applyFilters} className="flex-1 h-9 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer">
@@ -960,7 +960,7 @@ export default function CatalogoPage() {
                 </p>
               </div>
               {/* Footer */}
-              <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+              <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-panel-content/50">
                 <button onClick={handleCancelDelete} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
                   Cancelar
                 </button>
@@ -1002,7 +1002,7 @@ export default function CatalogoPage() {
               <p className="text-sm text-slate-500 leading-relaxed">Dejarán de existir en el catálogo, pero seguirán formando parte del histórico de ventas y actividad.</p>
             </div>
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-panel-content/50">
               <button onClick={handleCancelBatchDelete} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
                 Cancelar
               </button>
