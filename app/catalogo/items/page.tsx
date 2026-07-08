@@ -418,10 +418,10 @@ export default function CatalogoPage() {
         </div>
 
         {/* Main panel */}
-        <div className="flex-1 flex flex-col bg-[#f0efeb] rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
 
           {/* Top utility bar */}
-          <div className="relative border-b border-border h-[44px] bg-[#f0efeb] z-[100004]">
+          <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
@@ -447,7 +447,7 @@ export default function CatalogoPage() {
           </div>
 
           {/* Scrollable content */}
-          <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-hidden">
+          <main className="flex-1 flex bg-[#e8e7e3] overflow-hidden">
             <div className="flex-1 flex flex-col overflow-auto">
 
               {/* Title row — scrolls away */}
