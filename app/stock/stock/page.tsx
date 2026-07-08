@@ -514,7 +514,7 @@ export default function StockPage() {
                     </div>
                   </div>
                   {/* Tab header */}
-                  <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] h-9 border border-slate-200/80 mt-2 bg-slate-100 rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] h-9 border border-slate-200/80 mt-2 bg-slate-50 rounded-lg overflow-hidden">
                     <div className="flex items-center justify-center px-4 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
