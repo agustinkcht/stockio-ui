@@ -381,7 +381,8 @@ export default function NuevoItemPage() {
           <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
             {/* Header */}
             <div className="relative h-[44px] bg-white z-[100004]">
-              <div className="px-8 flex items-center justify-between h-full">
+              <div className="px-8 h-full flex items-center">
+              <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Breadcrumb items={breadcrumbs} />
                 </div>
@@ -481,7 +482,8 @@ export default function NuevoItemPage() {
           <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
             {/* Header */}
             <div className="relative h-[44px] bg-white z-[100004]">
-              <div className="px-8 flex items-center justify-between h-full">
+              <div className="px-8 h-full flex items-center">
+              <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Breadcrumb items={breadcrumbs} />
                 </div>
@@ -582,7 +584,8 @@ export default function NuevoItemPage() {
           <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
             {/* Header */}
             <div className="relative h-[44px] bg-white z-[100004]">
-              <div className="px-8 flex items-center justify-between h-full">
+              <div className="px-8 h-full flex items-center">
+              <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Breadcrumb items={breadcrumbs} />
                 </div>
@@ -1961,7 +1964,8 @@ export default function NuevoItemPage() {
           <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
             {/* Header */}
             <div className="relative h-[44px] bg-white z-[100004]">
-              <div className="px-8 flex items-center justify-between h-full">
+              <div className="px-8 h-full flex items-center">
+              <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Breadcrumb items={breadcrumbs} />
                 </div>
@@ -2801,7 +2805,8 @@ export default function NuevoItemPage() {
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
           {/* Header */}
           <div className="relative h-[44px] bg-white z-[100004]">
-            <div className="px-8 flex items-center justify-between h-full">
+            <div className="px-8 h-full flex items-center">
+              <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Breadcrumb items={breadcrumbs} />
               </div>
