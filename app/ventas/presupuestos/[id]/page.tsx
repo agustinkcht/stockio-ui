@@ -700,8 +700,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
           {/* Utility Bar */}
           <div className="relative h-[44px] bg-white">
-            <div className="px-8 h-full flex items-center">
-              <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
+            <div className="px-8 h-full flex items-center justify-between">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
@@ -713,7 +712,6 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                   </div>
                 )}
               <UserPanel />
-              </div>
             </div>
           </div>
 

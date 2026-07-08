@@ -183,8 +183,7 @@ function ClientesContent() {
 
           {/* ── Utility bar ────────────────────────────────────────────────── */}
           <div className="relative h-[44px] bg-white z-[100004] shrink-0">
-            <div className="px-8 h-full flex items-center">
-              <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
+            <div className="px-8 h-full flex items-center justify-between">
               <Breadcrumb items={breadcrumbs} />
                             <div className="flex items-center gap-2 min-w-[200px] justify-end">
                 {showSaveSuccess && (
@@ -194,7 +193,6 @@ function ClientesContent() {
                   </div>
                 )}
               <UserPanel />
-              </div>
             </div>
           </div>
 

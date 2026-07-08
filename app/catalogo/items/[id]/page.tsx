@@ -207,8 +207,7 @@ export default function CatalogoItemDetailPage() {
 
         <div className="flex-1 flex flex-col bg-white h-screen overflow-hidden relative z-10">
           <div className="relative h-[44px] bg-white">
-            <div className="px-8 h-full flex items-center">
-              <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
+            <div className="px-8 h-full flex items-center justify-between">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} onNavigate={guardedNavigate} />
               </div>
@@ -225,7 +224,6 @@ export default function CatalogoItemDetailPage() {
                   </div>
                 )}
               <UserPanel />
-              </div>
             </div>
           </div>
 
