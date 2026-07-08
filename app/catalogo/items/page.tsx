@@ -400,7 +400,7 @@ export default function CatalogoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1e1e1e]">
+    <div className="min-h-screen bg-[rgb(243,242,238)]">
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
 
         {/* Sidebar */}
@@ -418,10 +418,10 @@ export default function CatalogoPage() {
         </div>
 
         {/* Main panel */}
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+        <div className="flex-1 flex flex-col bg-[#f0efeb] rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
 
           {/* Top utility bar */}
-          <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
+          <div className="relative border-b border-border h-[44px] bg-[#f0efeb] z-[100004]">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
