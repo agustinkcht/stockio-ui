@@ -35,20 +35,20 @@
   --ring: oklch(0.708 0 0);
 
   /* ===== LAYOUT COMPONENTS ===== */
-  /* Sidebar - Light cool gray */
-  --sidebar: oklch(0.88 0.003 240);
-  --sidebar-foreground: oklch(0.25 0 0);
-  --sidebar-primary: oklch(0.25 0 0);
-  --sidebar-primary-foreground: oklch(0.88 0.003 240);
-  --sidebar-accent: oklch(0.82 0.003 240);
-  --sidebar-accent-foreground: oklch(0.2 0 0);
-  --sidebar-border: oklch(0.8 0.003 240);
-  --sidebar-ring: oklch(0.6 0.003 240);
+  /* Sidebar */
+  --sidebar: #1B1C20;
+  --sidebar-foreground: #F0F0F2;
+  --sidebar-primary: #2E2F35;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #2E2F35;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2E2F35;
+  --sidebar-ring: #3E3F46;
 
-  /* Navbar - Light cool gray, slightly darker than sidebar */
-  --navbar: oklch(0.86 0.003 240);
-  --navbar-foreground: oklch(0.25 0 0);
-  --navbar-accent: oklch(0.8 0.003 240);
+  /* Navbar — same dark base as sidebar, forms a single structural L-shape */
+  --navbar: #1B1C20;
+  --navbar-foreground: #9A9BA3;
+  --navbar-accent: #2E2F35;
 
   /* Toolbar Header - Lighter cool gray for tab headers */
   --toolbar-header: oklch(0.84 0.003 240);
