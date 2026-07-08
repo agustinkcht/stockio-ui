@@ -5,19 +5,16 @@
 
 :root {
   /* ===== BASE COLORS ===== */
-  /* Softer, warmer whites for main background and cards */
-  --background: oklch(0.96 0.002 85);
-  /* Softer warm off-white */
+  --background: #F7F8FA;
   --foreground: oklch(0.145 0 0);
   --card: oklch(0.99 0.001 85);
-  /* Very light warm white for cards */
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(0.99 0.001 85);
   --popover-foreground: oklch(0.145 0 0);
 
   /* ===== SEMANTIC COLORS ===== */
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #151721;
+  --primary-foreground: #FFFFFF;
   --secondary: rgb(248, 247, 243);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.93 0.002 85);
@@ -30,34 +27,34 @@
   --success-foreground: oklch(0.985 0 0);
 
   /* ===== BORDERS & INPUTS ===== */
-  --border: oklch(0.88 0.002 85);
-  --input: oklch(0.88 0.002 85);
+  --border: #DCDFE6;
+  --input: #DCDFE6;
   --ring: oklch(0.708 0 0);
 
   /* ===== LAYOUT COMPONENTS ===== */
-  /* Sidebar - Light cool gray */
-  --sidebar: oklch(0.88 0.003 240);
-  --sidebar-foreground: oklch(0.25 0 0);
-  --sidebar-primary: oklch(0.25 0 0);
-  --sidebar-primary-foreground: oklch(0.88 0.003 240);
-  --sidebar-accent: oklch(0.82 0.003 240);
-  --sidebar-accent-foreground: oklch(0.2 0 0);
-  --sidebar-border: oklch(0.8 0.003 240);
-  --sidebar-ring: oklch(0.6 0.003 240);
+  /* Sidebar */
+  --sidebar: #1B1C20;
+  --sidebar-foreground: #F0F0F2;
+  --sidebar-primary: #2E2F35;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #2E2F35;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2E2F35;
+  --sidebar-ring: #3E3F46;
 
-  /* Navbar - Light cool gray, slightly darker than sidebar */
-  --navbar: oklch(0.86 0.003 240);
-  --navbar-foreground: oklch(0.25 0 0);
-  --navbar-accent: oklch(0.8 0.003 240);
+  /* Navbar — same as sidebar so they form a single dark L-shape */
+  --navbar: #1B1C20;
+  --navbar-foreground: #9A9BA3;
+  --navbar-accent: #2E2F35;
 
-  /* Toolbar Header - Lighter cool gray for tab headers */
-  --toolbar-header: oklch(0.84 0.003 240);
-  --toolbar-header-foreground: oklch(0.3 0 0);
+  /* Toolbar Header */
+  --toolbar-header: #DBDEE7;
+  --toolbar-header-foreground: #4A4E5A;
 
-  /* Container Items - Lighter cool gray for agrupador items */
-  --container-item: oklch(0.91 0.002 240);
+  /* Container Items */
+  --container-item: #E9EBF0;
   --container-item-foreground: oklch(0.25 0 0);
-  --container-item-accent: oklch(0.87 0.002 240);
+  --container-item-accent: #DBDEE7;
 
   /* ===== PANEL CONTENT BACKGROUND ===== */
   /* Shared background for the scrollable content area of all main list views */

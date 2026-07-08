@@ -370,7 +370,7 @@ export function ItemsGrid({
         {/* Bulk actions + Tab Header */}
         <div className="px-4 pb-2 pt-2">
           {/* Bulk actions bar */}
-          <div className="bg-white border border-slate-200/80">
+          <div className="bg-white border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md">
             <div className="flex items-center gap-2 h-9 px-3">
               {/* Select all checkbox */}
               <div className="flex items-center justify-center shrink-0">
