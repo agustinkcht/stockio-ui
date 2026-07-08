@@ -1087,7 +1087,7 @@ export default function OrdenesDeCompraPage() {
                     </p>
                   </div>
                   <div className="bg-white border-t border-amber-100">
-                    <div className="grid grid-cols-[36px_1fr_auto_auto] h-9 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-panel-content border-b border-slate-200">
+                    <div className="grid grid-cols-[36px_1fr_auto_auto] h-9 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-100 border-b border-slate-200">
                       <div className="flex items-center justify-center">
                         <input
                           type="checkbox"

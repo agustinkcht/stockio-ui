@@ -593,7 +593,7 @@ export default function ListaDePreciosPage() {
                   </div>
 
                   {/* Tab header */}
-                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 rounded-lg overflow-hidden bg-slate-100">
                     <div className="col-span-6 flex items-center justify-center px-4 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>

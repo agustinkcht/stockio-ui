@@ -410,7 +410,7 @@ function ProveedoresContent() {
                     </div>
                   </div>
                   {/* Tab header */}
-                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 bg-panel-content rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 bg-slate-100 rounded-lg overflow-hidden">
                     <div className="col-span-5 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider pl-4">Proveedor</div>
                     <div className="col-span-3 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Email</div>
                     <div className="col-span-2 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Teléfono</div>
