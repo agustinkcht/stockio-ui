@@ -72,7 +72,7 @@ export function Sidebar({
   }
 
   return (
-    <div ref={containerRef} className="h-full flex flex-col z-[99999] bg-white shadow-sm rounded-lg w-20">
+    <div ref={containerRef} className="h-full flex flex-col z-[99999] bg-sidebar rounded-lg w-20">
       {/* Main Navigation */}
       <nav className="flex-1 space-y-1 px-2 pt-4">
       {sidebarItems.map((item, index) => {
@@ -95,18 +95,20 @@ export function Sidebar({
                 {/* Icon Container */}
                 <div
                   className={`flex items-center justify-center size-8 rounded-md transition-colors ${
-                    isActive || isOpen ? "bg-gray-100" : "hover:bg-gray-100"
+                    isActive || isOpen ? "bg-sidebar-accent" : "hover:bg-sidebar-accent"
                   }`}
                 >
                   <item.icon
                     className={`flex-shrink-0 size-5 ${
-                      isActive || isOpen ? "text-sidebar-foreground" : "text-sidebar-foreground/70"
+                      isActive || isOpen ? "text-sidebar-foreground" : "text-sidebar-muted"
                     }`}
                   />
                 </div>
 
                 {/* Label */}
-                <span className="text-[10px] font-medium text-center leading-tight px-1 max-w-full truncate text-sidebar-foreground/70">
+                <span className={`text-[10px] font-medium text-center leading-tight px-1 max-w-full truncate ${
+                  isActive || isOpen ? "text-sidebar-foreground" : "text-sidebar-muted"
+                }`}>
                   {item.label}
                 </span>
               </button>
@@ -180,13 +182,15 @@ export function Sidebar({
                 }}
               >
                 <div className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${
-                  isActive ? "bg-gray-100" : "hover:bg-gray-100"
+                  isActive ? "bg-sidebar-accent" : "hover:bg-sidebar-accent"
                 }`}>
                   <item.icon className={`w-5 h-5 flex-shrink-0 ${
-                    isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/70"
+                    isActive ? "text-sidebar-foreground" : "text-sidebar-muted"
                   }`} />
                 </div>
-                <span className="text-[10px] font-medium text-center leading-tight px-1 max-w-full truncate text-sidebar-foreground/70">
+                <span className={`text-[10px] font-medium text-center leading-tight px-1 max-w-full truncate ${
+                  isActive ? "text-sidebar-foreground" : "text-sidebar-muted"
+                }`}>
                   {item.label}
                 </span>
               </button>

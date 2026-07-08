@@ -103,7 +103,7 @@ export function UtilityBar({
   }, [itemCreated])
 
   return (
-    <div className="border-b border-border px-8 flex flex-col transition-all duration-300 bg-white">
+    <div className="border-b border-sidebar-border px-8 flex flex-col transition-all duration-300 bg-navbar">
       <div className="flex items-center justify-between h-[36px]">
         <div className="flex items-center">
           <Breadcrumb items={breadcrumbItems} />
