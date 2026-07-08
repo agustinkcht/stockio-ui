@@ -461,9 +461,9 @@ export default function CatalogoPage() {
                       <button
                         type="button"
                         onClick={() => setNuevoItemDropdownOpen(v => !v)}
-                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-panel-content cursor-pointer"
+                        className="h-9 px-4 text-sm font-semibold transition-colors gap-2 rounded-lg flex items-center bg-[#151721] text-white hover:bg-[#2A2C38] cursor-pointer"
                       >
-                        <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                        <Plus className="w-4 h-4 text-white" strokeWidth={2.25} />
                         Nuevo Item
                       </button>
                       {nuevoItemDropdownOpen && (
