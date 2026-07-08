@@ -460,8 +460,7 @@ export default function DashboardPage() {
           />
         </div>
 
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white rounded-lg shadow-sm h-[calc(100vh-12px)]">
-          {/* Top bar */}
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white h-screen">
           {/* Breadcrumb + Profile */}
           <div className="px-8 pt-5 pb-0 flex items-center justify-between shrink-0">
             <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }]} />
