@@ -187,8 +187,6 @@ function ClientesContent() {
             <Breadcrumb items={breadcrumbs} />
             <UserPanel />
           </div>
-            </div>
-          </div>
 
           {/* ── Scrollable region ──────────────────────────────────────────── */}
           <div className="flex-1 overflow-y-auto bg-panel-content">
