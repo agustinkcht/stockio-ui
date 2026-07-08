@@ -137,7 +137,7 @@ export default function PerfilPage() {
 
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white rounded-lg shadow-sm h-[calc(100vh-12px)]">
           {/* Header */}
-          <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20]">
+          <div className="relative h-[44px] bg-transparent">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={[{ label: "Perfil", href: "/perfil" }]} />

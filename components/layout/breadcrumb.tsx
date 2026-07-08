@@ -32,19 +32,19 @@ export function Breadcrumb({ items, onNavigate }: BreadcrumbProps) {
               onNavigate ? (
                 <button
                   onClick={() => onNavigate(item.href!)}
-                  className="text-sidebar-muted hover:text-sidebar-foreground cursor-pointer transition-colors bg-transparent border-none p-0 text-sm"
+                  className="text-slate-400 hover:text-slate-700 cursor-pointer transition-colors bg-transparent border-none p-0 text-sm"
                 >
                   {item.label}
                 </button>
               ) : (
-                <Link href={item.href} className="text-sidebar-muted hover:text-sidebar-foreground cursor-pointer transition-colors">
+                <Link href={item.href} className="text-slate-400 hover:text-slate-700 cursor-pointer transition-colors">
                   {item.label}
                 </Link>
               )
             ) : (
-              <span className={isLast ? "text-sidebar-foreground font-medium" : "text-sidebar-muted"}>{item.label}</span>
+              <span className={isLast ? "text-slate-800 font-semibold" : "text-slate-400"}>{item.label}</span>
             )}
-            {!isLast && <ChevronRight className="w-3.5 h-3.5 text-sidebar-muted" />}
+            {!isLast && <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
           </div>
         )
       })}
