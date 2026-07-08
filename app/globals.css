@@ -61,7 +61,7 @@
   /* Shared background for the scrollable content area of all main list views */
   /* (Catálogo, Lista de Precios, Stock, Clientes, Proveedores, Compras, Ventas, Presupuestos, Órdenes de Compra) */
   /* Change this single value to retheme all of them at once */
-  --panel-content: #e8e7e3;
+  --panel-content: #EEF0F3;
 
   /* ===== SURFACE VARIANTS ===== */
   --surface-elevated: oklch(0.99 0.001 85); /* Elevated surfaces like cards */
