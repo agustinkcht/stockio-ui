@@ -325,7 +325,7 @@ export default function StockPage() {
 
               {/* Row 1 — Search + filter tags + Filtrar/Ordenar + count */}
               <div className="relative z-10 bg-panel-content/95 backdrop-blur-sm px-8 pt-2 pb-0">
-                <div className="max-w-6xl mx-auto border-b border-slate-100 pb-2">
+                <div className="max-w-6xl mx-auto pb-2">
                   <div className="flex items-center gap-2">
 
                     {/* Search */}
