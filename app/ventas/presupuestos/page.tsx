@@ -629,7 +629,7 @@ export default function PresupuestosPage() {
                 </div>
 
                 {/* Row 2: Bulk actions */}
-                <div className="px-8">
+                <div className="px-8 bg-panel-content/95 backdrop-blur-sm pb-2">
                   <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
                       <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
