@@ -35,17 +35,17 @@
   --ring: oklch(0.708 0 0);
 
   /* ===== LAYOUT COMPONENTS ===== */
-  /* Sidebar — dark, solid, no transparency */
-  --sidebar: #1B1C20;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #2E2F35;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #2E2F35;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #2E2F35;
-  --sidebar-ring: #3E3F46;
+  /* Sidebar — white */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1B1C20;
+  --sidebar-primary: #F1F2F4;
+  --sidebar-primary-foreground: #1B1C20;
+  --sidebar-accent: #F1F2F4;
+  --sidebar-accent-foreground: #1B1C20;
+  --sidebar-border: #E4E6EB;
+  --sidebar-ring: #C8CAD0;
   /* Muted icon/text color for unselected items */
-  --sidebar-muted: #9A9BA3;
+  --sidebar-muted: #6B7280;
 
   /* Navbar — same dark base as sidebar, forms a continuous L-shape */
   --navbar: #1B1C20;
@@ -65,7 +65,7 @@
   /* Shared background for the scrollable content area of all main list views */
   /* (Catálogo, Lista de Precios, Stock, Clientes, Proveedores, Compras, Ventas, Presupuestos, Órdenes de Compra) */
   /* Change this single value to retheme all of them at once */
-  --panel-content: #E4E6EB;
+  --panel-content: #F1F5F9;
 
   /* ===== SURFACE VARIANTS ===== */
   --surface-elevated: oklch(0.99 0.001 85);
