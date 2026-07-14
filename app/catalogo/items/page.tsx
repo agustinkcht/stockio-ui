@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
-import { Plus, Search, X, ListFilter, ArrowUpDown, CheckCircle2, Pause, Play, ChevronDown, Trash2 } from "lucide-react"
+import { Plus, Search, X, ListFilter, ArrowUpDown, CheckCircle2, Pause, Play, ChevronDown, Trash2, Bell } from "lucide-react"
 import { useAccount } from "@/lib/contexts/account-context"
 
 import { Sidebar } from "@/components/layout/sidebar"
@@ -10,7 +10,6 @@ import { CatalogoGrid } from "@/components/catalogo/catalogo-grid"
 import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
 import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
 import { TemplateModal } from "@/components/modals/template-modal"
-import { UserPanel } from "@/components/layout/user-panel"
 import { useItems } from "@/hooks/use-items"
 import { useItemSelection } from "@/hooks/use-item-selection"
 import { useModals } from "@/hooks/use-modals"
@@ -419,16 +418,13 @@ export default function CatalogoPage() {
       {/* Right column: top bar + content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
 
-        {/* Top bar — breadcrumb left, UserPanel center, toasts right */}
-        <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20] z-[100004] shrink-0">
+        {/* Navbar — breadcrumb left, bell right */}
+        <div className="relative border-b border-white/[0.06] h-[44px] bg-transparent z-[100004] shrink-0">
           <div className="px-4 flex items-center justify-between h-full">
             <div className="flex items-center">
               <Breadcrumb items={breadcrumbs} />
             </div>
-            <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
-              <UserPanel />
-            </div>
-            <div className="flex items-center gap-2 min-w-[200px] justify-end">
+            <div className="flex items-center gap-3">
               {showSaveSuccess && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
                   <CheckCircle2 className="w-4 h-4 text-green-600" />
@@ -441,6 +437,9 @@ export default function CatalogoPage() {
                   <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
                 </div>
               )}
+              <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-white/[0.06] transition-colors cursor-pointer">
+                <Bell className="w-4 h-4 text-sidebar-muted" />
+              </button>
             </div>
           </div>
         </div>
