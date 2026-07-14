@@ -24,7 +24,7 @@ export function Breadcrumb({ items, onNavigate, variant = "light" }: BreadcrumbP
   const activeClass = variant === "dark" ? "text-white font-semibold" : "text-sidebar-foreground font-medium"
   const hoverClass = variant === "dark" ? "hover:text-white" : "hover:text-sidebar-foreground"
   const chevronClass = variant === "dark" ? "text-slate-500" : "text-sidebar-muted"
-  const sizeClass = variant === "dark" ? "text-base" : "text-sm"
+  const sizeClass = variant === "dark" ? "text-sm" : "text-sm"
 
   return (
     <nav className={`flex items-center gap-2 ${sizeClass}`}>
