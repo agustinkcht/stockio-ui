@@ -468,8 +468,11 @@ export default function CatalogoPage() {
                   <div className="relative" ref={profileRef}>
                     <button
                       onClick={() => setProfileOpen(v => !v)}
-                      className="flex items-center gap-2 bg-[#151721] hover:bg-[#1e2130] rounded-full pl-1 pr-4 py-1 transition-colors cursor-pointer"
+                      className="flex items-center gap-2 bg-[#151721] hover:bg-[#1e2130] rounded-full pl-4 pr-1 py-1 transition-colors cursor-pointer"
                     >
+                      <span className="text-sm font-medium text-slate-200 max-w-[120px] truncate">
+                        {currentUser.businessName}
+                      </span>
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 shrink-0 flex items-center justify-center">
                         {currentUser.avatar ? (
                           <Image src={currentUser.avatar} alt={currentUser.businessName} width={32} height={32} className="w-full h-full object-cover" />
@@ -479,9 +482,6 @@ export default function CatalogoPage() {
                           </span>
                         )}
                       </div>
-                      <span className="text-sm font-medium text-slate-200 max-w-[120px] truncate">
-                        {currentUser.businessName}
-                      </span>
                     </button>
 
                     {/* Dropdown */}
