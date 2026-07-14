@@ -1,7 +1,8 @@
 "use client"
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
-import { Plus, Search, X, ListFilter, ArrowUpDown, CheckCircle2, Pause, Play, ChevronDown, Trash2, Bell } from "lucide-react"
+import { Plus, Search, X, ListFilter, ArrowUpDown, CheckCircle2, Pause, Play, ChevronDown, Trash2, Bell, LogOut, UserCog } from "lucide-react"
+import Image from "next/image"
 import { useAccount } from "@/lib/contexts/account-context"
 
 import { Sidebar } from "@/components/layout/sidebar"
@@ -33,10 +34,23 @@ export default function CatalogoPage() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const { currentAccount } = useAccount()
+  const { currentAccount, currentUser, logout } = useAccount()
 
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!profileOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [profileOpen])
   const [toastLabel, setToastLabel] = useState<string | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "info" } | null>(null)
@@ -429,8 +443,8 @@ export default function CatalogoPage() {
                 <Breadcrumb items={breadcrumbs} variant="dark" />
               </div>
 
-              {/* Bell circle + toasts */}
-              <div className="flex items-center gap-3">
+              {/* Right side: toasts + bell + profile */}
+              <div className="flex items-center gap-2">
                 {showSaveSuccess && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
                     <CheckCircle2 className="w-4 h-4 text-green-600" />
@@ -443,9 +457,74 @@ export default function CatalogoPage() {
                     <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
                   </div>
                 )}
+
+                {/* Bell circle */}
                 <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#151721] hover:bg-[#1e2130] transition-colors cursor-pointer">
                   <Bell className="w-5 h-5 text-slate-300" />
                 </button>
+
+                {/* Profile pill */}
+                {currentUser && (
+                  <div className="relative" ref={profileRef}>
+                    <button
+                      onClick={() => setProfileOpen(v => !v)}
+                      className="flex items-center gap-2 bg-[#151721] hover:bg-[#1e2130] rounded-full pl-1 pr-4 py-1 transition-colors cursor-pointer"
+                    >
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 shrink-0 flex items-center justify-center">
+                        {currentUser.avatar ? (
+                          <Image src={currentUser.avatar} alt={currentUser.businessName} width={32} height={32} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xs font-semibold text-white">
+                            {currentUser.businessName?.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium text-slate-200 max-w-[120px] truncate">
+                        {currentUser.businessName}
+                      </span>
+                    </button>
+
+                    {/* Dropdown */}
+                    {profileOpen && (
+                      <div className="absolute top-full right-0 mt-2 w-52 bg-white border border-border rounded-lg shadow-lg py-2 z-[100010]">
+                        <div className="px-4 py-3 border-b border-border">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-full overflow-hidden bg-muted shrink-0">
+                              {currentUser.avatar ? (
+                                <Image src={currentUser.avatar} alt={currentUser.businessName} width={36} height={36} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-sm font-semibold text-muted-foreground">
+                                  {currentUser.businessName?.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{currentUser.businessName}</p>
+                              <p className="text-xs text-muted-foreground truncate">{currentUser.email}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="py-1">
+                          <button
+                            onClick={() => { setProfileOpen(false); router.push("/perfil") }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+                          >
+                            <UserCog className="w-4 h-4 text-muted-foreground" />
+                            Editar Perfil
+                          </button>
+                          <div className="h-px bg-border/50 mx-4 my-1" />
+                          <button
+                            onClick={logout}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-destructive/5 transition-colors cursor-pointer"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            Cerrar Sesión
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -1,10 +1,7 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { LogOut, UserCog } from "lucide-react"
-import Image from "next/image"
-import { useAccount } from "@/lib/contexts/account-context"
 import type { SidebarItem } from "@/lib/types"
 
 interface SidebarProps {
@@ -28,20 +25,6 @@ export function Sidebar({
   const navigate = (href: string) => onNavigate ? onNavigate(href) : router.push(href)
   const pathname = usePathname()
   const containerRef = useRef<HTMLDivElement>(null)
-  const { currentUser, logout } = useAccount()
-  const [profileOpen, setProfileOpen] = useState(false)
-  const profileRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!profileOpen) return
-    const handleClick = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setProfileOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [profileOpen])
 
   // Close dropdown on click outside the sidebar
   useEffect(() => {
@@ -215,74 +198,6 @@ export function Sidebar({
           )
         })}
 
-        {/* Profile icon */}
-        {currentUser && (
-          <div className="relative" ref={profileRef}>
-            <button
-              className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer"
-              onClick={() => setProfileOpen(v => !v)}
-            >
-              <div className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors overflow-hidden ${profileOpen ? "bg-sidebar-accent ring-1 ring-sidebar-foreground/20" : "hover:bg-sidebar-accent"}`}>
-                {currentUser.avatar ? (
-                  <Image
-                    src={currentUser.avatar}
-                    alt={currentUser.businessName}
-                    width={32}
-                    height={32}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-[11px] font-semibold text-sidebar-foreground">
-                    {currentUser.businessName?.charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <span className="text-[10px] font-medium text-center leading-tight px-1 max-w-full truncate text-sidebar-muted">
-                Perfil
-              </span>
-            </button>
-
-            {/* Profile dropdown */}
-            {profileOpen && (
-              <div className="absolute bottom-full left-full mb-0 ml-2 w-52 bg-white border border-border rounded-lg shadow-lg py-2 z-[100010]">
-                <div className="px-4 py-3 border-b border-border">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-md overflow-hidden bg-muted shrink-0">
-                      {currentUser.avatar ? (
-                        <Image src={currentUser.avatar} alt={currentUser.businessName} width={36} height={36} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-sm font-semibold text-muted-foreground">
-                          {currentUser.businessName?.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{currentUser.businessName}</p>
-                      <p className="text-xs text-muted-foreground truncate">{currentUser.email}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="py-1">
-                  <button
-                    onClick={() => { setProfileOpen(false); navigate("/perfil") }}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
-                  >
-                    <UserCog className="w-4 h-4 text-muted-foreground" />
-                    Editar Perfil
-                  </button>
-                  <div className="h-px bg-border/50 mx-4 my-1" />
-                  <button
-                    onClick={logout}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-destructive/5 transition-colors cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Cerrar Sesión
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </nav>
     </div>
   )
