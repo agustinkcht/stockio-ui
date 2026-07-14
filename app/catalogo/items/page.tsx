@@ -422,80 +422,40 @@ export default function CatalogoPage() {
         <main className="flex-1 flex bg-panel-content overflow-hidden">
           <div className="flex-1 flex flex-col overflow-auto">
 
-            {/* Sticky breadcrumb / bell row — blurred transparent, two floating capsules */}
-            <div className="sticky top-0 z-[100004] bg-panel-content/60 backdrop-blur-[3px] flex items-center justify-between px-8 py-3 shrink-0 border-none">
-              {/* Breadcrumb pill */}
-              <div className="flex items-center bg-[#151721] rounded-full px-4 py-2">
-                <Breadcrumb items={breadcrumbs} variant="dark" />
-              </div>
+            {/* Single sticky header — one blur layer covers breadcrumb + search/bulk */}
+            <div className="sticky top-0 z-[100004] bg-panel-content/60 backdrop-blur-[3px]">
 
-              {/* Bell circle + toasts */}
-              <div className="flex items-center gap-3">
-                {showSaveSuccess && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700 font-medium">{toastLabel ?? "Guardado"}</span>
-                  </div>
-                )}
-                {statusMessage && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in duration-300">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
-                  </div>
-                )}
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#151721] hover:bg-[#1e2130] transition-colors cursor-pointer">
-                  <Bell className="w-5 h-5 text-slate-300" />
-                </button>
-              </div>
-            </div>
+              {/* Breadcrumb / bell row */}
+              <div className="flex items-center justify-between px-8 py-3">
+                {/* Breadcrumb pill */}
+                <div className="flex items-center bg-[#151721] rounded-full px-4 py-2">
+                  <Breadcrumb items={breadcrumbs} variant="dark" />
+                </div>
 
-              {/* Title row — scrolls away */}
-              <div className="px-8 pt-6 pb-8">
-                <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
-                  <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-                    Catálogo
-                  </h1>
-                  <div className="flex items-center gap-2 mt-1 shrink-0 relative">
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setNuevoItemDropdownOpen(v => !v)}
-                        className="h-9 px-4 text-sm font-semibold transition-colors gap-2 rounded-lg flex items-center bg-[#151721] text-white hover:bg-[#2A2C38] cursor-pointer"
-                      >
-                        <Plus className="w-4 h-4 text-white" strokeWidth={2.25} />
-                        Nuevo Item
-                      </button>
-                      {nuevoItemDropdownOpen && (
-                        <>
-                          <div className="fixed inset-0 z-[90]" onClick={() => setNuevoItemDropdownOpen(false)} />
-                          <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-[100] py-1 overflow-hidden">
-                            <button
-                              type="button"
-                              onClick={() => { setNuevoItemDropdownOpen(false); router.push("/catalogo/items/nuevo") }}
-                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-panel-content transition-colors cursor-pointer"
-                            >
-                              Creación Individual
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => { setNuevoItemDropdownOpen(false); router.push("/catalogo/creador-masivo") }}
-                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-panel-content transition-colors cursor-pointer"
-                            >
-                              Creador Masivo
-                            </button>
-                          </div>
-                        </>
-                      )}
+                {/* Bell circle + toasts */}
+                <div className="flex items-center gap-3">
+                  {showSaveSuccess && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span className="text-sm text-green-700 font-medium">{toastLabel ?? "Guardado"}</span>
                     </div>
-                  </div>
+                  )}
+                  {statusMessage && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in duration-300">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
+                    </div>
+                  )}
+                  <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#151721] hover:bg-[#1e2130] transition-colors cursor-pointer">
+                    <Bell className="w-5 h-5 text-slate-300" />
+                  </button>
                 </div>
               </div>
 
-              {/* Sticky search + bulk bar */}
-              <div className="sticky top-[60px] z-20">
+              {/* Search + bulk rows */}
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 bg-panel-content/60 backdrop-blur-[3px] px-8 py-2">
+                <div className="relative z-10 px-8 py-2">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
 
@@ -611,7 +571,7 @@ export default function CatalogoPage() {
                 </div>
 
                 {/* Row 2: Bulk actions + tab header */}
-                <div className="px-8 bg-panel-content/60 backdrop-blur-[3px] pb-2">
+                <div className="px-8 pb-2">
                   <div className="max-w-6xl mx-auto">
                   <div className="bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
@@ -698,7 +658,8 @@ export default function CatalogoPage() {
                   </div>
                 </div>
 
-              </div>{/* /sticky */}
+              </div>{/* /search+bulk */}
+            </div>{/* /sticky outer */}
 
               {/* Grid */}
               <CatalogoGrid
