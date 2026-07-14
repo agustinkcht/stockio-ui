@@ -399,7 +399,7 @@ export default function CatalogoPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[rgb(243,242,238)]" onClick={handleCloseDropdowns}>
+    <div className="flex h-screen overflow-hidden bg-panel-content" onClick={handleCloseDropdowns}>
 
       {/* Sidebar — flush left, full height */}
       <div onClick={(e) => e.stopPropagation()} className="relative h-screen sticky top-0 z-[100003] shrink-0">
@@ -419,7 +419,7 @@ export default function CatalogoPage() {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
 
         {/* Navbar — breadcrumb left, bell right */}
-        <div className="relative border-b border-white/[0.06] h-[44px] bg-transparent z-[100004] shrink-0">
+        <div className="relative border-b border-slate-200 h-[44px] bg-panel-content z-[100004] shrink-0">
           <div className="px-4 flex items-center justify-between h-full">
             <div className="flex items-center">
               <Breadcrumb items={breadcrumbs} />
@@ -437,8 +437,8 @@ export default function CatalogoPage() {
                   <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
                 </div>
               )}
-              <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-white/[0.06] transition-colors cursor-pointer">
-                <Bell className="w-4 h-4 text-sidebar-muted" />
+              <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-200/70 transition-colors cursor-pointer">
+                <Bell className="w-4 h-4 text-slate-400" />
               </button>
             </div>
           </div>
