@@ -413,7 +413,7 @@ export default function CatalogoPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-panel-content" onClick={handleCloseDropdowns}>
+    <div className="flex h-screen overflow-hidden" onClick={handleCloseDropdowns}>
 
       {/* Sidebar — flush left, full height */}
       <div onClick={(e) => e.stopPropagation()} className="relative h-screen sticky top-0 z-[100003] shrink-0">
@@ -433,11 +433,11 @@ export default function CatalogoPage() {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
 
         {/* Scrollable content */}
-        <main className="flex-1 flex bg-panel-content overflow-hidden">
+        <main className="flex-1 flex overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/nvll_bg_slate.png')" }}>
           <div className="flex-1 flex flex-col overflow-auto">
 
             {/* Sticky breadcrumb / bell row — blurred transparent, two floating capsules */}
-            <div className="sticky top-0 z-[100004] bg-panel-content/60 backdrop-blur-[3px] flex items-center justify-between px-8 py-3 shrink-0 border-none">
+            <div className="sticky top-0 z-[100004] bg-white/50 backdrop-blur-[3px] flex items-center justify-between px-8 py-3 shrink-0 border-none">
               {/* Breadcrumb pill */}
               <div className="flex items-center bg-[#151721] rounded-full px-4 py-2">
                 <Breadcrumb items={breadcrumbs} variant="dark" />
@@ -574,7 +574,7 @@ export default function CatalogoPage() {
               <div className="sticky top-[60px] z-20">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 bg-panel-content/60 backdrop-blur-[3px] px-8 py-2">
+                <div className="relative z-10 bg-white/50 backdrop-blur-[3px] px-8 py-2">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
 
@@ -690,7 +690,7 @@ export default function CatalogoPage() {
                 </div>
 
                 {/* Row 2: Bulk actions + tab header */}
-                <div className="px-8 bg-panel-content/60 backdrop-blur-[3px] pb-2">
+                <div className="px-8 bg-white/50 backdrop-blur-[3px] pb-2">
                   <div className="max-w-6xl mx-auto">
                   <div className="bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
