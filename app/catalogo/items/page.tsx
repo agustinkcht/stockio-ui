@@ -418,34 +418,34 @@ export default function CatalogoPage() {
       {/* Right column: top bar + content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
 
-        {/* Navbar — full-bleed, breadcrumb left, bell right */}
-        <div className="flex items-center justify-between border-b border-slate-200 h-[44px] bg-panel-content z-[100004] shrink-0 pl-4 pr-3">
-          <Breadcrumb items={breadcrumbs} />
-          <div className="flex items-center gap-2">
-            {showSaveSuccess && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-green-700 font-medium">{toastLabel ?? "Guardado"}</span>
-              </div>
-            )}
-            {statusMessage && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in duration-300">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
-              </div>
-            )}
-            <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-200/70 transition-colors cursor-pointer">
-              <Bell className="w-4 h-4 text-slate-400" />
-            </button>
-          </div>
-        </div>
-
         {/* Scrollable content */}
         <main className="flex-1 flex bg-panel-content overflow-hidden">
           <div className="flex-1 flex flex-col overflow-auto">
 
+            {/* Sticky breadcrumb / bell row — inside scroll container, same padding as content */}
+            <div className="sticky top-0 z-[100004] bg-panel-content flex items-center justify-between px-8 h-[44px]">
+              <Breadcrumb items={breadcrumbs} />
+              <div className="flex items-center gap-2">
+                {showSaveSuccess && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">{toastLabel ?? "Guardado"}</span>
+                  </div>
+                )}
+                {statusMessage && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in duration-300">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
+                  </div>
+                )}
+                <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-200/70 transition-colors cursor-pointer">
+                  <Bell className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+
               {/* Title row — scrolls away */}
-              <div className="px-8 pt-12 pb-8">
+              <div className="px-8 pt-6 pb-8">
                 <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
                   <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
                     Catálogo
