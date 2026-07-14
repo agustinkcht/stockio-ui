@@ -532,7 +532,7 @@ export default function CatalogoPage() {
               <div className="px-8 pt-6 pb-8">
                 <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
                   <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-                    Catálogo
+                    Items
                   </h1>
                   <div className="flex items-center gap-2 mt-1 shrink-0 relative">
                     <div className="relative">

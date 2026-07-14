@@ -97,7 +97,7 @@ export default function StockPage() {
     handleCloseDropdowns,
   } = useSidebar()
 
-  const breadcrumbs = [{ label: "Stock" }, { label: "Stock", href: "/stock/stock" }]
+  const breadcrumbs = [{ label: "Catálogo" }, { label: "Stock", href: "/catalogo/stock" }]
 
   const hasChanges = hasUnsavedEdits
 

@@ -151,7 +151,7 @@ export default function ListaDePreciosPage() {
     handleCloseDropdowns,
   } = useSidebar()
 
-  const breadcrumbs = [{ label: "Precios" }, { label: "Lista de Precios", href: "/precios/lista-de-precios" }]
+  const breadcrumbs = [{ label: "Catálogo" }, { label: "Lista de Precios", href: "/catalogo/lista-de-precios" }]
 
   const canUndo = canUndoEdit || hasUnsavedDeletes
   const canRedo = canRedoEdit

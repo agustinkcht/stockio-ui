@@ -1,4 +1,4 @@
-import { Store, Box, Tag, Settings, Receipt, Users, Wallet, Package, LayoutList, LayoutDashboard } from "lucide-react"
+import { Store, Settings, Receipt, Users, Wallet, LayoutList, LayoutDashboard } from "lucide-react"
 import type { SidebarItem, Template } from "./types"
 
 export const TEMPLATES: Template[] = [
@@ -186,21 +186,11 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: LayoutList,
     label: "Catálogo",
     hasDropdown: true,
-    dropdown: [{ label: "Items", href: "/catalogo/items" }],
-  },
-  {
-    icon: Tag,
-    label: "Precios",
-    hasDropdown: true,
-    dropdown: [{ label: "Lista de Precios", href: "/precios/lista-de-precios" }],
-  },
-  {
-    icon: Box,
-    label: "Stock",
-    hasDropdown: true,
     dividerAfter: true,
     dropdown: [
-      { label: "Stock", href: "/stock/stock" },
+      { label: "Items", href: "/catalogo/items" },
+      { label: "Lista de Precios", href: "/catalogo/lista-de-precios" },
+      { label: "Stock", href: "/catalogo/stock" },
     ],
   },
   {
