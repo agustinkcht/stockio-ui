@@ -749,7 +749,7 @@ export default function CatalogoPage() {
                   </div>
 
                   {/* Tab header — grid-cols-12: item(5) precio(3) stock(4) */}
-                  <div className="grid grid-cols-12 h-9 mt-2">
+                  <div className="grid grid-cols-12 h-8 mt-2">
                     <div className="col-span-5 flex items-center justify-center px-4">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
