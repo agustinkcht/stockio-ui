@@ -11,40 +11,45 @@ interface BreadcrumbItem {
 
 interface BreadcrumbProps {
   items?: BreadcrumbItem[]
-  // Optional intercept — if provided, breadcrumb clicks call this instead of navigating directly
   onNavigate?: (href: string) => void
+  variant?: "light" | "dark"
 }
 
-export function Breadcrumb({ items, onNavigate }: BreadcrumbProps) {
+export function Breadcrumb({ items, onNavigate, variant = "light" }: BreadcrumbProps) {
   const pathname = usePathname()
 
-  // Generate breadcrumb items based on current path if not provided
   const breadcrumbItems: BreadcrumbItem[] = items || generateBreadcrumbs(pathname)
 
+  const mutedClass = variant === "dark" ? "text-slate-400" : "text-sidebar-muted"
+  const activeClass = variant === "dark" ? "text-white font-semibold" : "text-sidebar-foreground font-medium"
+  const hoverClass = variant === "dark" ? "hover:text-white" : "hover:text-sidebar-foreground"
+  const chevronClass = variant === "dark" ? "text-slate-500" : "text-sidebar-muted"
+  const sizeClass = variant === "dark" ? "text-base" : "text-sm"
+
   return (
-    <nav className="flex items-center gap-1.5 text-sm">
+    <nav className={`flex items-center gap-2 ${sizeClass}`}>
       {breadcrumbItems.map((item, index) => {
         const isLast = index === breadcrumbItems.length - 1
 
         return (
-          <div key={index} className="flex items-center gap-1.5">
+          <div key={index} className="flex items-center gap-2">
             {item.href && !isLast ? (
               onNavigate ? (
                 <button
                   onClick={() => onNavigate(item.href!)}
-                  className="text-sidebar-muted hover:text-sidebar-foreground cursor-pointer transition-colors bg-transparent border-none p-0 text-sm"
+                  className={`${mutedClass} ${hoverClass} cursor-pointer transition-colors bg-transparent border-none p-0 ${sizeClass}`}
                 >
                   {item.label}
                 </button>
               ) : (
-                <Link href={item.href} className="text-sidebar-muted hover:text-sidebar-foreground cursor-pointer transition-colors">
+                <Link href={item.href} className={`${mutedClass} ${hoverClass} cursor-pointer transition-colors`}>
                   {item.label}
                 </Link>
               )
             ) : (
-              <span className={isLast ? "text-sidebar-foreground font-medium" : "text-sidebar-muted"}>{item.label}</span>
+              <span className={isLast ? activeClass : mutedClass}>{item.label}</span>
             )}
-            {!isLast && <ChevronRight className="w-3.5 h-3.5 text-sidebar-muted" />}
+            {!isLast && <ChevronRight className={`w-4 h-4 ${chevronClass}`} />}
           </div>
         )
       })}

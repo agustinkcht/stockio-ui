@@ -422,9 +422,9 @@ export default function CatalogoPage() {
         <main className="flex-1 flex bg-panel-content overflow-hidden">
           <div className="flex-1 flex flex-col overflow-auto">
 
-            {/* Sticky breadcrumb / bell row — inside scroll container, same padding as content */}
-            <div className="sticky top-0 z-[100004] bg-panel-content flex items-center justify-between px-8 h-[44px]">
-              <Breadcrumb items={breadcrumbs} />
+            {/* Sticky breadcrumb / bell row */}
+            <div className="sticky top-0 z-[100004] bg-slate-950 flex items-center justify-between px-8 h-[52px] shrink-0">
+              <Breadcrumb items={breadcrumbs} variant="dark" />
               <div className="flex items-center gap-2">
                 {showSaveSuccess && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
@@ -438,8 +438,8 @@ export default function CatalogoPage() {
                     <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
                   </div>
                 )}
-                <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-200/70 transition-colors cursor-pointer">
-                  <Bell className="w-4 h-4 text-slate-400" />
+                <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors cursor-pointer">
+                  <Bell className="w-5 h-5 text-slate-300" />
                 </button>
               </div>
             </div>
@@ -487,7 +487,7 @@ export default function CatalogoPage() {
               </div>
 
               {/* Sticky search + bulk bar */}
-              <div className="sticky top-0 z-20">
+              <div className="sticky top-[52px] z-20">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
                 <div className="relative z-10 bg-panel-content/95 backdrop-blur-sm px-8 py-2">
