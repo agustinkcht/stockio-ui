@@ -418,29 +418,25 @@ export default function CatalogoPage() {
       {/* Right column: top bar + content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
 
-        {/* Navbar — breadcrumb left, bell right */}
-        <div className="relative border-b border-slate-200 h-[44px] bg-panel-content z-[100004] shrink-0">
-          <div className="px-4 flex items-center justify-between h-full">
-            <div className="flex items-center">
-              <Breadcrumb items={breadcrumbs} />
-            </div>
-            <div className="flex items-center gap-3">
-              {showSaveSuccess && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  <span className="text-sm text-green-700 font-medium">{toastLabel ?? "Guardado"}</span>
-                </div>
-              )}
-              {statusMessage && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in duration-300">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
-                </div>
-              )}
-              <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-200/70 transition-colors cursor-pointer">
-                <Bell className="w-4 h-4 text-slate-400" />
-              </button>
-            </div>
+        {/* Navbar — full-bleed, breadcrumb left, bell right */}
+        <div className="flex items-center justify-between border-b border-slate-200 h-[44px] bg-panel-content z-[100004] shrink-0 pl-4 pr-3">
+          <Breadcrumb items={breadcrumbs} />
+          <div className="flex items-center gap-2">
+            {showSaveSuccess && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
+                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <span className="text-sm text-green-700 font-medium">{toastLabel ?? "Guardado"}</span>
+              </div>
+            )}
+            {statusMessage && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in duration-300">
+                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
+              </div>
+            )}
+            <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-200/70 transition-colors cursor-pointer">
+              <Bell className="w-4 h-4 text-slate-400" />
+            </button>
           </div>
         </div>
 
