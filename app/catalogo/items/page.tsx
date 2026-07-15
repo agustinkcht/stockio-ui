@@ -222,16 +222,10 @@ export default function CatalogoPage() {
 
   const hasActiveFilters = filterCategorias.length > 0 || filterMarcas.length > 0 || filterPrecioDesde != null || filterPrecioHasta != null || filterStockFlags.length > 0
 
-  // ── Filtered count for badge — standalones + all variant children ─────────
+  // ── Filtered count for badge ───────────────────────────────────────────────
   const filteredCount = useMemo(() => {
     const searched = searchItems(items, searchQuery)
-    const filtered = filterItems(searched, filterConfig)
-    return filtered.reduce((acc, item) => {
-      if (item.hasVariants && item.variants?.length) {
-        return acc + item.variants.length
-      }
-      return acc + 1
-    }, 0)
+    return filterItems(searched, filterConfig).length
   }, [items, searchQuery, filterConfig])
 
   // ── Filter modal open/apply/clear ─────────────────────────────────────────
@@ -443,9 +437,9 @@ export default function CatalogoPage() {
           <div className="flex-1 flex flex-col overflow-auto">
 
             {/* Sticky breadcrumb / bell row — blurred transparent, two floating capsules */}
-            <div className="sticky top-0 z-[100004] flex items-center justify-between px-8 py-3 shrink-0 bg-slate-400">
+            <div className="sticky top-0 z-[100004] flex items-center justify-between px-8 py-3 shrink-0" style={{ backgroundColor: "#DCDFE6" }}>
               {/* Breadcrumb pill */}
-              <div className="flex items-center bg-slate-950 rounded-full px-4 py-2">
+              <div className="flex items-center bg-[#151721] rounded-full px-4 py-2">
                 <Breadcrumb items={breadcrumbs} variant="dark" />
               </div>
 
@@ -465,7 +459,7 @@ export default function CatalogoPage() {
                 )}
 
                 {/* Bell circle */}
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-950 hover:bg-slate-800 transition-colors cursor-pointer">
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#151721] hover:bg-[#1e2130] transition-colors cursor-pointer">
                   <Bell className="w-5 h-5 text-slate-300" />
                 </button>
 
@@ -474,7 +468,7 @@ export default function CatalogoPage() {
                   <div className="relative" ref={profileRef}>
                     <button
                       onClick={() => setProfileOpen(v => !v)}
-                      className="flex items-center gap-2 bg-slate-950 hover:bg-slate-800 rounded-full pl-4 pr-1 py-1 transition-colors cursor-pointer"
+                      className="flex items-center gap-2 bg-[#151721] hover:bg-[#1e2130] rounded-full pl-4 pr-1 py-1 transition-colors cursor-pointer"
                     >
                       <span className="text-sm font-medium text-slate-200 max-w-[120px] truncate">
                         {currentUser.businessName}
@@ -535,7 +529,7 @@ export default function CatalogoPage() {
             </div>
 
               {/* Title row — scrolls away */}
-              <div className="px-8 pt-6 pb-8 bg-slate-400">
+              <div className="px-8 pt-6 pb-8" style={{ backgroundColor: "#DCDFE6" }}>
                 <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
                   <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
                     Items
@@ -545,7 +539,7 @@ export default function CatalogoPage() {
                       <button
                         type="button"
                         onClick={() => setNuevoItemDropdownOpen(v => !v)}
-                        className="h-9 px-4 text-sm font-semibold transition-colors gap-2 rounded-lg flex items-center bg-slate-950 text-white hover:bg-slate-800 cursor-pointer"
+                        className="h-9 px-4 text-sm font-semibold transition-colors gap-2 rounded-lg flex items-center bg-[#151721] text-white hover:bg-[#2A2C38] cursor-pointer"
                       >
                         <Plus className="w-4 h-4 text-white" strokeWidth={2.25} />
                         Nuevo Item
@@ -580,7 +574,7 @@ export default function CatalogoPage() {
               <div className="sticky top-[60px] z-20 backdrop-blur-[3px]">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 px-8 py-2 bg-gradient-to-b from-slate-400 to-slate-200">
+                <div className="relative z-10 px-8 py-2" style={{ backgroundColor: "#DCDFE6" }}>
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
 
@@ -687,7 +681,7 @@ export default function CatalogoPage() {
                         </div>
 
                         <div className="w-px h-5 bg-slate-200 shrink-0" />
-                        <span className="text-xs text-white whitespace-nowrap tabular-nums">
+                        <span className="text-xs text-slate-500 whitespace-nowrap tabular-nums">
                           {filteredCount} {filteredCount === 1 ? "item" : "items"}
                         </span>
                       </div>
@@ -696,7 +690,7 @@ export default function CatalogoPage() {
                 </div>
 
                 {/* Row 2: Bulk actions + tab header */}
-                <div className="px-8 pb-2 bg-gradient-to-b from-slate-200 to-slate-100">
+                <div className="px-8 pb-2" style={{ background: "linear-gradient(to bottom, #DCDFE6 0%, rgba(220,223,230,0.5) 60%, transparent 100%)" }}>
                   <div className="max-w-6xl mx-auto">
                   <div className="bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
@@ -755,7 +749,7 @@ export default function CatalogoPage() {
                   </div>
 
                   {/* Tab header — grid-cols-12: item(5) precio(3) stock(4) */}
-                  <div className="grid grid-cols-12 h-7 mt-2 backdrop-blur-[3px]">
+                  <div className="grid grid-cols-12 h-7 mt-2">
                     <div className="col-span-5 flex items-center justify-center px-4">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
