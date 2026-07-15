@@ -445,7 +445,7 @@ export default function CatalogoPage() {
             {/* Sticky breadcrumb / bell row — blurred transparent, two floating capsules */}
             <div className="sticky top-0 z-[100004] flex items-center justify-between px-8 py-3 shrink-0 bg-slate-400">
               {/* Breadcrumb pill */}
-              <div className="flex items-center bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+              <div className="flex items-center bg-slate-950 rounded-full px-4 py-2">
                 <Breadcrumb items={breadcrumbs} variant="dark" />
               </div>
 
@@ -465,8 +465,8 @@ export default function CatalogoPage() {
                 )}
 
                 {/* Bell circle */}
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors cursor-pointer">
-                  <Bell className="w-5 h-5 text-slate-700" />
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-950 hover:bg-slate-800 transition-colors cursor-pointer">
+                  <Bell className="w-5 h-5 text-slate-300" />
                 </button>
 
                 {/* Profile pill */}
@@ -474,9 +474,9 @@ export default function CatalogoPage() {
                   <div className="relative" ref={profileRef}>
                     <button
                       onClick={() => setProfileOpen(v => !v)}
-                      className="flex items-center gap-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full pl-4 pr-1 py-1 transition-colors cursor-pointer"
+                      className="flex items-center gap-2 bg-slate-950 hover:bg-slate-800 rounded-full pl-4 pr-1 py-1 transition-colors cursor-pointer"
                     >
-                      <span className="text-sm font-medium text-slate-700 max-w-[120px] truncate">
+                      <span className="text-sm font-medium text-slate-200 max-w-[120px] truncate">
                         {currentUser.businessName}
                       </span>
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 shrink-0 flex items-center justify-center">
@@ -545,7 +545,7 @@ export default function CatalogoPage() {
                       <button
                         type="button"
                         onClick={() => setNuevoItemDropdownOpen(v => !v)}
-                        className="h-9 px-4 text-sm font-semibold transition-colors gap-2 rounded-lg flex items-center bg-[#151721] text-white hover:bg-[#2A2C38] cursor-pointer"
+                        className="h-9 px-4 text-sm font-semibold transition-colors gap-2 rounded-lg flex items-center bg-slate-950 text-white hover:bg-slate-800 cursor-pointer"
                       >
                         <Plus className="w-4 h-4 text-white" strokeWidth={2.25} />
                         Nuevo Item
