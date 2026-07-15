@@ -574,7 +574,7 @@ export default function CatalogoPage() {
               <div className="sticky top-[60px] z-20 backdrop-blur-[3px]">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 bg-slate-100/80 px-8 py-2">
+                <div className="relative z-10 bg-slate-50 px-8 py-2">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
 
@@ -690,7 +690,7 @@ export default function CatalogoPage() {
                 </div>
 
                 {/* Row 2: Bulk actions + tab header */}
-                <div className="px-8 pb-2 bg-gradient-to-b from-slate-100/80 from-0% via-slate-100/40 via-50% to-transparent to-100%">
+                <div className="px-8 pb-2 bg-gradient-to-b from-slate-50 from-0% via-slate-50/50 via-60% to-transparent to-100%">
                   <div className="max-w-6xl mx-auto">
                   <div className="bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
