@@ -222,10 +222,16 @@ export default function CatalogoPage() {
 
   const hasActiveFilters = filterCategorias.length > 0 || filterMarcas.length > 0 || filterPrecioDesde != null || filterPrecioHasta != null || filterStockFlags.length > 0
 
-  // ── Filtered count for badge ───────────────────────────────────────────────
+  // ── Filtered count for badge — standalones + all variant children ─────────
   const filteredCount = useMemo(() => {
     const searched = searchItems(items, searchQuery)
-    return filterItems(searched, filterConfig).length
+    const filtered = filterItems(searched, filterConfig)
+    return filtered.reduce((acc, item) => {
+      if (item.hasVariants && item.variants?.length) {
+        return acc + item.variants.length
+      }
+      return acc + 1
+    }, 0)
   }, [items, searchQuery, filterConfig])
 
   // ── Filter modal open/apply/clear ─────────────────────────────────────────
@@ -439,7 +445,7 @@ export default function CatalogoPage() {
             {/* Sticky breadcrumb / bell row — blurred transparent, two floating capsules */}
             <div className="sticky top-0 z-[100004] flex items-center justify-between px-8 py-3 shrink-0 bg-slate-400">
               {/* Breadcrumb pill */}
-              <div className="flex items-center bg-[#151721] rounded-full px-4 py-2">
+              <div className="flex items-center bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
                 <Breadcrumb items={breadcrumbs} variant="dark" />
               </div>
 
@@ -459,8 +465,8 @@ export default function CatalogoPage() {
                 )}
 
                 {/* Bell circle */}
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#151721] hover:bg-[#1e2130] transition-colors cursor-pointer">
-                  <Bell className="w-5 h-5 text-slate-300" />
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors cursor-pointer">
+                  <Bell className="w-5 h-5 text-slate-700" />
                 </button>
 
                 {/* Profile pill */}
@@ -468,9 +474,9 @@ export default function CatalogoPage() {
                   <div className="relative" ref={profileRef}>
                     <button
                       onClick={() => setProfileOpen(v => !v)}
-                      className="flex items-center gap-2 bg-[#151721] hover:bg-[#1e2130] rounded-full pl-4 pr-1 py-1 transition-colors cursor-pointer"
+                      className="flex items-center gap-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full pl-4 pr-1 py-1 transition-colors cursor-pointer"
                     >
-                      <span className="text-sm font-medium text-slate-200 max-w-[120px] truncate">
+                      <span className="text-sm font-medium text-slate-700 max-w-[120px] truncate">
                         {currentUser.businessName}
                       </span>
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 shrink-0 flex items-center justify-center">
@@ -681,7 +687,7 @@ export default function CatalogoPage() {
                         </div>
 
                         <div className="w-px h-5 bg-slate-200 shrink-0" />
-                        <span className="text-xs text-slate-500 whitespace-nowrap tabular-nums">
+                        <span className="text-xs text-white whitespace-nowrap tabular-nums">
                           {filteredCount} {filteredCount === 1 ? "item" : "items"}
                         </span>
                       </div>
