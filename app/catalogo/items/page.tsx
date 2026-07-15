@@ -437,7 +437,7 @@ export default function CatalogoPage() {
           <div className="flex-1 flex flex-col overflow-auto">
 
             {/* Sticky breadcrumb / bell row — blurred transparent, two floating capsules */}
-            <div className="sticky top-0 z-[100004] bg-panel-content/60 backdrop-blur-[3px] flex items-center justify-between px-8 py-3 shrink-0 border-none">
+            <div className="sticky top-0 z-[100004] bg-slate-100 flex items-center justify-between px-8 py-3 shrink-0">
               {/* Breadcrumb pill */}
               <div className="flex items-center bg-[#151721] rounded-full px-4 py-2">
                 <Breadcrumb items={breadcrumbs} variant="dark" />
@@ -574,7 +574,7 @@ export default function CatalogoPage() {
               <div className="sticky top-[60px] z-20">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 bg-panel-content/60 backdrop-blur-[3px] px-8 py-2">
+                <div className="relative z-10 bg-slate-100 px-8 py-2">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
 
@@ -690,7 +690,7 @@ export default function CatalogoPage() {
                 </div>
 
                 {/* Row 2: Bulk actions + tab header */}
-                <div className="px-8 bg-panel-content/60 backdrop-blur-[3px] pb-2">
+                <div className="px-8 pb-2 bg-gradient-to-b from-transparent from-0% via-slate-100/60 via-50% to-slate-100 to-100% backdrop-blur-[3px]">
                   <div className="max-w-6xl mx-auto">
                   <div className="bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
