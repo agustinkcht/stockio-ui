@@ -749,8 +749,7 @@ export default function CatalogoPage() {
                   </div>
 
                   {/* Tab header — grid-cols-12: item(5) precio(3) stock(4) */}
-                  <div className="relative">
-                  <div className="grid grid-cols-12 h-7 mt-2">
+                  <div className="grid grid-cols-12 h-7 mt-2 backdrop-blur-[3px]">
                     <div className="col-span-5 flex items-center justify-center px-4">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
@@ -776,9 +775,6 @@ export default function CatalogoPage() {
                     </div>
                   </div>
                   </div>
-                  {/* Soft fade below tab header */}
-                  <div className="absolute bottom-0 left-0 right-0 h-3 translate-y-full bg-gradient-to-b from-slate-100/60 to-transparent pointer-events-none z-10" />
-                  </div>{/* /relative tab header wrapper */}
                 </div>
 
               </div>{/* /sticky */}
