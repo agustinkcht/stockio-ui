@@ -580,7 +580,7 @@ export default function CatalogoPage() {
               <div className="sticky top-[60px] z-20 backdrop-blur-[3px]">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 px-8 py-2 bg-gradient-to-b from-slate-100 to-slate-400">
+                <div className="relative z-10 px-8 py-2 bg-gradient-to-b from-slate-400 to-slate-100">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
 
