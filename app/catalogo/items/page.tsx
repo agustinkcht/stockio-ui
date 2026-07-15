@@ -580,7 +580,9 @@ export default function CatalogoPage() {
               <div className="sticky top-[60px] z-20 backdrop-blur-[3px]">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 px-8 py-2 bg-gradient-to-b from-slate-400 from-0% via-slate-400/60 via-70% to-transparent to-100%">
+                <div className="relative z-10 px-8 py-2 bg-slate-100">
+                  {/* Bottom edge transition: slate-100 → transparent, reveals blur below */}
+                  <div className="absolute bottom-0 left-0 right-0 h-3 translate-y-full bg-gradient-to-b from-slate-100 to-transparent pointer-events-none z-10" />
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
 
