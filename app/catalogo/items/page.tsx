@@ -571,10 +571,10 @@ export default function CatalogoPage() {
               </div>
 
               {/* Sticky search + bulk bar */}
-              <div className="sticky top-[60px] z-20">
+              <div className="sticky top-[60px] z-20 backdrop-blur-[3px]">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 bg-slate-100 px-8 py-2">
+                <div className="relative z-10 bg-slate-100/80 px-8 py-2">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
 
@@ -690,7 +690,7 @@ export default function CatalogoPage() {
                 </div>
 
                 {/* Row 2: Bulk actions + tab header */}
-                <div className="px-8 pb-2 bg-gradient-to-b from-slate-100 from-0% via-slate-100/60 via-50% to-transparent to-100% backdrop-blur-[3px]">
+                <div className="px-8 pb-2 bg-gradient-to-b from-slate-100/80 from-0% via-slate-100/40 via-50% to-transparent to-100%">
                   <div className="max-w-6xl mx-auto">
                   <div className="bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
@@ -749,7 +749,7 @@ export default function CatalogoPage() {
                   </div>
 
                   {/* Tab header — grid-cols-12: item(5) precio(3) stock(4) */}
-                  <div className="grid grid-cols-12 h-7 mt-2 backdrop-blur-[3px]">
+                  <div className="grid grid-cols-12 h-7 mt-2">
                     <div className="col-span-5 flex items-center justify-center px-4">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
