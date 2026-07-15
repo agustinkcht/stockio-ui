@@ -690,7 +690,7 @@ export default function CatalogoPage() {
                 </div>
 
                 {/* Row 2: Bulk actions + tab header */}
-                <div className="px-8 pb-2 bg-gradient-to-b from-transparent from-0% via-slate-100/60 via-50% to-slate-100 to-100% backdrop-blur-[3px]">
+                <div className="px-8 pb-2 bg-gradient-to-b from-slate-100 from-0% via-slate-100/60 via-50% to-transparent to-100% backdrop-blur-[3px]">
                   <div className="max-w-6xl mx-auto">
                   <div className="bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
