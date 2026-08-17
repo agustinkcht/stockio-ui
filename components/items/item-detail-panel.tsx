@@ -4,11 +4,12 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen, Pencil } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen, Pencil, Info } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import Image from "next/image"
 import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -240,7 +241,8 @@ export function ItemDetailPanel({
 
     if (isNaN(inputValue) || inputValue < 0) return
 
-    const currentValue = Number.parseInt(selectedItem?.stock?.[stockType] || "0")
+    const stockField = stockType === "total" ? "enStock" : stockType
+    const currentValue = Number.parseInt(selectedItem?.stock?.[stockField] || "0")
     let newValue = currentValue
 
     if (modification.operation === "agregar") {
@@ -982,12 +984,12 @@ export function ItemDetailPanel({
               >
                 {/* FRONT SIDE */}
                 <div
-                  className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 cursor-pointer"
+                  className="absolute inset-0 p-6 px-8 pr-11 border border-slate-200/60 rounded-xl bg-gradient-to-b from-white to-slate-50/30 shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] pl-11 ml-0 cursor-pointer"
                   style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
                   onClick={() => setIsCardFlipped(true)}
                 >
                   {/* Flip hint top-right */}
-                  <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
+                  <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors select-none pointer-events-none">
                     <span className="text-[10px] uppercase tracking-wider">Descripción</span>
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M9 18l6-6-6-6"/>
@@ -997,7 +999,7 @@ export function ItemDetailPanel({
                   <div className="mt-2">
                     <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
                       <Image
-                        src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                        src={getItemPhoto(selectedItem)}
                         alt={selectedItem.name}
                         width={200}
                         height={256}
@@ -1022,7 +1024,7 @@ export function ItemDetailPanel({
                             }
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="font-semibold text-white text-lg bg-transparent border-b border-white/40 focus:border-white outline-none text-center w-full max-w-[220px]"
+                          className="font-semibold text-slate-900 text-lg bg-transparent border-b border-slate-300 focus:border-slate-600 outline-none text-center w-full max-w-[220px]"
                           autoFocus
                         />
                       ) : (
@@ -1035,9 +1037,9 @@ export function ItemDetailPanel({
                             }
                           }}
                         >
-                          <h2 className="font-semibold text-white text-lg">{nameValue || selectedItem.name}</h2>
+                          <h2 className="font-semibold text-slate-900 text-lg">{nameValue || selectedItem.name}</h2>
                           {!isChildItem && (
-                            <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                            <Pencil className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover/title:opacity-100 transition-opacity" />
                           )}
                         </div>
                       )}
@@ -1046,7 +1048,7 @@ export function ItemDetailPanel({
                           {selectedItem.atributosPrincipales.map((attr, i) => (
                             <span
                               key={i}
-                              className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
+                              className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60 whitespace-nowrap"
                             >
                               {attr.value}
                             </span>
@@ -1058,33 +1060,33 @@ export function ItemDetailPanel({
                     {/* SKU and Código Universal below the line, in column */}
                     {!isViewingContainer && (
                       <>
-                        <div className="border-t border-slate-700/50 my-4"></div>
-                        <div className="flex flex-col gap-2 text-xs text-slate-400 font-mono">
+                        <div className="border-t border-slate-200 my-4"></div>
+                        <div className="flex flex-col gap-2 text-xs text-slate-500 font-mono">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-slate-200 w-8">SKU:</span>
+                            <span className="font-medium text-slate-700 w-8">SKU:</span>
                             <span>{selectedItem.sku}</span>
                             <button
                               onClick={(e) => { e.stopPropagation(); handleCopySku() }}
-                              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+                              className="text-slate-400 hover:text-slate-600 transition-colors p-0.5"
                               title="Copiar SKU"
                             >
                               {skuCopied ? (
-                                <span className="text-green-400 text-xs">✓</span>
+                                <span className="text-green-600 text-xs">✓</span>
                               ) : (
                                 <Copy className="h-3 w-3" />
                               )}
                             </button>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-slate-200 w-8">C.U.:</span>
+                            <span className="font-medium text-slate-700 w-8">C.U.:</span>
                             <span>{selectedItem.codigoUniversal || "N/A"}</span>
                             <button
                               onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
-                              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+                              className="text-slate-400 hover:text-slate-600 transition-colors p-0.5"
                               title="Copiar Código Universal"
                             >
                               {codigoUniversalCopied ? (
-                                <span className="text-green-400 text-xs">✓</span>
+                                <span className="text-green-600 text-xs">✓</span>
                               ) : (
                                 <Copy className="h-3 w-3" />
                               )}
@@ -1098,7 +1100,7 @@ export function ItemDetailPanel({
 
                 {/* BACK SIDE */}
                 <div
-                  className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 cursor-pointer"
+                  className="absolute inset-0 p-6 px-8 pr-11 border border-slate-200/60 rounded-xl bg-gradient-to-b from-white to-slate-50/30 shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] pl-11 ml-0 cursor-pointer"
                   style={{
                     backfaceVisibility: "hidden",
                     WebkitBackfaceVisibility: "hidden",
@@ -1107,7 +1109,7 @@ export function ItemDetailPanel({
                   onClick={() => setIsCardFlipped(false)}
                 >
                   {/* Flip back hint top-right */}
-                  <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
+                  <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors select-none pointer-events-none">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M15 18l-6-6 6-6"/>
                     </svg>
@@ -1115,7 +1117,7 @@ export function ItemDetailPanel({
                   </div>
 
                   <div className="flex flex-col h-full pt-2">
-                    <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
+                    <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-600">
                       Descripción
                     </h3>
                     <div className="flex-1">
@@ -1125,17 +1127,17 @@ export function ItemDetailPanel({
                           onChange={(e) => setDescripcionValue(e.target.value)}
                           onBlur={handleDescripcionBlur}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full h-full min-h-[200px] px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none text-sm placeholder:text-slate-500"
+                          className="w-full h-full min-h-[200px] px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none text-sm placeholder:text-slate-400"
                           placeholder="Agregar descripción del producto..."
                           autoFocus
                         />
                       ) : (
                         <div
                           onClick={(e) => { e.stopPropagation(); setEditingDescripcion(true) }}
-                          className="w-full min-h-[200px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-text hover:bg-slate-800/50 transition-colors text-sm"
+                          className="w-full min-h-[200px] px-3 py-2 bg-slate-100/60 rounded-lg text-slate-700 cursor-text hover:bg-slate-100 transition-colors text-sm"
                         >
                           {descripcionValue || (
-                            <span className="text-slate-500">Click para agregar descripción...</span>
+                            <span className="text-slate-400">Click para agregar descripción...</span>
                           )}
                         </div>
                       )}
@@ -1667,7 +1669,7 @@ export function ItemDetailPanel({
                             onClick={() => {
                               // Navigate to the child item when clicking on the variant row
                               if (displaySku) {
-                                router.push(`/stock/stock/${displaySku}`)
+                                router.push(`/catalogo/stock/${displaySku}`)
                               }
                             }}
                             className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"
@@ -1737,12 +1739,21 @@ export function ItemDetailPanel({
                       <div className="flex flex-col gap-6">
                         <div className="flex flex-col gap-3">
                           <div>
-                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                              Atributos Informativos
-                            </h3>
-                            <p className="text-xs text-gray-500 italic mt-1">
-                              Atributos que describen propiedades generales del producto
-                            </p>
+                            <div className="flex items-center gap-1.5 mb-3">
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                Atributos Informativos
+                              </h3>
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Info className="w-3.5 h-3.5 text-gray-400 cursor-pointer shrink-0" />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                    Atributos que describen propiedades generales del producto
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
                           </div>
 
                           {atributosInformativos.map((attr, index) => {
@@ -1865,7 +1876,7 @@ export function ItemDetailPanel({
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                     <Image
-                      src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                      src={getItemPhoto(selectedItem)}
                       alt={selectedItem.name}
                       width={56}
                       height={56}
@@ -2341,12 +2352,21 @@ export function ItemDetailPanel({
                         <div className="flex flex-col gap-6">
                           <div className="flex flex-col gap-3">
                             <div>
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                                Atributos Informativos
-                              </h3>
-                              <p className="text-xs text-gray-500 italic mt-1">
-                                Atributos que describen propiedades adicionales del producto
-                              </p>
+                              <div className="flex items-center gap-1.5 mb-3">
+                                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                  Atributos Informativos
+                                </h3>
+                                <TooltipProvider delayDuration={200}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <Info className="w-3.5 h-3.5 text-gray-400 cursor-pointer shrink-0" />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                    Atributos que describen propiedades adicionales del producto
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
                             </div>
 
                             {atributosInformativos.map((attr, index) => {
@@ -2461,7 +2481,7 @@ export function ItemDetailPanel({
                       </span>
                       <div className="flex flex-col items-center gap-0.5 mt-2">
                         <span className="text-lg font-bold text-slate-600 tabular-nums">
-                          {Number.parseInt(selectedItem?.stock?.total || "0")}
+                          {Number.parseInt(selectedItem?.stock?.enStock || "0")}
                         </span>
                         <span className="text-[8px] text-slate-400 uppercase tracking-wider">Total</span>
                       </div>
@@ -2499,7 +2519,7 @@ export function ItemDetailPanel({
                               onClick={(e) => {
                                 e.stopPropagation()
                                 if (selectedItem?.sku) {
-                                  const current = Number.parseInt(selectedItem?.stock?.total || "0")
+                                  const current = Number.parseInt(selectedItem?.stock?.enStock || "0")
                                   updateStock(selectedItem.sku, "total", Math.max(0, current - 1))
                                 }
                               }}
@@ -2510,14 +2530,14 @@ export function ItemDetailPanel({
                           </>
                         )}
                         <span className="text-base font-semibold text-foreground tabular-nums min-w-[2rem] text-center">
-                          {Number.parseInt(selectedItem?.stock?.total || "0")}
+                          {Number.parseInt(selectedItem?.stock?.enStock || "0")}
                         </span>
                         {activeStockEdit === "total" && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
                               if (selectedItem?.sku) {
-                                const current = Number.parseInt(selectedItem?.stock?.total || "0")
+                                const current = Number.parseInt(selectedItem?.stock?.enStock || "0")
                                 updateStock(selectedItem.sku, "total", current + 1)
                               }
                             }}
@@ -2559,7 +2579,7 @@ export function ItemDetailPanel({
                           <span className="text-sm font-medium text-muted-foreground/60 tabular-nums min-w-[2.5rem] text-right">
                             {stockModification.total.value
                               ? (() => {
-                                  const current = Number.parseInt(selectedItem?.stock?.total || "0")
+                                  const current = Number.parseInt(selectedItem?.stock?.enStock || "0")
                                   const value = Number.parseInt(stockModification.total.value || "0")
                                   switch (stockModification.total.operation) {
                                     case "agregar": return Math.max(0, current + value)
@@ -2568,7 +2588,7 @@ export function ItemDetailPanel({
                                     default: return current
                                   }
                                 })()
-                              : Number.parseInt(selectedItem?.stock?.total || "0")
+                              : Number.parseInt(selectedItem?.stock?.enStock || "0")
                             }
                           </span>
                           <button
@@ -2712,7 +2732,7 @@ export function ItemDetailPanel({
                     <div className="flex items-center justify-between px-4 py-3">
                       <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</div>
                       <span className="text-xl font-bold text-emerald-600 tabular-nums">
-                        {Number.parseInt(selectedItem?.stock?.total || "0") -
+                        {Number.parseInt(selectedItem?.stock?.enStock || "0") -
                           Number.parseInt(selectedItem?.stock?.reservado || "0")}
                       </span>
                     </div>

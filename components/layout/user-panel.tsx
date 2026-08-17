@@ -28,7 +28,7 @@ export function UserPanel() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 backdrop-blur-md border py-1 hover:bg-background/80 transition-all cursor-pointer rounded-sm bg-white shadow-sm px-4 mt-0 border-[rgba(225,232,240,0.5)]"
+        className="flex items-center gap-3 border py-1 hover:bg-[#3E3F46] transition-all cursor-pointer rounded-sm bg-[#2E2F35] px-4 mt-0 border-[#3E3F46]"
       >
         <div className="w-7 h-7 rounded-md overflow-hidden bg-muted">
           <Image
@@ -39,8 +39,8 @@ export function UserPanel() {
             className="w-full h-full object-cover"
           />
         </div>
-        <span className="text-sm font-medium text-foreground">{currentUser.businessName}</span>
-        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <span className="text-sm font-medium text-white">{currentUser.businessName}</span>
+        <ChevronDown className={`w-4 h-4 text-[#9A9BA3] transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {/* Dropdown */}

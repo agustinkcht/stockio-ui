@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { ChevronRight, Package, CheckCircle2 } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
@@ -27,6 +27,14 @@ export default function CatalogoItemDetailPage() {
   const [selectedDetailTab, setSelectedDetailTab] = useState<"info" | "stock" | "precios" | "canales">("info")
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
+  const [toastLabel, setToastLabel] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = useCallback((label: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setToastLabel(label)
+    toastTimerRef.current = setTimeout(() => setToastLabel(null), 3000)
+  }, [])
 
   const {
     items,
@@ -44,6 +52,7 @@ export default function CatalogoItemDetailPage() {
     hasUnsavedEdits,
     canUndoEdit,
     canRedoEdit,
+    forceSaveItems,
   } = useItems()
 
   const { currentView, historyIndex, navigationHistory, navigateBack, navigateForward } = useNavigation()
@@ -101,7 +110,8 @@ export default function CatalogoItemDetailPage() {
 
   const handleDeleteWithTracking = (item: Item) => {
     deleteItem(item)
-    router.push("/catalogo/items")
+    const label = item.hasVariants || item.isAgrupador ? "agrupador" : "item"
+    router.push(`/catalogo/items?deleted=${encodeURIComponent(item.name)}&tipo=${label}`)
   }
 
   const hasUnsavedChanges = hasUnsavedEdits || hasUnsavedDeletes
@@ -196,7 +206,7 @@ export default function CatalogoItemDetailPage() {
         </div>
 
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
-          <div className="relative border-b border-border h-[44px] bg-white">
+          <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20]">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} onNavigate={guardedNavigate} />
@@ -212,26 +222,6 @@ export default function CatalogoItemDetailPage() {
                     <CheckCircle2 className="w-4 h-4 text-green-600" />
                     <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
                   </div>
-                )}
-
-                {hasChanges && !showSaveSuccess && (
-                  <>
-                    <button
-                      onClick={handleDeshacer}
-                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
-                      title="Deshacer cambios"
-                    >
-                      Deshacer
-                    </button>
-
-                    <button
-                      onClick={handleGuardar}
-                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium"
-                      title="Guardar cambios"
-                    >
-                      Guardar
-                    </button>
-                  </>
                 )}
               </div>
             </div>
@@ -255,11 +245,36 @@ export default function CatalogoItemDetailPage() {
               onDelete={handleDeleteWithTracking}
               variantChangeHandlers={{}}
               isExpanded={false}
-              onSaveNow={saveEdit}
+              onSaveNow={forceSaveItems}
+              onShowToast={showToast}
             />
           </main>
         </div>
       </div>
+
+      {/* Cambios guardados floating toast */}
+      {toastLabel && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200000] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300">
+          <div
+            className="relative flex items-stretch rounded-2xl overflow-hidden"
+            style={{ background: "#0d0f12", boxShadow: "0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.07)", minWidth: "280px" }}
+          >
+            <div className="w-[3px] shrink-0" style={{ background: "linear-gradient(to bottom, #34d399, #059669)" }} />
+            <div className="flex items-center gap-3.5 px-5 py-4">
+              <div
+                className="flex items-center justify-center w-9 h-9 rounded-xl shrink-0"
+                style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.2)" }}
+              >
+                <CheckCircle2 className="w-4 h-4" style={{ color: "#34d399" }} strokeWidth={2.25} />
+              </div>
+              <div>
+                <p className="text-[13px] font-semibold leading-tight" style={{ color: "#f1f5f9", letterSpacing: "-0.01em" }}>Cambios guardados</p>
+                <p className="text-[11px] mt-0.5 leading-tight" style={{ color: "rgba(148,163,184,0.7)" }}>{toastLabel}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <UnsavedChangesModal
         isOpen={showNavigationModal}

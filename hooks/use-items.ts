@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useAccount } from "@/lib/contexts/account-context"
 import type { Item } from "@/lib/types"
 import { TEMPLATES } from "@/lib/constants"
 import { generateStandaloneSKU, generateParentSKU, generateUniqueSKU } from "@/lib/utils/sku-generator"
 import { generateId } from "@/lib/utils/item-utils"
+import { getCategoryImage } from "@/lib/utils/category-images"
 
 interface DeletedItemWithPosition {
   item: Item
@@ -40,6 +41,7 @@ async function loadInitialItems(dataSet: string): Promise<Item[]> {
 export function useItems() {
   const { currentAccount, currentUser } = useAccount()
   const [items, setItems] = useState<Item[]>([])
+  const itemsRef = useRef<Item[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deletedItems, setDeletedItems] = useState<DeletedItemWithPosition[]>([])
   const [hasUnsavedDeletes, setHasUnsavedDeletes] = useState(false)
@@ -65,12 +67,24 @@ export function useItems() {
     return stock
   }
 
-  // Recursively migrate all stock fields in an item array
+  // Backfill media from category image for items/variants that pre-date the media field
+  const migrateMedia = (item: any, categoria?: string): any[] => {
+    if (Array.isArray(item.media)) return item.media
+    const photo = getCategoryImage(categoria || item.categoria)
+    return [{ photo, descripcion: "" }]
+  }
+
+  // Recursively migrate all stock fields and media in an item array
   const migrateItems = (parsedItems: any[]): any[] =>
     parsedItems.map((item) => ({
       ...item,
       stock: migrateStock(item.stock),
-      variants: item.variants?.map((v: any) => ({ ...v, stock: migrateStock(v.stock) })),
+      media: migrateMedia(item),
+      variants: item.variants?.map((v: any) => ({
+        ...v,
+        stock: migrateStock(v.stock),
+        media: migrateMedia(v, item.categoria),
+      })),
     }))
 
   // Helper: read items from localStorage and set state (used on mount and on sync events)
@@ -157,6 +171,11 @@ export function useItems() {
     window.addEventListener("stockio:items-updated", handleItemsUpdated)
     return () => window.removeEventListener("stockio:items-updated", handleItemsUpdated)
   }, [currentUser, currentAccount])
+
+  // Keep ref always up-to-date so forceSaveItems can read latest without stale closure
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
 
   // Save items to localStorage and notify all other useItems instances on this page
   const saveItems = (updatedItems: Item[]) => {
@@ -406,23 +425,25 @@ export function useItems() {
   }
 
   const deleteItem = (itemToDelete: Item) => {
-    console.log("[v0] useItems - deleteItem called for:", itemToDelete.name)
-    const originalIndex = items.findIndex((item) => item.id === itemToDelete.id || item.sku === itemToDelete.sku)
-    console.log("[v0] useItems - originalIndex:", originalIndex)
-    setDeletedItems((prev) => {
-      const newDeleted = [...prev, { item: itemToDelete, originalIndex }]
-      console.log("[v0] useItems - setDeletedItems, new count:", newDeleted.length)
-      return newDeleted
-    })
-    setItems((prevItems) => prevItems.filter((item) => item.sku !== itemToDelete.sku))
-    console.log("[v0] useItems - setting hasUnsavedDeletes to true")
-    setHasUnsavedDeletes(true)
+    // Always use id as the primary key — agrupadores have no `sku` (only `skuPrefix`),
+    // so filtering by sku would remove ALL items with undefined sku.
+    const matchById = !!itemToDelete.id
+    const originalIndex = items.findIndex((item) =>
+      matchById ? item.id === itemToDelete.id : (item.sku === itemToDelete.sku && !!item.sku)
+    )
+    setDeletedItems((prev) => [...prev, { item: itemToDelete, originalIndex }])
+    const remaining = items.filter((item) =>
+      matchById ? item.id !== itemToDelete.id : (item.sku !== itemToDelete.sku || !item.sku)
+    )
+    setItems(remaining)
+    // Persist immediately so a page navigation / reload reflects the deletion
+    saveItems(remaining.filter(isValidItem))
+    setHasUnsavedDeletes(false)
   }
 
   const undoDelete = () => {
     if (deletedItems.length === 0) return
 
-    console.log("[v0] useItems - undoDelete called")
     setItems((prevItems) => {
       const newItems = [...prevItems]
       const sortedDeleted = [...deletedItems].sort((a, b) => a.originalIndex - b.originalIndex)
@@ -441,13 +462,11 @@ export function useItems() {
   const saveDelete = async () => {
     if (deletedItems.length === 0) return
 
-    console.log("[v0] useItems - saveDelete called")
     try {
       if (USE_MOCK_DATA) {
         // Filter out any invalid items before saving
         const validItems = items.filter(isValidItem)
         saveItems(validItems)
-        console.log("[v0] Updated localStorage after deletion, remaining valid items:", validItems.length)
         setDeletedItems([])
         setHasUnsavedDeletes(false)
         return
@@ -475,7 +494,6 @@ export function useItems() {
   }
 
   const editField = (itemSku: string, field: string, newValue: any) => {
-    console.log("[v0] useItems - editField called:", { itemSku, field, newValue })
 
     // itemSku can be a SKU or an ID for children
     let parentItem: Item | undefined = undefined
@@ -513,7 +531,7 @@ export function useItems() {
         originalValues: { ...originalItem },
         currentValues: { ...originalItem, [field]: newValue },
       })
-      console.log("[v0] useItems - captured original state for:", itemId)
+
     } else {
       setEditedItem({
         ...editedItem,
@@ -524,11 +542,14 @@ export function useItems() {
     setHasUnsavedEdits(true)
     setLastUndoneEdit(null)
 
-    setItems((prevItems) => prevItems.map((item) => (item.id === itemSku || item.sku === itemSku ? { ...item, [field]: newValue } : item)))
+    // Update ref synchronously BEFORE setItems so forceSaveItems always reads the latest
+    itemsRef.current = itemsRef.current.map((item) =>
+      item.id === itemSku || item.sku === itemSku ? { ...item, [field]: newValue } : item
+    )
+    setItems(itemsRef.current)
   }
 
   const editVariantField = (parentSku: string, variantId: string, field: string, newValue: any) => {
-    console.log("[v0] useItems - editVariantField called:", { parentSku, variantId, field, newValue })
 
     // Find parent by id first, then sku
     const parentItem = items.find((item) => item.id === parentSku || item.sku === parentSku)
@@ -547,7 +568,7 @@ export function useItems() {
         originalValues: { ...originalVariant },
         currentValues: { ...originalVariant, [field]: newValue },
       })
-      console.log("[v0] useItems - captured original variant state for:", variantId)
+
     } else {
       setEditedItem({
         ...editedItem,
@@ -558,22 +579,21 @@ export function useItems() {
     setHasUnsavedEdits(true)
     setLastUndoneEdit(null)
 
-    // Update the variant within the parent's variants array by id
-    setItems((prevItems) =>
-      prevItems.map((item) => {
-        if ((item.id === parentSku || item.sku === parentSku) && item.variants) {
-          const updatedVariants = item.variants.map((v: any) =>
-            v.id === variantId || v.sku === variantId ? { ...v, [field]: newValue } : v,
-          )
-          return { ...item, variants: updatedVariants }
-        }
-        return item
-      }),
-    )
+    // Update ref synchronously BEFORE setItems so forceSaveItems always reads the latest
+    itemsRef.current = itemsRef.current.map((item) => {
+      if ((item.id === parentSku || item.sku === parentSku) && item.variants) {
+        const updatedVariants = item.variants.map((v: any) =>
+          v.id === variantId || v.sku === variantId ? { ...v, [field]: newValue } : v,
+        )
+        return { ...item, variants: updatedVariants }
+      }
+      return item
+    })
+    setItems(itemsRef.current)
   }
 
   const updateParentWithVariants = (parentSku: string, updates: Partial<Item>) => {
-    console.log("[v0] useItems - updateParentWithVariants called:", { parentSku, updates })
+
 
     const parentItem = items.find((item) => item.id === parentSku || item.sku === parentSku)
     if (!parentItem) return
@@ -669,20 +689,21 @@ export function useItems() {
 
     console.log("[v0] useItems - saveEdit called for:", editedItem.itemSku)
 
-    // Filter out any invalid items before saving
-    const validItems = items.filter(isValidItem)
+    // Use itemsRef.current — always has the latest state even when called right after editField
+    const validItems = itemsRef.current.filter(isValidItem)
     saveItems(validItems)
-    console.log("[v0] useItems - saved edits to localStorage, valid items:", validItems.length)
 
     setEditedItem(null)
     setLastUndoneEdit(null)
     setHasUnsavedEdits(false)
   }
 
-  // Force save current items state to localStorage (for audit mode bulk saves)
-  // Optionally accepts an explicit items array (e.g. when called right after setItems)
+  // Force save current items state to localStorage.
+  // Uses itemsRef to guarantee we always read the latest items,
+  // bypassing the stale-closure problem when called synchronously after editField.
   const forceSaveItems = (overrideItems?: Item[]) => {
-    const validItems = (overrideItems ?? items).filter(isValidItem)
+    const toSave = overrideItems ?? itemsRef.current
+    const validItems = toSave.filter(isValidItem)
     saveItems(validItems)
     setEditedItem(null)
     setLastUndoneEdit(null)

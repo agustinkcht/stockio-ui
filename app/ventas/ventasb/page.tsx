@@ -28,7 +28,7 @@ import {
   File,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import Image from "next/image"
 import type { Venta, PaymentMethod } from "@/lib/types"
 
@@ -233,7 +233,7 @@ function VentasContent() {
         </div>
 
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
-          <div className="relative border-b border-border h-[44px] bg-white">
+          <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20]">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
@@ -577,7 +577,7 @@ function VentasContent() {
                                         <div key={idx} className="flex items-center gap-3 py-2">
                                           <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
                                             <Image
-                                              src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                              src={getItemPhoto(item as any)}
                                               alt={item.name}
                                               width={40}
                                               height={40}

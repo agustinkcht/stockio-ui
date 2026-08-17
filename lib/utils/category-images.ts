@@ -1,3 +1,14 @@
+export const ITEM_FALLBACK_PHOTO = "/images/item-fallback.png"
+
+/**
+ * Returns the primary photo for an item.
+ * Reads media[0].photo when present, otherwise falls back to the default fallback image.
+ */
+export function getItemPhoto(item?: { media?: { photo: string; descripcion: string }[] }): string {
+  const photo = item?.media?.[0]?.photo
+  return photo && photo.trim() !== "" ? photo : ITEM_FALLBACK_PHOTO
+}
+
 /**
  * Maps category names to their corresponding bottle image URLs
  * Returns the appropriate category image based on the item's category

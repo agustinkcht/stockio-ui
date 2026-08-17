@@ -81,7 +81,7 @@ export function CatalogoGrid({
   return (
     <>
       {/* Items Grid */}
-      <div className="px-8 pb-8 mt-2">
+      <div className="px-8 pb-8">
         <div className="max-w-6xl mx-auto">
           {sortedAndFilteredItems.length === 0 && (searchQuery || filterConfig.categorias.length > 0 || filterConfig.marcas.length > 0) ? (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400">

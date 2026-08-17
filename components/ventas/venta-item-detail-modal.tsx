@@ -5,7 +5,7 @@ import Image from "next/image"
 import { X, Copy, Check } from "lucide-react"
 import type { VentaItem } from "@/lib/types"
 import { useItems } from "@/hooks/use-items"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { getVentaItemDisplay, lookupLiveItemBySku } from "@/lib/utils/venta-item-lookup"
 
 interface VentaItemDetailModalProps {
@@ -53,8 +53,8 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
   const codigoProveedor = r?.codigoProveedor || p?.codigoProveedor || ""
   const descripcion = r?.descripcion || p?.descripcion || ""
 
-  // Back side media: use category image as thumbnail
-  const imageSrc = getCategoryImage(categoria) || "/placeholder.svg"
+  // Back side media: use item's own photo or fall back to default
+  const imageSrc = getItemPhoto((r?.media ? r : p) as any)
 
   // Atributos informativos — merge parent + variant overrides
   const atributosInformativos = (() => {
@@ -322,7 +322,7 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
                   {/* Volumen */}
                   <div className="mt-4 flex flex-col gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-medium text-gray-600 uppercase tracking-wider">Volumen de la unidad</span>
+                      <span className="text-[11px] font-medium text-gray-600 uppercase tracking-wider">Contenido</span>
                       <div className={`w-8 h-4 rounded-full relative transition-colors ${volumenActive ? "bg-slate-800" : "bg-gray-300"}`}>
                         <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${volumenActive ? "translate-x-4" : "translate-x-0"}`} />
                       </div>

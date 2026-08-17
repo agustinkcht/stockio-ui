@@ -1,3 +1,8 @@
+export interface ItemMedia {
+  photo: string
+  descripcion: string
+}
+
 export interface Atributo {
   key: string
   value: string
@@ -35,6 +40,7 @@ export interface ItemVariant {
   proveedor?: string
   codigoProveedor?: string
   atributosPrincipales?: Atributo[]
+  media?: ItemMedia[]
   isActive?: boolean // Whether the item is active (Activo) or paused (Pausado)
 }
 
@@ -76,7 +82,7 @@ export interface Item {
   proveedor?: string
   codigoProveedor?: string
   descripcion?: string
-  imagenUrl?: string
+  media?: ItemMedia[]
   atributosPrincipales?: Atributo[]
   atributosInformativos?: Atributo[]
   variants?: ItemVariant[]
@@ -435,6 +441,9 @@ export interface FilterConfig {
   proveedores: string[]
   stock: StockFilter[]
   depositos: string[]
+  precioDesde?: number | null
+  precioHasta?: number | null
+  stockFlags?: ("sin_stock_disponible" | "con_stock_reservado")[]
 }
 
 export type ClienteSortFactor = "nombre" | "tipo" | "condicionIva" | "ciudad"

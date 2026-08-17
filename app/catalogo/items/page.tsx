@@ -1,7 +1,8 @@
 "use client"
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
-import { Plus, Search, X, ListFilter, ArrowUpDown, CheckCircle2, Pause, Play } from "lucide-react"
+import { Plus, Search, X, ListFilter, ArrowUpDown, CheckCircle2, Pause, Play, ChevronDown, Trash2, Bell, LogOut, UserCog } from "lucide-react"
+import Image from "next/image"
 import { useAccount } from "@/lib/contexts/account-context"
 
 import { Sidebar } from "@/components/layout/sidebar"
@@ -10,7 +11,6 @@ import { CatalogoGrid } from "@/components/catalogo/catalogo-grid"
 import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
 import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
 import { TemplateModal } from "@/components/modals/template-modal"
-import { UserPanel } from "@/components/layout/user-panel"
 import { useItems } from "@/hooks/use-items"
 import { useItemSelection } from "@/hooks/use-item-selection"
 import { useModals } from "@/hooks/use-modals"
@@ -18,7 +18,7 @@ import { useSidebar } from "@/hooks/use-sidebar"
 
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import type { Item, FilterConfig, SortFactorConfig } from "@/lib/types"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { searchItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -28,16 +28,31 @@ const breadcrumbs = [
   { label: "Items", href: "/catalogo/items" },
 ]
 
-type QuickSortField = "nombre" | "categoria" | "marca" | "precioVenta" | "stock"
+type QuickSortField = "nombre" | "categoria" | "marca" | "precioVenta" | "stockDisponible"
 
 export default function CatalogoPage() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const { currentAccount } = useAccount()
+  const { currentAccount, currentUser, logout } = useAccount()
 
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!profileOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [profileOpen])
+  const [toastLabel, setToastLabel] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "info" } | null>(null)
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
   const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false)
@@ -53,19 +68,31 @@ export default function CatalogoPage() {
   const searchQuery = searchParams.get("q") ?? ""
   const sortField = (searchParams.get("sort") ?? "nombre") as QuickSortField
   const sortDir = (searchParams.get("dir") ?? "asc") as "asc" | "desc"
-  const filterCategorias = searchParams.get("categorias")?.split(",").filter(Boolean) ?? []
-  const filterMarcas = searchParams.get("marcas")?.split(",").filter(Boolean) ?? []
-  const filterEstados = searchParams.get("estados")?.split(",").filter(Boolean) ?? []
-
   const setSearchQuery = (v: string) => updateParam("q", v)
   const setSortField = (v: QuickSortField) => updateParam("sort", v)
   const setSortDir = (v: "asc" | "desc") => updateParam("dir", v)
-  const setFilterCategorias = (v: string[]) => updateParam("categorias", v.join(","))
-  const setFilterMarcas = (v: string[]) => updateParam("marcas", v.join(","))
-  const setFilterEstados = (v: string[]) => updateParam("estados", v.join(","))
+
+
+  // ── Committed filters (from URL) ──────────────────────────────────────────
+  const filterCategorias = searchParams.get("categorias")?.split(",").filter(Boolean) ?? []
+  const filterMarcas = searchParams.get("marcas")?.split(",").filter(Boolean) ?? []
+  const filterPrecioDesde = searchParams.get("precioDesde") ? Number(searchParams.get("precioDesde")) : null
+  const filterPrecioHasta = searchParams.get("precioHasta") ? Number(searchParams.get("precioHasta")) : null
+  const filterStockFlags = searchParams.get("stockFlags")?.split(",").filter(Boolean) ?? []
+
+  // ── Draft filter state (inside the modal, not yet applied) ────────────────
+  const [draftCategorias, setDraftCategorias] = useState<string[]>(filterCategorias)
+  const [draftMarcas, setDraftMarcas] = useState<string[]>(filterMarcas)
+  const [draftPrecioDesde, setDraftPrecioDesde] = useState<string>(filterPrecioDesde != null ? String(filterPrecioDesde) : "")
+  const [draftPrecioHasta, setDraftPrecioHasta] = useState<string>(filterPrecioHasta != null ? String(filterPrecioHasta) : "")
+  const [draftStockFlags, setDraftStockFlags] = useState<string[]>(filterStockFlags)
 
   // ── Dropdown visibility ────────────────────────────────────────────────────
   const [filterOpen, setFilterOpen] = useState(false)
+  const [categoriasExpanded, setCategoriasExpanded] = useState(false)
+  const [marcasExpanded, setMarcasExpanded] = useState(false)
+  const [precioExpanded, setPrecioExpanded] = useState(false)
+  const [stockExpanded, setStockExpanded] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
   const [nuevoItemDropdownOpen, setNuevoItemDropdownOpen] = useState(false)
 
@@ -83,6 +110,7 @@ export default function CatalogoPage() {
     editField,
     editVariantField,
     saveEdit,
+    forceSaveItems,
     hasUnsavedEdits,
     updateItemsActiveStatus,
   } = useItems()
@@ -149,31 +177,96 @@ export default function CatalogoPage() {
     handleCloseDropdowns,
   } = useSidebar()
 
-  // ── Derived filter/sort config for grid ───────────────────────────────────
+  // ── Show success toast when redirected from item/agrupador deletion ───────
+  useEffect(() => {
+    const deletedName = searchParams.get("deleted")
+    const tipo = searchParams.get("tipo")
+    if (!deletedName) return
+    const label = tipo === "agrupador" ? "Agrupador" : "Item"
+    setToastLabel(`${label} eliminado`)
+    setShowSaveSuccess(true)
+    // Clean up URL params immediately so the effect doesn't re-fire
+    const p = new URLSearchParams(searchParams.toString())
+    p.delete("deleted")
+    p.delete("tipo")
+    router.replace(`${pathname}${p.toString() ? `?${p.toString()}` : ""}`, { scroll: false })
+    const t = setTimeout(() => {
+      setShowSaveSuccess(false)
+      setToastLabel(null)
+    }, 3000)
+    return () => clearTimeout(t)
+  // searchParams is the correct dep — re-run whenever URL changes (e.g. on redirect arrival)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  // ── Derived filter/sort config for grid (committed from URL) ─────────────
   const filterConfig: FilterConfig = useMemo(() => ({
     tipos: [],
     categorias: filterCategorias,
     marcas: filterMarcas,
     proveedores: [],
-    stock: filterEstados.includes("sin_stock") ? ["sin_stock"] : [],
+    stock: [],
     depositos: [],
-  }), [filterCategorias, filterMarcas, filterEstados])
+    precioDesde: filterPrecioDesde,
+    precioHasta: filterPrecioHasta,
+    stockFlags: filterStockFlags as ("sin_stock_disponible" | "con_stock_reservado")[],
+  }), [filterCategorias, filterMarcas, filterPrecioDesde, filterPrecioHasta, filterStockFlags])
 
   const sortConfig: SortFactorConfig[] = useMemo(() => ([
     { factor: sortField as any, direction: sortDir },
   ]), [sortField, sortDir])
 
-  // ── Available options for filter dropdown ─────────────────────────────────
+  // ── Available options for filter dropdowns ────────────────────────────────
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
 
-  const hasActiveFilters = filterCategorias.length > 0 || filterMarcas.length > 0 || filterEstados.length > 0
+  const hasActiveFilters = filterCategorias.length > 0 || filterMarcas.length > 0 || filterPrecioDesde != null || filterPrecioHasta != null || filterStockFlags.length > 0
 
   // ── Filtered count for badge ───────────────────────────────────────────────
   const filteredCount = useMemo(() => {
     const searched = searchItems(items, searchQuery)
     return filterItems(searched, filterConfig).length
   }, [items, searchQuery, filterConfig])
+
+  // ── Filter modal open/apply/clear ─────────────────────────────────────────
+  const openFilterModal = useCallback(() => {
+    // Sync draft from currently committed URL params
+    setDraftCategorias(filterCategorias)
+    setDraftMarcas(filterMarcas)
+    setDraftPrecioDesde(filterPrecioDesde != null ? String(filterPrecioDesde) : "")
+    setDraftPrecioHasta(filterPrecioHasta != null ? String(filterPrecioHasta) : "")
+    setDraftStockFlags(filterStockFlags)
+    setFilterOpen(true)
+  }, [filterCategorias, filterMarcas, filterPrecioDesde, filterPrecioHasta, filterStockFlags])
+
+  const applyFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    const setOrDelete = (key: string, value: string) => value ? params.set(key, value) : params.delete(key)
+    setOrDelete("categorias", draftCategorias.join(","))
+    setOrDelete("marcas", draftMarcas.join(","))
+    setOrDelete("precioDesde", draftPrecioDesde.trim())
+    setOrDelete("precioHasta", draftPrecioHasta.trim())
+    setOrDelete("stockFlags", draftStockFlags.join(","))
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    setFilterOpen(false)
+  }, [draftCategorias, draftMarcas, draftPrecioDesde, draftPrecioHasta, draftStockFlags, searchParams, pathname, router])
+
+  const clearFilters = useCallback(() => {
+    setDraftCategorias([])
+    setDraftMarcas([])
+    setDraftPrecioDesde("")
+    setDraftPrecioHasta("")
+    setDraftStockFlags([])
+    // Also clear committed filters from URL and close
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("categorias")
+    params.delete("marcas")
+    params.delete("precioDesde")
+    params.delete("precioHasta")
+    params.delete("stockFlags")
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    setFilterOpen(false)
+  }, [searchParams, pathname, router])
 
   // ── Status helpers ────────────────────────────────────────────────────�����────
   const showStatusMessage = (text: string, type: "success" | "info" = "success") => {
@@ -182,20 +275,28 @@ export default function CatalogoPage() {
   }
 
   // ── Precio / Stock handlers ────────────────────────────────────────────────
+  const showToast = useCallback((label: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setToastLabel(label)
+    toastTimerRef.current = setTimeout(() => setToastLabel(null), 3000)
+  }, [])
+
   const handleUpdatePrecio = useCallback((itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => {
     for (const item of items) {
       if (item.variants) {
         const variant = item.variants.find((v: any) => v.id === itemId || v.sku === itemId)
         if (variant) {
           editVariantField(item.sku, variant.sku, "precio", precio)
-          setTimeout(() => saveEdit(), 0)
+          forceSaveItems()
+          showToast("Precio actualizado")
           return
         }
       }
     }
     editField(itemId, "precio", precio)
-    setTimeout(() => saveEdit(), 0)
-  }, [items, editField, editVariantField, saveEdit])
+    forceSaveItems()
+    showToast("Precio actualizado")
+  }, [items, editField, editVariantField, forceSaveItems, showToast])
 
   const handleUpdateStockWithTracking = useCallback((itemId: string, field: "total" | "reservado", value: number) => {
     for (const item of items) {
@@ -213,7 +314,8 @@ export default function CatalogoPage() {
             disponible: newDisponible.toString(),
           }
           editVariantField(parentIdentifier!, itemId, "stock", newStock)
-          setTimeout(() => saveEdit(), 0)
+          forceSaveItems()
+          showToast("Stock actualizado")
           const wasInactive = (variant as any).isActive === false
           const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
           if (wasInactive && hadNoStock && newDisponible > 0 && variant.id) updateItemsActiveStatus([variant.id], true)
@@ -235,26 +337,27 @@ export default function CatalogoPage() {
         disponible: newDisponible.toString(),
       }
       editField(itemId, "stock", newStock)
-      setTimeout(() => saveEdit(), 0)
+      forceSaveItems()
+      showToast("Stock actualizado")
       const wasInactive = item.isActive === false
       const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
       if (wasInactive && hadNoStock && newDisponible > 0 && item.id) updateItemsActiveStatus([item.id], true)
       const isActive = item.isActive !== false
       if (isActive && newDisponible <= 0 && item.id) updateItemsActiveStatus([item.id], false)
     }
-  }, [items, editField, editVariantField, saveEdit, updateItemsActiveStatus])
+  }, [items, editField, editVariantField, forceSaveItems, updateItemsActiveStatus, showToast])
 
-  // ── Delete handlers ────────────────────────────────────────────────────────
+  // ── Delete handlers ───���─────────────────────────────────��──────────────────
   const handleDeleteWithTracking = (item: Item) => setItemToDelete(item)
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return
+    const label = itemToDelete.hasVariants || (itemToDelete as any).isAgrupador ? "Agrupador eliminado" : "Item eliminado"
     deleteItem(itemToDelete)
-    await sleep(300)
-    await saveDeletedItems()
     setItemToDelete(null)
+    setToastLabel(label)
     setShowSaveSuccess(true)
-    setTimeout(() => setShowSaveSuccess(false), 3000)
+    setTimeout(() => { setShowSaveSuccess(false); setToastLabel(null) }, 3000)
   }
 
   const handleCancelDelete = () => setItemToDelete(null)
@@ -310,40 +413,42 @@ export default function CatalogoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(243,242,238)]">
-      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
+    <div className="flex h-screen overflow-hidden bg-panel-content" onClick={handleCloseDropdowns}>
 
-        {/* Sidebar */}
-        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
-          <Sidebar
-            sidebarItems={SIDEBAR_ITEMS}
-            bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
-            hoveredDropdown={hoveredDropdown}
-            onDropdownOpen={handleDropdownMouseEnter}
-            onDropdownClose={handleDropdownMouseLeave}
-          />
-          {(showNuevoItemModal || showNuevoItemConVariantesModal) && (
-            <div className="absolute top-0 left-0 h-full w-full bg-black/50 z-[60] pointer-events-none rounded-lg" />
-          )}
-        </div>
+      {/* Sidebar — flush left, full height */}
+      <div onClick={(e) => e.stopPropagation()} className="relative h-screen sticky top-0 z-[100003] shrink-0">
+        <Sidebar
+          sidebarItems={SIDEBAR_ITEMS}
+          bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+          hoveredDropdown={hoveredDropdown}
+          onDropdownOpen={handleDropdownMouseEnter}
+          onDropdownClose={handleDropdownMouseLeave}
+        />
+        {(showNuevoItemModal || showNuevoItemConVariantesModal) && (
+          <div className="absolute top-0 left-0 h-full w-full bg-black/50 z-[60] pointer-events-none" />
+        )}
+      </div>
 
-        {/* Main panel */}
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+      {/* Right column: top bar + content */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
 
-          {/* Top utility bar */}
-          <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
-            <div className="px-4 flex items-center justify-between h-full">
-              <div className="flex items-center">
-                <Breadcrumb items={breadcrumbs} />
+        {/* Scrollable content */}
+        <main className="flex-1 flex bg-panel-content overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-auto">
+
+            {/* Sticky breadcrumb / bell row — blurred transparent, two floating capsules */}
+            <div className="sticky top-0 z-[100004] flex items-center justify-between px-8 py-3 shrink-0 bg-slate-300">
+              {/* Breadcrumb pill */}
+              <div className="flex items-center bg-[#151721] rounded-full px-4 py-2">
+                <Breadcrumb items={breadcrumbs} variant="dark" />
               </div>
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
-                <UserPanel />
-              </div>
-              <div className="flex items-center gap-2 min-w-[200px] justify-end">
+
+              {/* Right side: toasts + bell + profile */}
+              <div className="flex items-center gap-2">
                 {showSaveSuccess && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
                     <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700 font-medium">Guardado</span>
+                    <span className="text-sm text-green-700 font-medium">{toastLabel ?? "Guardado"}</span>
                   </div>
                 )}
                 {statusMessage && (
@@ -352,28 +457,91 @@ export default function CatalogoPage() {
                     <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
                   </div>
                 )}
+
+                {/* Bell circle */}
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#151721] hover:bg-[#1e2130] transition-colors cursor-pointer">
+                  <Bell className="w-5 h-5 text-slate-300" />
+                </button>
+
+                {/* Profile pill */}
+                {currentUser && (
+                  <div className="relative" ref={profileRef}>
+                    <button
+                      onClick={() => setProfileOpen(v => !v)}
+                      className="flex items-center gap-2 bg-[#151721] hover:bg-[#1e2130] rounded-full pl-4 pr-1 py-1 transition-colors cursor-pointer"
+                    >
+                      <span className="text-sm font-medium text-slate-200 max-w-[120px] truncate">
+                        {currentUser.businessName}
+                      </span>
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 shrink-0 flex items-center justify-center">
+                        {currentUser.avatar ? (
+                          <Image src={currentUser.avatar} alt={currentUser.businessName} width={32} height={32} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xs font-semibold text-white">
+                            {currentUser.businessName?.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Dropdown */}
+                    {profileOpen && (
+                      <div className="absolute top-full right-0 mt-2 w-52 bg-white border border-border rounded-lg shadow-lg py-2 z-[100010]">
+                        <div className="px-4 py-3 border-b border-border">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-full overflow-hidden bg-muted shrink-0">
+                              {currentUser.avatar ? (
+                                <Image src={currentUser.avatar} alt={currentUser.businessName} width={36} height={36} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-sm font-semibold text-muted-foreground">
+                                  {currentUser.businessName?.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{currentUser.businessName}</p>
+                              <p className="text-xs text-muted-foreground truncate">{currentUser.email}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="py-1">
+                          <button
+                            onClick={() => { setProfileOpen(false); router.push("/perfil") }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+                          >
+                            <UserCog className="w-4 h-4 text-muted-foreground" />
+                            Editar Perfil
+                          </button>
+                          <div className="h-px bg-border/50 mx-4 my-1" />
+                          <button
+                            onClick={logout}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-destructive/5 transition-colors cursor-pointer"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            Cerrar Sesión
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-
-          {/* Scrollable content */}
-          <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-auto">
 
               {/* Title row — scrolls away */}
-              <div className="px-8 pt-12 pb-8">
+              <div className="px-8 pt-6 pb-8 bg-slate-300">
                 <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
                   <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-                    Catálogo
+                    Items
                   </h1>
                   <div className="flex items-center gap-2 mt-1 shrink-0 relative">
                     <div className="relative">
                       <button
                         type="button"
                         onClick={() => setNuevoItemDropdownOpen(v => !v)}
-                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                        className="h-9 px-4 text-sm font-semibold transition-colors gap-2 rounded-lg flex items-center bg-[#151721] text-white hover:bg-[#2A2C38] cursor-pointer"
                       >
-                        <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                        <Plus className="w-4 h-4 text-white" strokeWidth={2.25} />
                         Nuevo Item
                       </button>
                       {nuevoItemDropdownOpen && (
@@ -383,14 +551,14 @@ export default function CatalogoPage() {
                             <button
                               type="button"
                               onClick={() => { setNuevoItemDropdownOpen(false); router.push("/catalogo/items/nuevo") }}
-                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-panel-content transition-colors cursor-pointer"
                             >
                               Creación Individual
                             </button>
                             <button
                               type="button"
                               onClick={() => { setNuevoItemDropdownOpen(false); router.push("/catalogo/creador-masivo") }}
-                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-panel-content transition-colors cursor-pointer"
                             >
                               Creador Masivo
                             </button>
@@ -403,10 +571,10 @@ export default function CatalogoPage() {
               </div>
 
               {/* Sticky search + bulk bar */}
-              <div className="sticky top-0 z-20">
+              <div className="sticky top-[60px] z-20 backdrop-blur-[3px]">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 py-2">
+                <div className="relative z-10 px-8 py-2 bg-slate-300">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
 
@@ -435,7 +603,7 @@ export default function CatalogoPage() {
                           {filterCategorias.map(c => (
                             <span key={c} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
                               {c}
-                              <button type="button" onClick={() => setFilterCategorias(filterCategorias.filter(x => x !== c))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <button type="button" onClick={() => updateParam("categorias", filterCategorias.filter(x => x !== c).join(","))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
                                 <X className="w-2.5 h-2.5 text-slate-400" />
                               </button>
                             </span>
@@ -443,15 +611,32 @@ export default function CatalogoPage() {
                           {filterMarcas.map(m => (
                             <span key={m} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
                               {m}
-                              <button type="button" onClick={() => setFilterMarcas(filterMarcas.filter(x => x !== m))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <button type="button" onClick={() => updateParam("marcas", filterMarcas.filter(x => x !== m).join(","))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
                                 <X className="w-2.5 h-2.5 text-slate-400" />
                               </button>
                             </span>
                           ))}
-                          {filterEstados.map(e => (
-                            <span key={e} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
-                              {e === "sin_stock" ? "Sin stock" : e === "pausado" ? "Pausado" : e}
-                              <button type="button" onClick={() => setFilterEstados(filterEstados.filter(x => x !== e))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                          {(filterPrecioDesde != null || filterPrecioHasta != null) && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {filterPrecioDesde != null && filterPrecioHasta != null ? `$${filterPrecioDesde} – $${filterPrecioHasta}` : filterPrecioDesde != null ? `Desde $${filterPrecioDesde}` : `Hasta $${filterPrecioHasta}`}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const params = new URLSearchParams(searchParams.toString())
+                                  params.delete("precioDesde")
+                                  params.delete("precioHasta")
+                                  router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+                                }}
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                          {filterStockFlags.map(f => (
+                            <span key={f} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {f === "sin_stock_disponible" ? "Sin stock disponible" : "Con stock reservado"}
+                              <button type="button" onClick={() => updateParam("stockFlags", filterStockFlags.filter(x => x !== f).join(","))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
                                 <X className="w-2.5 h-2.5 text-slate-400" />
                               </button>
                             </span>
@@ -463,87 +648,14 @@ export default function CatalogoPage() {
                       <div className="ml-auto flex items-center gap-2">
 
                         {/* Filtrar */}
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
-                            className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${hasActiveFilters ? "border-blue-400 text-blue-600 bg-blue-50" : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"}`}
-                          >
-                            <ListFilter className="w-3.5 h-3.5" />
-                            <span>Filtrar</span>
-                          </button>
-                          {filterOpen && (
-                            <>
-                              <div className="fixed inset-0 z-[90]" onClick={() => setFilterOpen(false)} />
-                              <div className="absolute top-full right-0 mt-1 z-[100] bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
-                                {/* Categoría */}
-                                <div>
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
-                                  <select
-                                    value=""
-                                    onChange={(e) => { if (e.target.value && !filterCategorias.includes(e.target.value)) setFilterCategorias([...filterCategorias, e.target.value]) }}
-                                    className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
-                                  >
-                                    <option value="">Todas</option>
-                                    {availableCategorias.filter(c => !filterCategorias.includes(c)).map(c => <option key={c} value={c}>{c}</option>)}
-                                  </select>
-                                  {filterCategorias.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                      {filterCategorias.map(c => (
-                                        <span key={c} className="inline-flex items-center gap-1 h-5 pl-2 pr-1 text-[10px] rounded-full bg-slate-100 text-slate-600">
-                                          {c}
-                                          <button type="button" onClick={() => setFilterCategorias(filterCategorias.filter(x => x !== c))} className="cursor-pointer"><X className="w-2.5 h-2.5" /></button>
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                                {/* Marca */}
-                                <div>
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
-                                  <select
-                                    value=""
-                                    onChange={(e) => { if (e.target.value && !filterMarcas.includes(e.target.value)) setFilterMarcas([...filterMarcas, e.target.value]) }}
-                                    className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
-                                  >
-                                    <option value="">Todas</option>
-                                    {availableMarcas.filter(m => !filterMarcas.includes(m)).map(m => <option key={m} value={m}>{m}</option>)}
-                                  </select>
-                                  {filterMarcas.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                      {filterMarcas.map(m => (
-                                        <span key={m} className="inline-flex items-center gap-1 h-5 pl-2 pr-1 text-[10px] rounded-full bg-slate-100 text-slate-600">
-                                          {m}
-                                          <button type="button" onClick={() => setFilterMarcas(filterMarcas.filter(x => x !== m))} className="cursor-pointer"><X className="w-2.5 h-2.5" /></button>
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                                {/* Estado */}
-                                <div className="space-y-2">
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
-                                  {(["sin_stock", "pausado"] as const).map(e => (
-                                    <label key={e} className="flex items-center gap-2 cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={filterEstados.includes(e)}
-                                        onChange={(ev) => setFilterEstados(ev.target.checked ? [...filterEstados, e] : filterEstados.filter(x => x !== e))}
-                                        className="w-3.5 h-3.5 rounded accent-slate-800"
-                                      />
-                                      <span className="text-xs text-slate-700">{e === "sin_stock" ? "Sin stock" : "Pausado"}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                                {hasActiveFilters && (
-                                  <button type="button" onClick={() => { setFilterCategorias([]); setFilterMarcas([]); setFilterEstados([]) }} className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer">
-                                    Limpiar filtros
-                                  </button>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { openFilterModal(); setSortOpen(false) }}
+                          className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${hasActiveFilters ? "border-blue-400 text-blue-600 bg-blue-50" : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-panel-content"}`}
+                        >
+                          <ListFilter className="w-3.5 h-3.5" />
+                          <span>Filtros</span>
+                        </button>
 
                         {/* Ordenar */}
                         <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
@@ -551,7 +663,7 @@ export default function CatalogoPage() {
                             type="button"
                             onClick={() => setSortDir(sortDir === "asc" ? "desc" : "asc")}
                             title={sortDir === "asc" ? "Ascendente" : "Descendente"}
-                            className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                            className="px-2.5 h-full hover:bg-panel-content transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
                           >
                             <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
                           </button>
@@ -564,7 +676,7 @@ export default function CatalogoPage() {
                             <option value="categoria">Categoría</option>
                             <option value="marca">Marca</option>
                             <option value="precioVenta">Precio Venta</option>
-                            <option value="stock">Stock</option>
+                            <option value="stockDisponible">Stock Disponible</option>
                           </select>
                         </div>
 
@@ -578,9 +690,9 @@ export default function CatalogoPage() {
                 </div>
 
                 {/* Row 2: Bulk actions + tab header */}
-                <div className="px-8 bg-slate-50/95 backdrop-blur-sm pb-2">
+                <div className="px-8 pb-2 bg-gradient-to-b from-slate-300 from-0% via-slate-300/50 via-60% to-transparent to-100%">
                   <div className="max-w-6xl mx-auto">
-                  <div className="bg-white border border-slate-200/80">
+                  <div className="bg-white border border-slate-200/80 rounded-lg">
                     <div className="flex items-center gap-2 h-9">
                       {/* All-selector */}
                       <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
@@ -636,18 +748,15 @@ export default function CatalogoPage() {
                     </div>
                   </div>
 
-                  {/* Tab header — grid-cols-12: item(5) estado(1) precio(3) stock(3) */}
-                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2">
-                    <div className="col-span-5 flex items-center justify-center px-4 border-r border-slate-200/60">
+                  {/* Tab header — grid-cols-12: item(5) precio(3) stock(4) */}
+                  <div className="grid grid-cols-12 h-7 mt-2">
+                    <div className="col-span-5 flex items-center justify-center px-4">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
-                    <div className="col-span-1 flex items-center justify-center px-1 border-r border-slate-200/60">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
-                    </div>
-                    <div className="col-span-3 flex items-center justify-center px-4 border-r border-slate-200/60">
+                    <div className="col-span-3 flex items-center justify-center px-4">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Precio Venta</span>
                     </div>
-                    <div className="col-span-3 flex items-center justify-center gap-1.5 px-2">
+                    <div className="col-span-4 flex items-center justify-center gap-1.5 px-2">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
                       <div className="group relative flex-shrink-0">
                         <div className="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center cursor-default text-gray-400 hover:text-gray-600 hover:border-gray-600 transition-colors">
@@ -709,7 +818,6 @@ export default function CatalogoPage() {
             </div>
           </main>
         </div>
-      </div>
 
       {/* Modals */}
       <TemplateModal showTemplateModal={showTemplateModal} setShowTemplateModal={setShowTemplateModal} />
@@ -746,40 +854,262 @@ export default function CatalogoPage() {
         isCreatingItem={isCreatingItem}
       />
 
-      {/* Delete modal */}
-      {itemToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]" onClick={handleCancelDelete}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
-                <img src={getCategoryImage(itemToDelete?.categoria) || "/placeholder.svg"} alt={itemToDelete?.categoria || ""} className="w-6 h-6 object-contain opacity-70" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-900 truncate">{itemToDelete?.nombre}</p>
-                {(itemToDelete?.marca || itemToDelete?.categoria) && (
-                  <p className="text-xs text-slate-400 truncate">{[itemToDelete?.marca, itemToDelete?.categoria].filter(Boolean).join(" · ")}</p>
+      {/* Filter modal */}
+      {filterOpen && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setFilterOpen(false)} />
+          <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <h3 className="text-sm font-semibold text-slate-900">Filtros</h3>
+              <button type="button" onClick={() => setFilterOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto overscroll-contain px-5 py-4 space-y-1" style={{ maxHeight: "60vh" }}>
+
+              {/* ── Categoría ── */}
+              <div className="py-2">
+                <button type="button" onClick={() => setCategoriasExpanded(v => !v)} className="flex items-center justify-between w-full cursor-pointer py-0.5">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    Categoría
+                    {draftCategorias.length > 0 && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{draftCategorias.length}</span>}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${categoriasExpanded ? "rotate-180" : ""}`} />
+                </button>
+                {categoriasExpanded && (
+                  <div className="mt-3 space-y-2.5">
+                    {availableCategorias.map(c => (
+                      <label key={c} className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={draftCategorias.includes(c)} onChange={(ev) => setDraftCategorias(ev.target.checked ? [...draftCategorias, c] : draftCategorias.filter(x => x !== c))} className="w-3.5 h-3.5 rounded accent-slate-800" />
+                        <span className="text-xs text-slate-700">{c}</span>
+                      </label>
+                    ))}
+                  </div>
                 )}
               </div>
+
+              <div className="border-t border-slate-100" />
+
+              {/* ── Marca ── */}
+              <div className="py-2">
+                <button type="button" onClick={() => setMarcasExpanded(v => !v)} className="flex items-center justify-between w-full cursor-pointer py-0.5">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    Marca
+                    {draftMarcas.length > 0 && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{draftMarcas.length}</span>}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${marcasExpanded ? "rotate-180" : ""}`} />
+                </button>
+                {marcasExpanded && (
+                  <div className="mt-3 space-y-2.5">
+                    {availableMarcas.map(m => (
+                      <label key={m} className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={draftMarcas.includes(m)} onChange={(ev) => setDraftMarcas(ev.target.checked ? [...draftMarcas, m] : draftMarcas.filter(x => x !== m))} className="w-3.5 h-3.5 rounded accent-slate-800" />
+                        <span className="text-xs text-slate-700">{m}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100" />
+
+              {/* ── Precio ── */}
+              <div className="py-2">
+                <button type="button" onClick={() => setPrecioExpanded(v => !v)} className="flex items-center justify-between w-full cursor-pointer py-0.5">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    Precio
+                    {(draftPrecioDesde.trim() || draftPrecioHasta.trim()) && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">1</span>}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${precioExpanded ? "rotate-180" : ""}`} />
+                </button>
+                {precioExpanded && (
+                  <div className="mt-3 flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-[10px] text-slate-400 mb-1">Desde</label>
+                      <input
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        value={draftPrecioDesde}
+                        onChange={(ev) => setDraftPrecioDesde(ev.target.value)}
+                        className="w-full h-8 px-2.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[10px] text-slate-400 mb-1">Hasta</label>
+                      <input
+                        type="number"
+                        min={0}
+                        placeholder="∞"
+                        value={draftPrecioHasta}
+                        onChange={(ev) => setDraftPrecioHasta(ev.target.value)}
+                        className="w-full h-8 px-2.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100" />
+
+              {/* ── Stock ── */}
+              <div className="py-2">
+                <button type="button" onClick={() => setStockExpanded(v => !v)} className="flex items-center justify-between w-full cursor-pointer py-0.5">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    Stock
+                    {draftStockFlags.length > 0 && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{draftStockFlags.length}</span>}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${stockExpanded ? "rotate-180" : ""}`} />
+                </button>
+                {stockExpanded && (
+                  <div className="mt-3 space-y-2.5">
+                    {([
+                      { value: "sin_stock_disponible", label: "Sin stock disponible" },
+                      { value: "con_stock_reservado", label: "Con stock reservado" },
+                    ] as const).map(({ value, label }) => (
+                      <label key={value} className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={draftStockFlags.includes(value)} onChange={(ev) => setDraftStockFlags(ev.target.checked ? [...draftStockFlags, value] : draftStockFlags.filter(x => x !== value))} className="w-3.5 h-3.5 rounded accent-slate-800" />
+                        <span className="text-xs text-slate-700">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">¿Seguro deseas eliminar este item?</h3>
-            <p className="text-sm text-muted-foreground">Dejará de existir en la grilla, pero seguirá formando parte del histórico de ventas y actividad.</p>
-            <div className="flex items-center gap-3 justify-end mt-6">
-              <button onClick={handleCancelDelete} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer">Cancelar</button>
-              <button onClick={handleConfirmDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer">Eliminar item</button>
+
+            {/* Footer */}
+            <div className="px-5 py-4 border-t border-slate-100 flex items-center gap-2 shrink-0">
+              <button type="button" onClick={clearFilters} className="flex-1 h-9 text-xs font-medium rounded-lg border border-slate-200 text-slate-500 hover:bg-panel-content hover:text-slate-700 transition-colors cursor-pointer">
+                Limpiar filtros
+              </button>
+              <button type="button" onClick={applyFilters} className="flex-1 h-9 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer">
+                Filtros
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Delete modal */}
+      {itemToDelete && (() => {
+        const isAgrupador = !!(itemToDelete as any).isAgrupador || !!(itemToDelete as any).hasVariants
+        const isVariante = !!(itemToDelete as any).isChild || !!(itemToDelete as any).skuSuffix
+        const entityLabel = isAgrupador ? "agrupador" : isVariante ? "variante" : "item"
+        const entityLabelCap = isAgrupador ? "Agrupador" : isVariante ? "Variante" : "Item"
+        return (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100010]" onClick={handleCancelDelete}>
+            <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              {/* Header — same structure as editar modal */}
+              <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                      <img src={getItemPhoto(itemToDelete as any)} alt={itemToDelete?.name || ""} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 leading-tight truncate">{itemToDelete?.name}</p>
+                      {(itemToDelete?.marca || itemToDelete?.categoria) && (
+                        <p className="text-xs text-slate-400 truncate mt-0.5">{[itemToDelete.marca, itemToDelete.categoria].filter(Boolean).join(" · ")}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button onClick={handleCancelDelete} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0 cursor-pointer">
+                    <X className="w-4 h-4 text-slate-400" />
+                  </button>
+                </div>
+              </div>
+              {/* Body */}
+              <div className="px-5 py-5">
+                <h3 className="text-base font-semibold text-slate-900 mb-1.5">
+                  {`¿Seguro querés eliminar est${isVariante ? "a" : "e"} ${entityLabel}?`}
+                </h3>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  {isAgrupador
+                    ? "El agrupador y todas sus variantes dejarán de existir en el catálogo, pero seguirán formando parte del histórico de ventas y actividad."
+                    : `${entityLabelCap === "Item" ? "El item" : `La ${entityLabel}`} dejará de existir en el catálogo, pero seguirá formando parte del histórico de ventas y actividad.`
+                  }
+                </p>
+              </div>
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-panel-content/50">
+                <button onClick={handleCancelDelete} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                  Cancelar
+                </button>
+                <button onClick={handleConfirmDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors cursor-pointer">
+                  {`Eliminar ${entityLabel}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Batch delete modal */}
+      {showBatchDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100010]" onClick={handleCancelBatchDelete}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 shrink-0 flex items-center justify-center">
+                    <Trash2 className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 leading-tight">
+                      {selectedItems.length} {selectedItems.length === 1 ? "item seleccionado" : "items seleccionados"}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">Eliminación múltiple</p>
+                  </div>
+                </div>
+                <button onClick={handleCancelBatchDelete} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0 cursor-pointer">
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+            {/* Body */}
+            <div className="px-5 py-5">
+              <h3 className="text-base font-semibold text-slate-900 mb-1.5">¿Seguro querés eliminar los items seleccionados?</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">Dejarán de existir en el catálogo, pero seguirán formando parte del histórico de ventas y actividad.</p>
+            </div>
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-panel-content/50">
+              <button onClick={handleCancelBatchDelete} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button onClick={handleConfirmBatchDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors cursor-pointer">
+                Eliminar items
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Batch delete modal */}
-      {showBatchDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]" onClick={handleCancelBatchDelete}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-foreground mb-2">¿Seguro deseas eliminar los items seleccionados?</h3>
-            <p className="text-sm text-muted-foreground">Dejarán de existir en la grilla, pero seguirán formando parte del histórico de ventas y actividad.</p>
-            <div className="flex items-center gap-3 justify-end mt-6">
-              <button onClick={handleCancelBatchDelete} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer">Cancelar</button>
-              <button onClick={handleConfirmBatchDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer">Eliminar items</button>
+      {/* Cambios guardados floating toast */}
+      {toastLabel && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200000] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300">
+          <div
+            className="relative flex items-stretch rounded-2xl overflow-hidden"
+            style={{ background: "#0d0f12", boxShadow: "0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.07)", minWidth: "280px" }}
+          >
+            <div className="w-[3px] shrink-0" style={{ background: "linear-gradient(to bottom, #34d399, #059669)" }} />
+            <div className="flex items-center gap-3.5 px-5 py-4">
+              <div
+                className="flex items-center justify-center w-9 h-9 rounded-xl shrink-0"
+                style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.2)" }}
+              >
+                <CheckCircle2 className="w-4 h-4" style={{ color: "#34d399" }} strokeWidth={2.25} />
+              </div>
+              <div>
+                <p className="text-[13px] font-semibold leading-tight" style={{ color: "#f1f5f9", letterSpacing: "-0.01em" }}>Cambios guardados</p>
+                <p className="text-[11px] mt-0.5 leading-tight" style={{ color: "rgba(148,163,184,0.7)" }}>{toastLabel}</p>
+              </div>
             </div>
           </div>
         </div>

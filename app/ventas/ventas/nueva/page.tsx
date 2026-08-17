@@ -36,7 +36,7 @@ import { CLIENTES } from "@/lib/data/clientes"
 import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
 import { useVentas } from "@/hooks/use-ventas"
 import { useItems } from "@/hooks/use-items"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import type {
   Item,
@@ -567,7 +567,7 @@ export default function NuevaVentaPage() {
             />
           </div>
           <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
-            <div className="relative border-b border-border h-[44px] bg-white">
+            <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20]">
               <div className="px-4 flex items-center justify-between h-full">
                 <Breadcrumb items={breadcrumbs} />
                 <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
@@ -624,7 +624,7 @@ export default function NuevaVentaPage() {
 
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
           {/* Header */}
-          <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
+          <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20] z-[100004]">
             <div className="px-4 flex items-center justify-between h-full">
               <Breadcrumb items={breadcrumbs} />
               <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
@@ -913,7 +913,7 @@ export default function NuevaVentaPage() {
                             <div className="flex items-center gap-3 px-4 py-3">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image
-                                  src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                                  src={getItemPhoto(display.resolved as any)}
                                   alt={display.name}
                                   width={32}
                                   height={32}
@@ -1641,7 +1641,7 @@ export default function NuevaVentaPage() {
               <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-slate-100">
                 <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
                   <Image
-                    src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                    src={getItemPhoto(display.resolved as any)}
                     alt={display.name}
                     width={40}
                     height={40}
@@ -1912,7 +1912,7 @@ export default function NuevaVentaPage() {
                         </button>
                         <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
                           <Image
-                            src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                            src={getItemPhoto(display.resolved as any)}
                             alt={display.name}
                             width={36}
                             height={36}
@@ -2215,7 +2215,7 @@ export default function NuevaVentaPage() {
                             {selState.indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
                           </button>
                           <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                            <Image src={getCategoryImage(item.categoria || "") || "/placeholder.svg"} alt={item.name} width={36} height={36} className="w-full h-full object-cover" />
+                            <Image src={getItemPhoto(item)} alt={item.name} width={36} height={36} className="w-full h-full object-cover" />
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
@@ -2257,7 +2257,7 @@ export default function NuevaVentaPage() {
                                 {vState.checked && <Check className="w-3 h-3 text-slate-800" />}
                               </button>
                               <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                                <Image src={getCategoryImage(variant.categoria || item.categoria || "") || "/placeholder.svg"} alt={variant.name || item.name} width={32} height={32} className="w-full h-full object-cover" />
+                                <Image src={getItemPhoto((variant as any).media ? variant as any : item)} alt={variant.name || item.name} width={32} height={32} className="w-full h-full object-cover" />
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">

@@ -186,78 +186,81 @@ export function NuevoProveedorModal({ isOpen, onClose, onSave }: NuevoProveedorM
               </div>
             )}
 
-            {/* Identificación */}
-            {tipo === "empresa" ? (
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1.5">
-                  CUIT <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={cuit}
-                  onChange={handleCuitChange}
-                  required
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  placeholder="XX-XXXXXXXX-X"
-                />
-              </div>
-            ) : (
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <label className="text-sm font-medium">Identificación</label>
-                  <div className="flex items-center border border-border rounded-md overflow-hidden text-xs h-6">
-                    <button
-                      type="button"
-                      onClick={() => { setIdType("dni"); setDni(""); setCuit("") }}
-                      className={`px-2.5 h-full transition-colors cursor-pointer ${idType === "dni" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
-                    >
-                      DNI
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setIdType("cuit"); setDni(""); setCuit("") }}
-                      className={`px-2.5 h-full transition-colors cursor-pointer ${idType === "cuit" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
-                    >
-                      CUIT
-                    </button>
-                  </div>
-                </div>
-                {idType === "dni" ? (
-                  <input
-                    type="text"
-                    value={dni}
-                    onChange={(e) => setDni(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                    className="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    placeholder="12345678"
-                  />
-                ) : (
+            {/* Identificación + Condición IVA — same row */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              {/* Identificación */}
+              {tipo === "empresa" ? (
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    CUIT <span className="text-destructive">*</span>
+                  </label>
                   <input
                     type="text"
                     value={cuit}
                     onChange={handleCuitChange}
+                    required
                     className="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder="XX-XXXXXXXX-X"
                   />
-                )}
-              </div>
-            )}
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <label className="text-sm font-medium">Identificación</label>
+                    <div className="flex items-center border border-border rounded-md overflow-hidden text-xs h-6">
+                      <button
+                        type="button"
+                        onClick={() => { setIdType("dni"); setDni(""); setCuit("") }}
+                        className={`px-2.5 h-full transition-colors cursor-pointer ${idType === "dni" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+                      >
+                        DNI
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setIdType("cuit"); setDni(""); setCuit("") }}
+                        className={`px-2.5 h-full transition-colors cursor-pointer ${idType === "cuit" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+                      >
+                        CUIT
+                      </button>
+                    </div>
+                  </div>
+                  {idType === "dni" ? (
+                    <input
+                      type="text"
+                      value={dni}
+                      onChange={(e) => setDni(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                      className="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      placeholder="12345678"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={cuit}
+                      onChange={handleCuitChange}
+                      className="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      placeholder="XX-XXXXXXXX-X"
+                    />
+                  )}
+                </div>
+              )}
 
-            {/* Condición IVA */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1.5">
-                Condición frente al IVA <span className="text-destructive">*</span>
-              </label>
-              <select
-                value={condicionIva}
-                onChange={(e) => setCondicionIva(e.target.value as Proveedor["condicionIva"])}
-                className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
-              >
-                {condicionesIva.map((condicion) => (
-                  <option key={condicion} value={condicion}>
-                    {condicion}
-                  </option>
-                ))}
-              </select>
+              {/* Condición IVA */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  Condición frente al IVA <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={condicionIva}
+                  onChange={(e) => setCondicionIva(e.target.value as Proveedor["condicionIva"])}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+                >
+                  {condicionesIva.map((condicion) => (
+                    <option key={condicion} value={condicion}>
+                      {condicion}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="h-px bg-border my-5" />

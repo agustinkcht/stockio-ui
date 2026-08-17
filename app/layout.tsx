@@ -28,12 +28,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html className="bg-[rgb(243,242,238)]" lang="en">
-      <body className={`font-sans antialiased bg-[rgb(243,242,238)] ${geistSans.className}`}>
+    <html className="bg-panel-content" lang="en">
+      <body className={`font-sans antialiased bg-panel-content ${geistSans.className}`}>
         <SettingsProvider>
           <PeriodProvider>
             <AccountProvider>
-              <div className="min-h-screen bg-[rgb(243,242,238)]">{children}</div>
+              <div className="min-h-screen bg-panel-content">{children}</div>
             </AccountProvider>
           </PeriodProvider>
         </SettingsProvider>

@@ -52,7 +52,7 @@ export function UtilityBarShared({
   }
 
   return (
-    <div className="relative border-b border-border h-[44px] bg-white flex-shrink-0">
+    <div className="relative border-b border-[#2E2F35] h-[44px] bg-[#1B1C20] flex-shrink-0">
       <div className="px-4 flex items-center justify-between h-full">
         {/* Left: Breadcrumbs */}
         <div className="flex items-center">

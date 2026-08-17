@@ -298,9 +298,10 @@ function compareItems(a: Item, b: Item, factor: SortFactor, direction: SortDirec
       comparison = (a.sku || "").localeCompare(b.sku || "")
       break
 
-    case "stock": {
-      const stockA = Number.parseFloat(a.stock?.total || "0")
-      const stockB = Number.parseFloat(b.stock?.total || "0")
+    case "stock":
+    case "stockDisponible": {
+      const stockA = Number.parseFloat(a.stock?.disponible || a.stock?.total || "0")
+      const stockB = Number.parseFloat(b.stock?.disponible || b.stock?.total || "0")
       comparison = stockA - stockB
       break
     }
@@ -319,7 +320,8 @@ function compareItems(a: Item, b: Item, factor: SortFactor, direction: SortDirec
       break
     }
 
-    case "precioFinal": {
+    case "precioFinal":
+    case "precioVenta": {
       const pfA = a.precio?.precioFinal ?? a.precioVenta ?? 0
       const pfB = b.precio?.precioFinal ?? b.precioVenta ?? 0
       comparison = pfA - pfB
@@ -342,7 +344,10 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
       filterConfig.marcas.length === 0 &&
       (filterConfig.proveedores?.length || 0) === 0 &&
       filterConfig.stock.length === 0 &&
-      filterConfig.depositos.length === 0)
+      filterConfig.depositos.length === 0 &&
+      !filterConfig.precioDesde &&
+      !filterConfig.precioHasta &&
+      (filterConfig.stockFlags?.length || 0) === 0)
   ) {
     return items
   }
@@ -410,6 +415,35 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
 
     // Filter by deposito - for now we skip this as we don't have deposito info on items
     // In the future, you would query the stock table to check if item has stock in specific depositos
+
+    // Filter by precio range (inclusive on both ends)
+    if (filterConfig.precioDesde != null || filterConfig.precioHasta != null) {
+      const desde = filterConfig.precioDesde ?? -Infinity
+      const hasta = filterConfig.precioHasta ?? Infinity
+      const inRange = (price: number) => price >= desde && price <= hasta
+
+      if (item.variants && item.variants.length > 0) {
+        // For items with variants, pass if at least one variant price is in range
+        const anyVariantMatches = item.variants.some((v: any) => {
+          const vPrice = v.precio?.precioFinal ?? v.precioFinal ?? 0
+          return inRange(vPrice)
+        })
+        if (!anyVariantMatches) return false
+      } else {
+        const precioFinal = item.precio?.precioFinal ?? 0
+        if (!inRange(precioFinal)) return false
+      }
+    }
+
+    // Filter by stock flags
+    if (filterConfig.stockFlags && filterConfig.stockFlags.length > 0) {
+      const disponible = Number.parseFloat(item.stock?.disponible || "0")
+      const reservado = Number.parseFloat(item.stock?.reservado || "0")
+      let matchesFlag = false
+      if (filterConfig.stockFlags.includes("sin_stock_disponible") && disponible <= 0) matchesFlag = true
+      if (filterConfig.stockFlags.includes("con_stock_reservado") && reservado > 0) matchesFlag = true
+      if (!matchesFlag) return false
+    }
 
     return true
   })
