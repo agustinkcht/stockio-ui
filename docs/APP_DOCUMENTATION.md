@@ -64,9 +64,8 @@
 | Catálogo · Item detail | `/catalogo/items/[id]` | `app/catalogo/items/[id]/page.tsx` | [`modules/catalogo-item-detail.md`](./modules/catalogo-item-detail.md) | ✅ Documented |
 | Catálogo · Nuevo item | `/catalogo/items/nuevo` | `app/catalogo/items/nuevo/page.tsx` | [`modules/catalogo-nuevo-item.md`](./modules/catalogo-nuevo-item.md) | ✅ Documented |
 | Catálogo · Creador masivo | `/catalogo/creador-masivo` | `app/catalogo/creador-masivo/page.tsx` | [`modules/catalogo-creador-masivo.md`](./modules/catalogo-creador-masivo.md) | ✅ Documented |
-| Catálogo · Lista de precios | `/catalogo/lista-de-precios` | `app/catalogo/lista-de-precios/page.tsx` | _pending_ | ⬜ Not documented |
-| Catálogo · Stock | `/catalogo/stock` | `app/catalogo/stock/page.tsx` | _pending_ | ⬜ Not documented |
-| Stock | `/stock/*` | `app/stock/*` | _pending_ | ⬜ Not documented |
+| Catálogo · Lista de precios | `/catalogo/lista-de-precios` | `app/catalogo/lista-de-precios/page.tsx` | [`modules/catalogo-lista-de-precios.md`](./modules/catalogo-lista-de-precios.md) | ✅ Documented |
+| Catálogo · Stock | `/catalogo/stock` | `app/catalogo/stock/page.tsx` | [`modules/catalogo-stock.md`](./modules/catalogo-stock.md) | ✅ Documented |
 | Ventas | `/ventas/*` | `app/ventas/*` | _pending_ | ⬜ Not documented |
 | Compras | `/compras/*` | `app/compras/*` | _pending_ | ⬜ Not documented |
 | Contactos | `/contactos/*` | `app/contactos/*` | _pending_ | ⬜ Not documented |
