@@ -29,7 +29,8 @@
 
 | Guide | Scope |
 | --- | --- |
-| [`LAYOUT_AND_UI.md`](./LAYOUT_AND_UI.md) | App shell (sidebar, navbar pills, title row), Grid vs. Detail view archetypes, the theming/token system in `globals.css`, and the pending layout-transformation debt. Read this before any UI re-skin or rewrite. |
+| [`UI_LAYOUT_ACTUAL.md`](./UI_LAYOUT_ACTUAL.md) | The UI **as-built today**, module by module: the inlined shell, the sidebar, the current solid-bar-with-pills top row, content archetypes, theming tokens, and known debt. Note: only `catalogo/items` is on the new design system. Read this to understand the current state. |
+| [`UI_DESIGN_SYSTEM_TARGET.md`](./UI_DESIGN_SYSTEM_TARGET.md) | The **target** design system to migrate toward: the new edge-to-edge full-screen shell with floating-pill navbar, and the `catalogo/items` visual language generalized across all modules. Includes a per-module migration status table. Read this before any UI re-skin or rewrite. |
 | [`DATA_FLOW_AND_RELATIONSHIPS.md`](./DATA_FLOW_AND_RELATIONSHIPS.md) | How modules share and mutate the same data: the Item hub, the stock model (`enStock`/`reservado`/`disponible`) and its three mutation paths, price snapshotting, contact references, document bridges, and the cross-module debt register. Read this before changing any logic that spans more than one module. |
 
 ---
