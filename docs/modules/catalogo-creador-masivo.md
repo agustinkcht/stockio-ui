@@ -185,7 +185,7 @@ CreadorMasivoPage (min-h-screen, bg panel)
         │   ├── (standalone) 3-row header: section → subHeader → column label,
         │   │                 then WorkableRow inputs; per-row add/remove controls
         │   └── (con variantes) CreadorMasivoConVariantes: ParentRow + nested VariantRow grid
-        └── Footer/action: "Crear" (count badge) → confirm modal
+        ��── Footer/action: "Crear" (count badge) → confirm modal
     ├── Error modal (rows missing título)
     ├── Confirm modal (N items to create)
     ├── Success message (auto-hide 3s)
@@ -268,6 +268,14 @@ setParentRows, visibleSections }`.
    empty value + `inherit:true`; preserve this when transforming rows.
 8. **Persists via `useItems`.** Unlike Nuevo Item, id assignment and storage are delegated to the
    bulk helpers — don't write localStorage directly here.
+9. **Con-variantes variant price compounds IVA.** When a variant has no manual `precioVenta`, its
+   `precioFinal` fallback is `costo * (1 + margen/100) * (1 + iva/100)` — i.e. **IVA is folded into
+   the stored final price**. This differs from the standalone/Nuevo-Item formula
+   (`round(costo * (1 + margen/100))`, IVA kept separate). Don't assume the two creators compute
+   `precioFinal` the same way.
+10. **Variant SKU is always composed, even when blank.** `sku` is `` `${skuPadre}-${skuSuffix}` ``;
+    if `skuSufijo` is empty it falls back to the attribute values joined by `-`. An attribute-less
+    variant can therefore produce a trailing-dash SKU (`SKUPADRE-`).
 
 ---
 

@@ -274,6 +274,14 @@ Scopes the storage key `stockio-items-{currentAccount}`.
 8. **Stock strings / precio numbers** — respect the typing when building objects.
 9. **`alert()` on error.** Failure UX is a native alert; consider aligning with the app's toast
    system if you touch this path.
+10. **Variant commercial fields are untyped (`(v as any)`).** The `variantItems` state type only
+    declares `id, skuSuffix, codigoUniversal, descripcion, foto, variant1, variant2`. The submit
+    handler reads `costo / margen / iva / precioFinal / stockInicial / stockReservado` off each row
+    via `(v as any)` — they are written dynamically and are **not** in the declared type. If you
+    formalize the type, keep these fields or per-variant price/stock will silently become 0.
+11. **Individual IVA build fallback is `0`, not `21`.** `iva` state defaults to `"21"`, but the
+    standalone submit uses `parseFloat(iva) || 0` — clearing the field persists IVA `0`. (The
+    con-variantes path defaults a blank variant IVA to `21`.)
 
 ---
 
