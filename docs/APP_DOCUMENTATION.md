@@ -70,9 +70,9 @@
 | Ventas · Presupuestos | `/ventas/presupuestos`, `.../nuevo`, `.../[id]` | `app/ventas/presupuestos/*` | [`modules/ventas-presupuestos.md`](./modules/ventas-presupuestos.md) | ✅ Documented |
 | Compras · Compras | `/compras/compras`, `.../nueva`, `.../[id]` | `app/compras/compras/*` | [`modules/compras-compras.md`](./modules/compras-compras.md) | ✅ Documented |
 | Compras · Órdenes de compra | `/compras/ordenes-de-compra`, `.../nueva`, `.../[id]` | `app/compras/ordenes-de-compra/*` | [`modules/compras-ordenes-de-compra.md`](./modules/compras-ordenes-de-compra.md) | ✅ Documented |
-| Contactos | `/contactos/*` | `app/contactos/*` | _pending_ | ⬜ Not documented |
+| Contactos · Clientes & Proveedores | `/contactos/clientes`, `/contactos/proveedores` | `app/contactos/*` | [`modules/contactos.md`](./modules/contactos.md) | ✅ Documented |
 | PDV (Punto de venta) | `/pdv` | `app/pdv/page.tsx` | _pending_ | ⬜ Not documented |
-| Dashboard | `/dashboard` | `app/dashboard/page.tsx` | _pending_ | ⬜ Not documented |
+| Dashboard | `/dashboard` | `app/dashboard/page.tsx` | [`modules/dashboard.md`](./modules/dashboard.md) | ✅ Documented |
 
 ---
 
