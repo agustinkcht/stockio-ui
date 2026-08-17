@@ -25,6 +25,14 @@
 
 ---
 
+## Cross-cutting guides (not module-specific)
+
+| Guide | Scope |
+| --- | --- |
+| [`LAYOUT_AND_UI.md`](./LAYOUT_AND_UI.md) | App shell (sidebar, navbar pills, title row), Grid vs. Detail view archetypes, the theming/token system in `globals.css`, and the pending layout-transformation debt. Read this before any UI re-skin or rewrite. |
+
+---
+
 ## Domain glossary (shared across all modules)
 
 | Term (code / UI) | Meaning |
