@@ -68,7 +68,8 @@
 | Catálogo · Stock | `/catalogo/stock` | `app/catalogo/stock/page.tsx` | [`modules/catalogo-stock.md`](./modules/catalogo-stock.md) | ✅ Documented |
 | Ventas · Ventas | `/ventas/ventas`, `.../nueva`, `.../[id]` | `app/ventas/ventas/*` | [`modules/ventas-ventas.md`](./modules/ventas-ventas.md) | ✅ Documented |
 | Ventas · Presupuestos | `/ventas/presupuestos`, `.../nuevo`, `.../[id]` | `app/ventas/presupuestos/*` | [`modules/ventas-presupuestos.md`](./modules/ventas-presupuestos.md) | ✅ Documented |
-| Compras | `/compras/*` | `app/compras/*` | _pending_ | ⬜ Not documented |
+| Compras · Compras | `/compras/compras`, `.../nueva`, `.../[id]` | `app/compras/compras/*` | [`modules/compras-compras.md`](./modules/compras-compras.md) | ✅ Documented |
+| Compras · Órdenes de compra | `/compras/ordenes-de-compra`, `.../nueva`, `.../[id]` | `app/compras/ordenes-de-compra/*` | [`modules/compras-ordenes-de-compra.md`](./modules/compras-ordenes-de-compra.md) | ✅ Documented |
 | Contactos | `/contactos/*` | `app/contactos/*` | _pending_ | ⬜ Not documented |
 | PDV (Punto de venta) | `/pdv` | `app/pdv/page.tsx` | _pending_ | ⬜ Not documented |
 | Dashboard | `/dashboard` | `app/dashboard/page.tsx` | _pending_ | ⬜ Not documented |
