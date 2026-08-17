@@ -1,20 +1,23 @@
-# Contactos — Clientes & Proveedores
+# Module: Contactos · Clientes & Proveedores
 
-> Module: `/contactos/clientes` and `/contactos/proveedores`
-> Files: `app/contactos/clientes/page.tsx`, `app/contactos/proveedores/page.tsx`
-> Last verified against implementation: this revision
+> Part of [Stockio Application Documentation](../APP_DOCUMENTATION.md).
+> This document is authoritative for `/contactos/clientes` and `/contactos/proveedores`. Where
+> it disagrees with the code, the code wins — treat the doc as stale and fix it.
+>
+> **UI status:** ⬜ **on the current design (`UI_LAYOUT_ACTUAL.md`)** — not yet migrated to
+> [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md) (only `catalogo/items` is).
+> **Cross-module data flow:** see [`DATA_FLOW_AND_RELATIONSHIPS.md`](../DATA_FLOW_AND_RELATIONSHIPS.md) §5 (contacts referenced by id; `transactionCount` denormalized).
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
 
 ---
 
-## At a glance
+## 1. At a glance
 
 Contactos is the address book of the app: two near-identical CRUD screens, one for **Clientes** (customers) and one for **Proveedores** (suppliers). Each page renders a searchable, filterable, sortable list of contacts with row-level selection, single and bulk delete, and modal-based create/edit. The two pages are structural twins — same layout skeleton, same search/filter/sort/selection machinery, same modal pattern — differing only in the entity they manage, the hook that persists it (`useClientes` vs `useProveedores`), the transaction source they read for context (`useVentas` vs `useCompras`), and the id prefix they mint (`CLI-` vs `PROV-`).
 
 Both entities share an **identical TypeScript shape** (`Cliente` and `Proveedor` are field-for-field the same interface), so the two pages can be understood as one module parameterized by entity. Data is per-account localStorage (`stockio-clientes-{account}` / `stockio-proveedores-{account}`), seeded from account-specific initial datasets on first load. There is **no detail route** — a contact is only ever viewed/edited through its modal.
 
----
-
-## Quick facts
+### Quick facts
 
 | Fact | Clientes | Proveedores |
 |------|----------|-------------|
@@ -31,7 +34,7 @@ Both entities share an **identical TypeScript shape** (`Cliente` and `Proveedor`
 
 ---
 
-## File & component map
+## 2. File & component map
 
 | Path | Role |
 |------|------|
@@ -50,7 +53,7 @@ Both entities share an **identical TypeScript shape** (`Cliente` and `Proveedor`
 
 ---
 
-## Data model
+## 3. Data model
 
 Both interfaces are identical:
 
@@ -81,7 +84,7 @@ interface Cliente /* === Proveedor */ {
 
 ---
 
-## State & data flow
+## 4. State & data flow
 
 **Persistence (both hooks)**
 - Data lives in localStorage under a per-account key; on first load (no key yet) the hook lazy-imports the account-specific seed (`invino` / `noire`) and writes it back.
@@ -98,7 +101,7 @@ interface Cliente /* === Proveedor */ {
 
 ---
 
-## Layout & structure
+## 5. Component tree & layout
 
 Both pages share the app shell: left `Sidebar`, a dark (`#1B1C20`) utility bar with `Breadcrumb` + centered `UserPanel` + a transient "Cambios guardados" success pill, then a scrollable panel containing:
 
@@ -111,7 +114,7 @@ Both pages share the app shell: left `Sidebar`, a dark (`#1B1C20`) utility bar w
 
 ---
 
-## Behaviors
+## 6. Behaviors
 
 - **Search** — free-text across the identity fields listed above.
 - **Filter** — `tipo` (Particular / Empresa) and `condicionIva` (4 fixed options from `CONDICIONES_IVA`); active filters render as removable tags and can be cleared in-popover.
@@ -123,7 +126,7 @@ Both pages share the app shell: left `Sidebar`, a dark (`#1B1C20`) utility bar w
 
 ---
 
-## Public API (hooks)
+## 7. Public API surfaces
 
 `useClientes()` → `{ clientes, isLoading, addCliente, updateCliente, deleteCliente, getClienteById, incrementTransactionCount }`
 
@@ -133,7 +136,7 @@ Note the **asymmetry in `add`**: `addCliente(Omit<Cliente,"id"|"transactionCount
 
 ---
 
-## Gotchas & edge cases
+## 8. Edge cases & gotchas
 
 1. **`transactionCount` is a denormalized counter.** It is only correct if every venta/compra flow remembers to call the corresponding `increment…` method. It does not self-heal from the transaction lists, so a contact deleted-and-recreated, or a transaction created outside the normal flow, can drift. Do not treat it as a source of truth for "how many sales does this customer have".
 2. **Selection is positional and resets on list change.** `contactoSelected[i]` maps to `filtered[i]`, and a `useEffect` clears the whole array whenever `filtered.length` changes. Typing in search or toggling a filter therefore drops the current selection — intended, but easy to break if you refactor the list.
@@ -144,7 +147,7 @@ Note the **asymmetry in `add`**: `addCliente(Omit<Cliente,"id"|"transactionCount
 
 ---
 
-## Change-safety checklist
+## 9. Change-safety checklist
 
 - [ ] Changing the `Cliente`/`Proveedor` shape? Update **both** `lib/data/*.ts` interfaces (they are meant to stay identical) and every modal.
 - [ ] Touching selection? Preserve the positional `boolean[]` ↔ `filtered` alignment and the reset-on-length-change effect.

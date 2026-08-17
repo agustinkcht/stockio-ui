@@ -47,10 +47,13 @@ is no server, no transactions, and no cross-tab syncing.
    └──────────┘                     │ reads precioFinal → snapshots unitPrice
         ▲                           │
         │ acepta                    │ convierte
-   ┌────┴─────────┐          ┌──────┴────────┐         ┌──────────────┐
-   │ ÓRDENES DE   │          │ PRESUPUESTOS  │         │  DASHBOARD   │
-   │ COMPRA       │          │               │         │ (read-only)  │
-   └──────────────┘          └───────────────┘         └──────────────┘
+   ┌────┴─────────┐          ┌──────┴────────┐         ┌──────────────────────┐
+   │ ÓRDENES DE   │          │ PRESUPUESTOS  │         │  DASHBOARD (read)    │
+   │ COMPRA       │          │               │         │  reads VENTAS + CAJA │
+   └──────────────┘          └───────────────┘         │  + items (NOT compras)│
+                                                        └──────────────────────┘
+
+        CAJA (built but inactive) ── egreso movements ──► read by Dashboard
 ```
 
 ---
@@ -222,15 +225,16 @@ one place where a **Compra writes back into Item pricing**, gated by the global
 ### 6.1 Orden de Compra → Compra (one-way)
 
 "Aceptar y llevar a compras" spawns a new `Compra` with `origen: "orden"` and cross-links
-via `compraId` (on the orden) / `ordenId` (on the compra). The orden becomes `aceptada`.
+via `orden.compraId` ↔ `compra.ordenId`. The orden becomes `aceptada`.
 Line items and estimated amounts are copied forward; the compra then runs its own
 reception/payment lifecycle independently. **No stock moves at acceptance** — stock only
 moves when the resulting compra is *received*.
 
 ### 6.2 Presupuesto → Venta (one-way)
 
-Accepting a presupuesto builds a `Venta` from its lines. The presupuesto is a **quote**:
-it holds `unitPrice` snapshots but **owns no stock** while open.
+Accepting a presupuesto builds a `Venta` from its lines and cross-links via
+`presupuesto.ventaId` ↔ `venta.presupuestoId`. The presupuesto is a **quote**: it holds
+`unitPrice` snapshots but **owns no stock** while open.
 
 > **⚠ DEBT — inconsistent stock reservation on accept.** Accepting a presupuesto from the
 > **list** view runs through `useVentaStockSync` (so the new venta **reserves stock**), but
@@ -242,14 +246,43 @@ it holds `unitPrice` snapshots but **owns no stock** while open.
 
 ## 7. The Dashboard — pure read-only consumer
 
-The Dashboard never writes. `computeMetrics` joins ventas + compras + items **by `sku`**
-over a selected period and derives KPIs. Relevant cross-module truths:
+The Dashboard never writes. Its inputs are **`useVentas` + `useCaja` + items** (it does
+**not** read `useCompras`). `computeMetrics` joins ventas against items **by `sku`** over a
+selected period and derives KPIs. Relevant cross-module truths:
 
 - **Cancelled ventas are excluded** from revenue.
+- **Gastos (expenses) = promociones (inferred discounts) + COGS + caja egresos** — the
+  purchasing side (Compras) is *not* a dashboard input; the cash-out figure comes from
+  **Caja `egreso` movements** (see §7bis), smeared across period buckets rather than
+  located at their real timestamps. ⚠ DEBT.
 - **COGS uses the item's *current* `costo`**, not the cost at sale time (there is no cost
   snapshot on venta lines) — so historical margin shifts if catalog cost changes. ⚠ DEBT.
 - The SKU join is the main fragility point: items missing/renamed after a sale drop out of
   the join.
+
+---
+
+## 7bis. Caja (cash register) — built but currently inactive
+
+> **Status: BUILT BUT INACTIVE — pending re-implementation.** The `useCaja` hook and its
+> `CajaSesion` / `CajaMovimiento` model exist and are seeded with demo data, and the
+> Dashboard reads caja `egreso` movements for its expense figure. However, Caja is **not
+> wired as an active production module**: there is no documented Caja view in the module
+> set, PDV sales do **not** currently create caja movements at checkout, and the team plans
+> to re-architect it. Treat this section as describing latent scaffolding, not live behavior.
+
+- **Hook:** `useCaja` — storage key `stockio_caja_{account}` (underscore-prefixed family,
+  like the transactional docs). Seeds one closed demo session on first load.
+- **Model:** a `CajaSesion` has `apertura` / `cierre` snapshots and a `movimientos[]` list.
+  Each `CajaMovimiento` has a `tipo`: `venta_efectivo` | `venta_posnet` |
+  `venta_transferencia` | `ingreso` | `egreso` | `retiro` | `correctivo`, an amount, and an
+  optional `ventaId` back-reference.
+- **Derivation:** `calcularSaldoEsperado` folds movements into expected
+  `efectivo`/`posnet`/`transferencia` balances; ventas add, `egreso`/`retiro` subtract.
+- **Cross-module link:** caja movements reference sales via `ventaId`, and the Dashboard is
+  the only current *reader* of caja data. When Caja is re-implemented, PDV/Ventas are the
+  intended *writers* (a sale should append the matching `venta_*` movement to the active
+  session).
 
 ---
 
@@ -280,6 +313,7 @@ over a selected period and derives KPIs. Relevant cross-module truths:
 | 7 | Presupuesto accept reserves stock from list but not detail | presupuestos | divergent stock outcome |
 | 8 | Dashboard COGS uses current cost, no sale-time snapshot | dashboard | historical margin drifts |
 | 9 | Multi-store writes non-atomic; no cross-tab sync | localStorage substrate | partial-write desync |
+| 10 | Caja built but inactive; PDV/Ventas don't write movements, yet Dashboard reads caja egresos | caja / dashboard / pdv | expense figure relies on seed data, not live sales |
 
 ---
 

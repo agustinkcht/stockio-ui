@@ -8,6 +8,11 @@
 > view**. An earlier version of this doc described an obsolete four-tab model
 > (Info / Stock / Precios / Canales) that no longer exists in the UI. If you find leftover
 > references to those tabs, they are stale.
+>
+> **UI status:** ⬜ **on the current design (`UI_LAYOUT_ACTUAL.md`)** — not yet migrated to
+> [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md) (only `catalogo/items` is).
+> **Cross-module data flow:** see [`DATA_FLOW_AND_RELATIONSHIPS.md`](../DATA_FLOW_AND_RELATIONSHIPS.md).
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
 
 ---
 

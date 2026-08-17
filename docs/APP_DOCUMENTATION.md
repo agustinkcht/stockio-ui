@@ -31,27 +31,30 @@
 | --- | --- |
 | [`UI_LAYOUT_ACTUAL.md`](./UI_LAYOUT_ACTUAL.md) | The UI **as-built today**, module by module: the inlined shell, the sidebar, the current solid-bar-with-pills top row, content archetypes, theming tokens, and known debt. Note: only `catalogo/items` is on the new design system. Read this to understand the current state. |
 | [`UI_DESIGN_SYSTEM_TARGET.md`](./UI_DESIGN_SYSTEM_TARGET.md) | The **target** design system to migrate toward: the new edge-to-edge full-screen shell with floating-pill navbar, and the `catalogo/items` visual language generalized across all modules. Includes a per-module migration status table. Read this before any UI re-skin or rewrite. |
-| [`DATA_FLOW_AND_RELATIONSHIPS.md`](./DATA_FLOW_AND_RELATIONSHIPS.md) | How modules share and mutate the same data: the Item hub, the stock model (`enStock`/`reservado`/`disponible`) and its three mutation paths, price snapshotting, contact references, document bridges, and the cross-module debt register. Read this before changing any logic that spans more than one module. |
+| [`DATA_FLOW_AND_RELATIONSHIPS.md`](./DATA_FLOW_AND_RELATIONSHIPS.md) | How modules share and mutate the same data: the Item hub, the stock model (`enStock`/`reservado`/`disponible`) and its three mutation paths, price snapshotting, contact references, document bridges, **Caja (§7bis, built but inactive)**, and the cross-module debt register. Read this before changing any logic that spans more than one module. |
+| [`GLOSSARY.md`](./GLOSSARY.md) | The single canonical dictionary of domain terms, entity shapes, id/SKU conventions, `estado` values, storage keys, and same-concept-different-name mappings (e.g. `variantes` vs `tags`, the image-field family). Start here when a term is unfamiliar. |
+| [`USER_FLOW.md`](./USER_FLOW.md) | End-to-end user journeys across modules (onboarding, cataloging, selling, purchasing, POS, reporting) and how each step moves stock, price, and documents. Read this to understand *why* the modules connect the way they do. |
+| [`SKU_GENERATION_RULES.md`](./SKU_GENERATION_RULES.md) | How SKUs (standalone `sku`, parent `skuPrefix`, variant `skuSuffix`, composed full SKU) are generated and where convention diverges from code. |
 
 ---
 
 ## Domain glossary (shared across all modules)
 
+> **Moved.** The full, canonical glossary now lives in **[`GLOSSARY.md`](./GLOSSARY.md)** so
+> every module doc links to one source of truth. The essentials are repeated here for quick
+> orientation; **`GLOSSARY.md` wins** on any discrepancy.
+
 | Term (code / UI) | Meaning |
 | --- | --- |
 | **Item** | A product record. Can be standalone, a parent (`agrupador`), or a child (`variant`). |
-| **Standalone item** | A single product with no variants. `hasVariants=false`, `isAgrupador=false`. Identified by `sku`. |
-| **Agrupador / Parent** | A container item that owns child variants. `hasVariants=true` and/or `isAgrupador=true`. Identified by `skuPrefix` (the "SKU padre"). Has no own `sku`. |
-| **Variant / Child** | A concrete sellable unit under a parent. Typed as `ItemVariant`. Identified by `skuSuffix`; its full SKU is `{parent.skuPrefix}-{skuSuffix}`. |
-| **SKU** | Stock Keeping Unit string. Standalone → `sku`; parent → `skuPrefix`; child → computed `{skuPrefix}-{skuSuffix}`. |
-| **`id`** | Stable internal identifier, prefixed by type: `STA` (standalone), `PAR` (parent), `VAR` (variant). Preferred over `sku` for lookups. |
-| **`stock`** | Object `{ enStock, reservado, disponible }` — all **strings**. `enStock` (physical) is the editable base; `reservado` is committed-to-sales; `disponible = max(0, enStock - reservado)` is **always derived**, never stored independently. Legacy shape used `total` instead of `enStock`. See [`DATA_FLOW_AND_RELATIONSHIPS.md`](./DATA_FLOW_AND_RELATIONSHIPS.md) §3. |
-| **`precio`** | Object `{ costo, margen, iva, precioFinal }` — all **numbers**. |
-| **`atributosPrincipales`** | Key/value attributes that define/identify an item or variant. |
-| **`atributosInformativos`** | Key/value attributes that are informational only. |
-| **`containerAtributosPrincipales`** | On a parent: the attribute dimensions (`{ key, variantes[] }`) whose Cartesian product generates children. |
-| **Activo / Pausado** | `isActive` flag. `true` (or `undefined`) = active; `false` = paused (dimmed, excluded from sale surfaces). |
-| **Cuenta (account)** | The active business/tenant (`invino`, `noire`, ...). Scopes all persisted data. |
+| **Agrupador / Parent** | A container item that owns child variants. Identified by `skuPrefix` ("SKU padre"); has no own `sku`. |
+| **Variant / Child** | A sellable unit under a parent (`ItemVariant`). Identified by `skuSuffix`; full SKU is `{parent.skuPrefix}-{skuSuffix}`. |
+| **`stock`** | `{ enStock, reservado, disponible }` — all **strings**. `disponible = max(0, enStock − reservado)` is **always derived**. See [`DATA_FLOW_AND_RELATIONSHIPS.md`](./DATA_FLOW_AND_RELATIONSHIPS.md) §3. |
+| **`precio`** | `{ costo, margen, iva, precioFinal }` — all **numbers**. |
+| **Cuenta (account)** | The active business/tenant (`invino`, `noire`, …). Scopes all persisted data. |
+
+*Full term list, entity shapes, `estado` values, storage-key conventions, and naming-variant
+maps: see [`GLOSSARY.md`](./GLOSSARY.md).*
 
 ---
 
@@ -83,6 +86,16 @@
 | Contactos · Clientes & Proveedores | `/contactos/clientes`, `/contactos/proveedores` | `app/contactos/*` | [`modules/contactos.md`](./modules/contactos.md) | ✅ Documented |
 | PDV (Punto de venta) | `/pdv` | `app/pdv/page.tsx` | [`modules/pdv.md`](./modules/pdv.md) | ✅ Documented |
 | Dashboard | `/dashboard` | `app/dashboard/page.tsx` | [`modules/dashboard.md`](./modules/dashboard.md) | ✅ Documented |
+| Perfil (settings) | `/perfil` | `app/perfil/page.tsx` | — (see [`UI_LAYOUT_ACTUAL.md`](./UI_LAYOUT_ACTUAL.md) §5) | ✅ Noted |
+| Ajustes (settings) | `/ajustes` | `app/ajustes/page.tsx` | — (see [`UI_LAYOUT_ACTUAL.md`](./UI_LAYOUT_ACTUAL.md) §5) | ✅ Noted |
+| **Caja (cash register)** | — (no active view) | `hooks/use-caja.ts` | [`DATA_FLOW_AND_RELATIONSHIPS.md`](./DATA_FLOW_AND_RELATIONSHIPS.md) §7bis | ⚠ Built but **inactive** — pending re-implementation |
+
+> **⚠ Stale routes — not part of the live app.** An older parallel stock/bulk implementation
+> still exists under **`app/stock/*`** (`app/stock/stock2`, `app/stock/articulos/editor-masivo`,
+> `app/stock/stock/[item]`), rendering the legacy `ItemsGrid` + `UserPanel`. It is **not** linked
+> from the sidebar and is superseded by `/catalogo/stock` and `/catalogo/creador-masivo`. Do not
+> build on it; it is a deletion candidate. Also stale: `app/ventas/ventasb`. See
+> [`modules/catalogo-stock.md`](./modules/catalogo-stock.md) §8.
 
 ---
 

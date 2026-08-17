@@ -1,11 +1,16 @@
-# Ventas — Presupuestos / Quotes (`/ventas/presupuestos`)
+# Module: Ventas · Presupuestos (Quotes)
 
-> Module doc. Part of [`APP_DOCUMENTATION.md`](../APP_DOCUMENTATION.md). Documents the **current**
-> implementation only.
+> Part of [Stockio Application Documentation](../APP_DOCUMENTATION.md).
+> This document is authoritative for the `/ventas/presupuestos` area. Where it disagrees with
+> the code, the code wins — treat the doc as stale and fix it.
 >
+> **UI status:** ⬜ **on the current design (`UI_LAYOUT_ACTUAL.md`)** — not yet migrated to
+> [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md) (only `catalogo/items` is).
+> **Cross-module data flow:** see [`DATA_FLOW_AND_RELATIONSHIPS.md`](../DATA_FLOW_AND_RELATIONSHIPS.md) §6.2 (accept → Venta, `presupuesto.ventaId` ↔ `venta.presupuestoId`).
 > **Sibling doc:** [`ventas-ventas.md`](./ventas-ventas.md). A presupuesto is a **pre-sale quote**
 > that mirrors the `Venta` shape (minus cobros/entregas) so the same list/wizard/detail UI can be
 > reused. Accepting a presupuesto **creates a Venta**.
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
 
 ---
 

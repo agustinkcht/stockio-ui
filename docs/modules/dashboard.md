@@ -1,20 +1,23 @@
-# Dashboard
+# Module: Dashboard
 
-> Module: `/dashboard`
-> File: `app/dashboard/page.tsx`
-> Last verified against implementation: this revision
+> Part of [Stockio Application Documentation](../APP_DOCUMENTATION.md).
+> This document is authoritative for the `/dashboard` page (`app/dashboard/page.tsx`). Where
+> it disagrees with the code, the code wins — treat the doc as stale and fix it.
+>
+> **UI status:** ⬜ **on the current design (`UI_LAYOUT_ACTUAL.md`)** — not yet migrated to
+> [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md) (only `catalogo/items` is).
+> **Cross-module data flow:** see [`DATA_FLOW_AND_RELATIONSHIPS.md`](../DATA_FLOW_AND_RELATIONSHIPS.md) §7 (reads Ventas + Caja + items — **not** Compras) & §7bis (Caja).
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
 
 ---
 
-## At a glance
+## 1. At a glance
 
 The Dashboard is the analytics home of the app: a single, read-only page that turns the raw ventas, caja, and items data into period-scoped business metrics. It never writes anything — it reads `useVentas`, `useCaja`, and `useItems`, filters them to a selected time window, and derives everything on the fly inside one big pure function (`computeMetrics`). The output is a set of KPI cards (Ingresos / Gastos / Ganancia), a configurable multi-factor line chart, a payment-method split, a paginated "top products" list, and a weekday×hour sales-concentration heatmap.
 
 The defining idea is **period-driven derivation**. A shared `PeriodContext` holds the selected window (`hoy`, `mes en curso`, `año en curso`, últimos 7/30 días, último año, or a custom range); `usePeriodRange` resolves it to concrete start/end dates; and every widget is a `useMemo` over `(ventas, range, costoMap, itemMetaMap, cajaEgresos)`. Because nothing is persisted and everything is recomputed, correctness lives entirely in `computeMetrics` and the SKU-resolution helpers that join venta line items back to their item costs and metadata.
 
----
-
-## Quick facts
+### Quick facts
 
 | Fact | Value |
 |------|-------|
@@ -30,7 +33,7 @@ The defining idea is **period-driven derivation**. A shared `PeriodContext` hold
 
 ---
 
-## File & component map
+## 2. File & component map
 
 Everything is inline in `app/dashboard/page.tsx`. Key units:
 
@@ -54,7 +57,7 @@ External deps: `PeriodContext`, `useSettings` (business name/photo + default per
 
 ---
 
-## Data model (derived)
+## 3. Data model (derived)
 
 `computeMetrics` returns `DashboardMetrics`:
 
@@ -89,7 +92,7 @@ interface DashboardMetrics {
 
 ---
 
-## State & data flow
+## 4. State & data flow
 
 1. **Period** — `usePeriod()` gives `periodKey` + `customRange`; a first-mount effect applies `dashboard.periodoDefault` from settings. `usePeriodRange(firstSaleDate)` resolves the key to a concrete `PeriodRange`. `firstSaleDate` (earliest non-cancelled venta) backs the "histórico"-style ranges.
 2. **Joins** — `costoMap` and `itemMetaMap` are `useMemo`'d from `items`; both expand variant SKUs (`skuPrefix`+`skuSuffix`, falling back to `v.sku`).
@@ -99,7 +102,7 @@ interface DashboardMetrics {
 
 ---
 
-## Layout & structure
+## 5. Component tree & layout
 
 App shell (Sidebar + top bar with Breadcrumb/UserPanel), then a scrollable content column:
 
@@ -111,7 +114,7 @@ App shell (Sidebar + top bar with Breadcrumb/UserPanel), then a scrollable conte
 
 ---
 
-## Behaviors
+## 6. Behaviors
 
 - **Period selection** — dropdown of `PERIOD_OPTIONS`; choosing "Personalizado" opens `RangeCalendarDialog`; selection is stored in context (shared app-wide, not just this page).
 - **Factor chart** — pick which ≤4 factors are visible, then select one to plot; totals shown per factor. Granularity (hour/day/month) auto-adapts to range width.
@@ -121,7 +124,17 @@ App shell (Sidebar + top bar with Breadcrumb/UserPanel), then a scrollable conte
 
 ---
 
-## Gotchas & edge cases
+## 7. Public API surfaces
+
+**None.** The Dashboard is a single self-contained read-only page: it exports no reusable
+hook or component (all widgets are inlined in `app/dashboard/page.tsx`) and it performs no
+writes. Its only *inputs* are the shared hooks `useVentas`, `useCaja`, `useItems`, and
+`PeriodContext`; its only *output* is rendered UI. Anything reusable here (e.g. `computeMetrics`,
+`buildCostoMap`) would need to be extracted before another module could consume it.
+
+---
+
+## 8. Edge cases & gotchas
 
 1. **Read-only, fully derived.** No writes, no persistence. Every number is recomputed from ventas/caja/items each render — fixing a wrong metric means fixing `computeMetrics` (or the join maps), never a stored value.
 2. **`egresosCaja` is smeared across buckets.** Per-bucket caja egreso = `cajaEgresos / activeBuckets`, i.e. it is **not** placed on the day it actually occurred. The period *total* for gastos is correct; the per-bucket line for that factor is an even distribution, not a time series. Don't read the caja line as "spend on that day".
@@ -134,7 +147,7 @@ App shell (Sidebar + top bar with Breadcrumb/UserPanel), then a scrollable conte
 
 ---
 
-## Change-safety checklist
+## 9. Change-safety checklist
 
 - [ ] Adding/altering a metric? Do it in `computeMetrics` and keep `factors` arrays length-aligned with `chartLabels`.
 - [ ] Adding a factor to the chart? Extend `FactorBuckets`, `FactorKey`, `ALL_FACTOR_DEFS`, and the per-bucket fill loop — and respect the 4-factor visible cap.

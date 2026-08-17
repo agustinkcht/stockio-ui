@@ -3,6 +3,11 @@
 > Part of [Stockio Application Documentation](../APP_DOCUMENTATION.md).
 > This document is authoritative for the `/catalogo/items/nuevo` creation flow. Where it disagrees
 > with the code, the code wins — treat the doc as stale and fix it.
+>
+> **UI status:** ⬜ **on the current design (`UI_LAYOUT_ACTUAL.md`)** — not yet migrated to
+> [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md) (only `catalogo/items` is).
+> **SKU generation:** see [`SKU_GENERATION_RULES.md`](../SKU_GENERATION_RULES.md).
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
 
 ---
 

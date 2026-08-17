@@ -1,11 +1,16 @@
-# Compras — Purchases (`/compras/compras`)
+# Module: Compras · Purchases
 
-> Module doc. Part of [`APP_DOCUMENTATION.md`](../APP_DOCUMENTATION.md). Documents the **current**
-> implementation only. Reflects the purchases area reachable from the sidebar (`Compras › Compras`).
+> Part of [Stockio Application Documentation](../APP_DOCUMENTATION.md).
+> This document is authoritative for the `/compras/compras` area (`Compras › Compras`). Where it
+> disagrees with the code, the code wins — treat the doc as stale and fix it.
 >
+> **UI status:** ⬜ **on the current design (`UI_LAYOUT_ACTUAL.md`)** — not yet migrated to
+> [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md) (only `catalogo/items` is).
+> **Cross-module data flow:** see [`DATA_FLOW_AND_RELATIONSHIPS.md`](../DATA_FLOW_AND_RELATIONSHIPS.md) §3.4 (stock inflow) & §4.3 (cost write-back).
 > **Sibling doc:** [`compras-ordenes-de-compra.md`](./compras-ordenes-de-compra.md) (purchase orders
 > that convert into compras). A **Compra** is the received-goods counterpart of a `Venta`: same
 > list/wizard/detail shape, but it *adds* stock instead of removing it.
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
 
 ---
 

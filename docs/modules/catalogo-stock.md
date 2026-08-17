@@ -1,7 +1,13 @@
-# Catálogo · Stock
+# Module: Catálogo · Stock
 
-> Route: `/catalogo/stock` · Primary source: `app/catalogo/stock/page.tsx`
-> Status: ✅ Documented. Reflects the **current** implementation only.
+> Part of [Stockio Application Documentation](../APP_DOCUMENTATION.md).
+> This document is authoritative for the `/catalogo/stock` page (`app/catalogo/stock/page.tsx`).
+> Where it disagrees with the code, the code wins — treat the doc as stale and fix it.
+>
+> **UI status:** ⬜ **on the current design (`UI_LAYOUT_ACTUAL.md`)** — not yet migrated to
+> [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md) (only `catalogo/items` is).
+> **Cross-module data flow:** see [`DATA_FLOW_AND_RELATIONSHIPS.md`](../DATA_FLOW_AND_RELATIONSHIPS.md) §3.
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
 
 ## 1. At a glance
 
@@ -105,6 +111,19 @@ Grid columns use `grid-cols-[minmax(0,6fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,
 6. **Parent/variant rows** — parents expand via `toggleVariantExpansion`. A parent's own stock is
    read the same way; variants are matched by `sku`/`id` scan across `item.variants`.
 
+> **⚠ STALE PATH — variant matching still keys off the deprecated `ItemVariant.sku`.** The
+> rest of the docs treat `ItemVariant.sku` as `@deprecated` and use `skuSuffix` + the
+> composed full SKU (`` `${parent.skuPrefix}-${skuSuffix}` ``) as variant identity (see
+> [`catalogo-items.md`](./catalogo-items.md) §3 and [`GLOSSARY.md`](../GLOSSARY.md)). This
+> grid (and Lista de Precios) still scans `v.sku`. It should eventually migrate to
+> `skuSuffix` + composed SKU like the reference module.
+
+7. **Active-state auto-toggle is NOT implemented here.** The Item Grid auto-pauses an item
+   when `disponible` hits 0 and reactivates it when stock returns (see
+   [`catalogo-items.md`](./catalogo-items.md) §6 → Inline edit). The dedicated Stock screen
+   does **not** do this — `handleStockFieldChange` / `handleBulkStockEdit` only rewrite the
+   `stock` object. ⚠ Inconsistency to reconcile when this module is migrated.
+
 ## 7. Public API surfaces
 
 `StockListGrid` props (page → grid):
@@ -138,6 +157,13 @@ reloadItems, hasUnsavedEdits`.
    creation or deletion; `handleGuardar` only calls `forceSaveItems`.
 7. **Variant detection is by SKU/id scan** across `item.variants`, same caveat as the price grid.
 8. **Filtering duplicated** in page (count) and grid (rows) — keep semantics aligned.
+
+> **⚠ STALE ROUTES — the `app/stock/*` tree is dead code.** Separate from this canonical
+> `/catalogo/stock` page, an older parallel implementation still exists under
+> **`app/stock/`**: `app/stock/stock2`, `app/stock/articulos/editor-masivo`, and
+> `app/stock/stock/[item]`. They render the legacy `ItemsGrid` + `UserPanel`, are **not**
+> linked from the sidebar, and are superseded by `/catalogo/stock` (this page) and
+> `/catalogo/creador-masivo`. Do not build on them; they are candidates for deletion.
 
 ## 9. Change-safety checklist
 

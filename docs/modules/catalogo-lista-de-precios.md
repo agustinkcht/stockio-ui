@@ -1,7 +1,14 @@
-# Catálogo · Lista de Precios
+# Module: Catálogo · Lista de Precios
 
-> Route: `/catalogo/lista-de-precios` · Primary source: `app/catalogo/lista-de-precios/page.tsx`
-> Status: ✅ Documented. Reflects the **current** implementation only.
+> Part of [Stockio Application Documentation](../APP_DOCUMENTATION.md).
+> This document is authoritative for the `/catalogo/lista-de-precios` page
+> (`app/catalogo/lista-de-precios/page.tsx`). Where it disagrees with the code, the code
+> wins — treat the doc as stale and fix it.
+>
+> **UI status:** ⬜ **on the current design (`UI_LAYOUT_ACTUAL.md`)** — not yet migrated to
+> [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md) (only `catalogo/items` is).
+> **Cross-module data flow:** see [`DATA_FLOW_AND_RELATIONSHIPS.md`](../DATA_FLOW_AND_RELATIONSHIPS.md) §4.
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
 
 ## 1. At a glance
 
@@ -138,6 +145,12 @@ handleCreateNuevoItem, handleCreateNuevoItemConVariantes, isCreatingItem`.
 2. **IVA default is `21`** everywhere pricing is read with a fallback (`iva || 21`).
 3. **Variant detection is by SKU scan**, not a flag: `handlePriceFieldChange` / `findItemBySku`
    loop over every parent's `variants` and match `v.sku === itemSku`. Keep variant `sku` unique.
+
+   > **⚠ STALE PATH — this keys off the deprecated `ItemVariant.sku`.** Elsewhere the docs
+   > treat `ItemVariant.sku` as `@deprecated` and use `skuSuffix` + composed full SKU
+   > (`` `${parent.skuPrefix}-${skuSuffix}` ``) as variant identity (see
+   > [`catalogo-items.md`](./catalogo-items.md) §3 and [`GLOSSARY.md`](../GLOSSARY.md)). This
+   > grid (like Stock) should eventually migrate off `v.sku` to `skuSuffix` + composed SKU.
 4. **`findItemBySku` returns `parentSku = item.sku || item.id`** — parents may be keyed by `id`.
 5. **Margen bulk edit is a no-op when `costo === 0`** (can't derive a percentage of zero).
 6. **Saving is delegated to `useItems`.** Do not write `localStorage` here — use `forceSaveItems`.

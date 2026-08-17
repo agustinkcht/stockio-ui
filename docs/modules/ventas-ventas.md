@@ -1,10 +1,16 @@
-# Ventas — Sales (`/ventas/ventas`)
+# Module: Ventas · Sales
 
-> Module doc. Part of [`APP_DOCUMENTATION.md`](../APP_DOCUMENTATION.md). Documents the **current**
-> implementation only. Reflects the sales area reachable from the sidebar (`Ventas › Ventas`).
+> Part of [Stockio Application Documentation](../APP_DOCUMENTATION.md).
+> This document is authoritative for the `/ventas/ventas` area (`Ventas › Ventas`). Where it
+> disagrees with the code, the code wins — treat the doc as stale and fix it.
 >
+> **UI status:** ⬜ **on the current design (`UI_LAYOUT_ACTUAL.md`)** — not yet migrated to
+> [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md) (only `catalogo/items` is).
+> **Cross-module data flow:** see [`DATA_FLOW_AND_RELATIONSHIPS.md`](../DATA_FLOW_AND_RELATIONSHIPS.md) §3–§4, §6.2.
 > **Sibling doc:** [`ventas-presupuestos.md`](./ventas-presupuestos.md) (quotes that convert into ventas).
-> **Legacy / not documented:** `app/ventas/ventasb/page.tsx` is an orphaned alternate list (uses raw
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
+>
+> **⚠ STALE / UNUSED:** `app/ventas/ventasb/page.tsx` is an orphaned alternate list (uses raw
 > `useVentas`, not linked from the sidebar). It is **not** part of the live app — ignore it.
 
 ---

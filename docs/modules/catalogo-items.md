@@ -3,6 +3,12 @@
 > Part of [Stockio Application Documentation](../APP_DOCUMENTATION.md).
 > This document is authoritative for the `/catalogo/items` list page. Where it disagrees with
 > the code, the code wins — treat the doc as stale and fix it.
+>
+> **UI status:** ✅ **on the target design system** — this is the *reference implementation*
+> of [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md); every other module still
+> reflects [`UI_LAYOUT_ACTUAL.md`](../UI_LAYOUT_ACTUAL.md).
+> **Cross-module data flow:** see [`DATA_FLOW_AND_RELATIONSHIPS.md`](../DATA_FLOW_AND_RELATIONSHIPS.md).
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
 
 ---
 
@@ -30,8 +36,12 @@ detail or creation flows.
 | State transport | URL query params (search/sort/filters) + React state (selection/UI) |
 
 > **Note on a second grid component.** `components/items/items-grid.tsx` (`ItemsGrid`) is a
-> similar but **distinct** grid used by other screens. `/catalogo/items` uses **`CatalogoGrid`**,
-> not `ItemsGrid`. Do not edit `ItemsGrid` expecting to change this page.
+> similar but **distinct** grid. `/catalogo/items` uses **`CatalogoGrid`**, not `ItemsGrid`.
+> Do not edit `ItemsGrid` expecting to change this page. Its only consumers are the
+> **stale `app/stock/*` routes** (`app/stock/stock2`, `app/stock/articulos/editor-masivo`,
+> `app/stock/stock/[item]`) — see the ⚠ STALE note in
+> [`catalogo-stock.md`](./catalogo-stock.md). Those routes are dead code, so `ItemsGrid` is
+> effectively legacy.
 
 ---
 
@@ -98,13 +108,21 @@ interface ItemVariant {
 
 - **Stock values are strings**, not numbers. Always `parseInt`/`Number.parseFloat` before math and
   `.toString()` when writing back.
-- **`disponible = enStock − reservado`**, recomputed on every stock write (clamped `≥ 0` in most paths).
+- **`disponible = max(0, enStock − reservado)`**, recomputed and **clamped `≥ 0` on every
+  stock write, no exceptions** (matches `DATA_FLOW_AND_RELATIONSHIPS.md` §3.1).
 - **Legacy `stock.total`** may exist on old records; readers fall back
   `stock.enStock ?? stock.total`. `useItems.migrateStock` rewrites `total → enStock` on load.
 - **Parents have no `sku`** — only `skuPrefix`. Deleting/looking up a parent MUST use `id`,
   never `sku`, or every item with `undefined` sku would match.
 - **Two child models coexist:** `variants` (`ItemVariant`) and `items` (nested `Item`, used by
   `isAgrupador`). Code that walks children checks `item.variants || item.items`.
+
+> **⚠ STALE / SEED-ONLY — the `isAgrupador` + nested-`items[]` model.** No creation flow
+> produces it: both Nuevo Item and Creador Masivo emit the `hasVariants` + `variants[]`
+> (`ItemVariant`) model. The nested-item agrupador only appears in **seed data**
+> (`lib/data/initial-items.ts`) and the back-compat branches in `useItems`. Treat
+> `variants[]` as the **active** child model and `isAgrupador`/`items[]` as legacy that
+> reader code must still tolerate but new code should not generate.
 
 ### `FilterConfig` / `SortFactorConfig`
 

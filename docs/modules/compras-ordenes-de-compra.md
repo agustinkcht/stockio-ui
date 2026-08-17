@@ -1,12 +1,17 @@
-# Compras — Órdenes de Compra / Purchase Orders (`/compras/ordenes-de-compra`)
+# Module: Compras · Órdenes de Compra (Purchase Orders)
 
-> Module doc. Part of [`APP_DOCUMENTATION.md`](../APP_DOCUMENTATION.md). Documents the **current**
-> implementation only. Reflects the purchase-orders area reachable from the sidebar
-> (`Compras › Órdenes de Compra`).
+> Part of [Stockio Application Documentation](../APP_DOCUMENTATION.md).
+> This document is authoritative for the `/compras/ordenes-de-compra` area
+> (`Compras › Órdenes de Compra`). Where it disagrees with the code, the code wins — treat the
+> doc as stale and fix it.
 >
+> **UI status:** ⬜ **on the current design (`UI_LAYOUT_ACTUAL.md`)** — not yet migrated to
+> [`UI_DESIGN_SYSTEM_TARGET.md`](../UI_DESIGN_SYSTEM_TARGET.md) (only `catalogo/items` is).
+> **Cross-module data flow:** see [`DATA_FLOW_AND_RELATIONSHIPS.md`](../DATA_FLOW_AND_RELATIONSHIPS.md) §6.1 (accept → Compra, `orden.compraId` ↔ `compra.ordenId`).
 > **Sibling doc:** [`compras-compras.md`](./compras-compras.md). An orden is a **pre-purchase plan**
 > that mirrors part of the `Compra` shape (minus recepciones/pagos) so a similar list/wizard/detail UI
 > can be reused. Accepting an orden **creates a Compra** (which is what later receives stock).
+> **Terms:** see [`GLOSSARY.md`](../GLOSSARY.md).
 
 ---
 

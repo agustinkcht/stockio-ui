@@ -83,8 +83,10 @@ In the reference route (`app/catalogo/items/page.tsx`, ~lines 439–489):
   avatar) opening a dropdown (Editar Perfil → `/perfil`, Cerrar Sesión → `logout`).
 - Colors are **hard-coded literals** (`bg-slate-300`, `bg-[#151721]`), not tokens.
 
-Other modules replicate a similar bar with their own inlined markup and their own literal
-colors — there is drift between them.
+**The reference route inlines this bar; every other module uses the shared
+`components/layout/user-panel.tsx` (`UserPanel`) component instead** — that older top bar
+is the current reality for ~27 pages. So the presence of `UserPanel` in a page is the
+tell-tale that it is still on the **old shell** (see §7.2).
 
 ### 3.3 Title row — title + primary actions
 
@@ -136,6 +138,8 @@ Legend: **New DS** = built on the new design language; **Old** = pre-transformat
 | `contactos/proveedores` | Grid (uniform) | Old | Twin of clientes. Old skin. |
 | `pdv` | Special | **Incomplete** | Two-pane POS (search + cart/checkout); least aligned to the shared shell. |
 | `dashboard` | Read-only analytics | Old | KPI cards, charts, top items, heatmap, payments; period-driven. |
+| `perfil` | Settings form | Old | Uses `Sidebar` + `Breadcrumb` + `UserPanel`. Editable profile/empresa fields with a dirty-state footer + unsaved-changes nav guard. |
+| `ajustes` | Settings form | Old | Same shell (`UserPanel`). Edits `costoBehavior`, default dashboard period, and IVA condition via `SettingsProvider`; dirty-state footer + nav guard. |
 
 **Bottom line:** exactly one module (`catalogo/items`) is on the new design language.
 Everything else is either the older skin or an incomplete surface.
@@ -175,16 +179,26 @@ Read this before any re-skin so you build on the right foundation.
 1. **Shell is inlined per page.** The top bar, title row, and utility bar are hand-written
    in each `page.tsx` (see `catalogo/items` ~439–571). Editing one page does **not**
    propagate. Only `Sidebar` and `Breadcrumb` are shared.
-2. **Legacy, unused layout components.** `components/layout/header.tsx` (solid dark
-   `bg-gray-950` bar), `top-nav.tsx` (a different pill attempt with mock bookmarks),
-   `toolbar.tsx`, `utility-bar.tsx`, `utility-bar-shared.tsx`, and `user-panel.tsx` are
-   **not imported by any `app/**/page.tsx`**. They are an older model — do not treat them
-   as source of truth.
-3. **Hard-coded colors alongside tokens.** Literals (`bg-slate-300`, `bg-[#151721]`,
+2. **Two different top-bar realities — this is the key marker of the design split.**
+   - **`user-panel.tsx` is the OLD shell and it is actively used** by ~27 pages (ventas,
+     compras, órdenes, contactos, stock, precios, dashboard, pdv, item-detail, nuevo-item,
+     creador-masivo, perfil, ajustes…). It renders the older top bar (breadcrumb + profile).
+     It is **not** dead code — it is the current top bar for every module *except* the
+     reference route.
+   - **`catalogo/items` does NOT use `UserPanel`.** It inlines its own `bg-slate-300` strip
+     with dark pills — this is the new-DS top bar. So "uses `UserPanel`" ≈ "still on the old
+     shell"; "inlines its own pills" ≈ "on the new DS." That is the fastest way to tell which
+     shell a page is on.
+3. **Genuinely legacy / unused layout components.** `components/layout/header.tsx` (solid
+   dark `bg-gray-950` bar), `top-nav.tsx` (a different pill attempt with mock bookmarks),
+   `toolbar.tsx`, `utility-bar.tsx`, and `utility-bar-shared.tsx` are **not imported by any
+   `app/**/page.tsx`**. These are an older model — do not treat them as source of truth.
+   (Note: unlike these, `user-panel.tsx` above **is** still in use.)
+4. **Hard-coded colors alongside tokens.** Literals (`bg-slate-300`, `bg-[#151721]`,
    `text-slate-900`) are mixed with tokens across pages, causing drift.
-4. **Mock/placeholder data in shell UI.** `top-nav.tsx` bookmarks and a hard-coded
+5. **Mock/placeholder data in shell UI.** `top-nav.tsx` bookmarks and a hard-coded
    `"In Vino Veritás - Admin"` label are placeholders; the live profile comes from
    `AccountProvider`.
-5. **No global dark-mode toggle** despite complete `.dark` tokens.
-6. **Design-system coverage is 1 module.** Only `catalogo/items` uses the new language;
+6. **No global dark-mode toggle** despite complete `.dark` tokens.
+7. **Design-system coverage is 1 module.** Only `catalogo/items` uses the new language;
    the rest await migration (tracked in `UI_DESIGN_SYSTEM_TARGET.md`).
