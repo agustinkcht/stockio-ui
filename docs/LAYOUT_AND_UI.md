@@ -26,13 +26,20 @@ profile pills on the right), a **top section** (view title on the left, primary
 action button(s) on the right, occasionally an extra control like a period selector),
 and then **view-specific content**.
 
-View-specific content comes in two archetypes. A **Grid view** (the default landing
+View-specific content comes in a few archetypes. A **Grid view** (the default landing
 view of a module — items, stock, precios, clientes, compras, etc.) pairs a
 search / filter / sort / bulk-actions bar with a grid of records for scanning and
-bulk operations. A **Detail view** (`.../[id]`, `.../nuevo`) is the drill-in editor for
-a single record and is shaped per module — the item detail looks nothing like the
-compra detail. The shell (sidebar + navbar pills + title row) stays constant across
-both; only the region below the title row changes.
+bulk operations. A **Detail view** (`.../[id]`) is the drill-in editor for a single
+existing record and is shaped per module — the item detail looks nothing like the
+compra detail. A **Creation / wizard view** (`.../nuevo`, `.../nueva`) guides the user
+through building a new record with a **stepped wizard** (a vertical stepper on the left,
+the active step's form on the right). Finally, a couple of **special views**
+(`creador-masivo`, `pdv`) break the mold with bespoke, full-width working surfaces.
+
+In **all** of these the shell (sidebar + navbar pills + title row) stays constant; only
+the region below the title row changes. The special views are the exception worth
+calling out — they are **visually incomplete** and not yet consistent with the rest of
+the app (see [§4.4](#44-special-views-creador-masivo--pdv--incomplete)).
 
 The whole surface is themed through CSS custom properties in `app/globals.css`. The
 shared scrollable background of every grid view is a single token, `--panel-content`,
@@ -145,13 +152,75 @@ clicked. These sit above/within the utility area depending on the view.
 
 ### 4.2 Detail view (drill-in editor)
 
-Reached at `.../[id]` (existing record) or `.../nuevo` | `.../nueva` (creation wizard).
-Shows and edits one record. **Detail views are intentionally module-specific** — the
-`catalogo/items` item detail (flip card + info/atributos card, or variant matrix for
-agrupadores) is structurally unrelated to the `compras`/`ventas` document detail
-(header + line items + payment/delivery/returns sections). What they share is only the
-outer shell (sidebar + pill row + title row); everything below is per module. See the
-relevant `modules/*.md` for each detail view's internal structure.
+Reached at `.../[id]`. Shows and edits one **existing** record. **Detail views are
+intentionally module-specific** — the `catalogo/items` item detail (flip card +
+info/atributos card, or variant matrix for agrupadores) is structurally unrelated to the
+`compras`/`ventas` document detail (header + line items + payment/delivery/returns
+sections). What they share is only the outer shell (sidebar + pill row + title row);
+everything below is per module. See the relevant `modules/*.md` for each detail view's
+internal structure.
+
+### 4.3 Creation / wizard view (`nuevo` / `nueva`)
+
+Reached at `.../nuevo` | `.../nueva`. This is the archetype for **creating a new
+record** — Nuevo Item, Nueva Compra, Nuevo Presupuesto, Nueva Orden de Compra all follow
+it. The **shell stays consistent** (Sidebar + breadcrumb pill preserved), but below the
+pill row the view switches into a **full-height stepped wizard** instead of a grid.
+
+Canonical structure (see `app/ventas/presupuestos/nuevo/page.tsx`,
+`app/compras/compras/nueva/page.tsx`, `app/catalogo/items/nuevo/page.tsx`):
+
+- **`<main>`** becomes `flex ... overflow-hidden` (full height, no page scroll) split
+  into two columns.
+- **Left column — the stepper.** A short **context summary** at the top (the entity
+  being built, e.g. the chosen cliente/proveedor or the item `titulo`, truncated), then a
+  vertical list of steps rendered from a local `STEPS` array. Each step is a numbered
+  node with three visual states — **completed** (green + check, connector line turns
+  green), **active** (accent-filled), **pending** (gray) — joined by connector segments.
+  Steps are **clickable to jump**, with some gated (disabled) until preconditions are met
+  (`canProceed` / `isStepDisabled` — e.g. can't reach step 2 without a cliente, or the
+  variantes steps until variants exist).
+- **Right column — the active step body.** A wide scroll area
+  (`col-span-16 overflow-auto p-8`) that renders exactly one step at a time
+  (`currentStep === 1 | 2 | 3 | 4`): typically pick counterpart → pick items →
+  set commercial/payment details → review & confirm. Advancing is done with
+  Back / Next (or a final "Crear / Confirmar") controls.
+- **Success state.** After creation, some wizards (e.g. Nuevo Item) swap the whole
+  wizard for a **full-screen confirmation view without the stepper**, offering
+  next-actions (view the record, create another).
+- **Modals.** Sub-flows (add client, edit line, etc.) open as centered overlay dialogs
+  (`rounded-2xl shadow-2xl max-w-md/2xl/3xl mx-4`).
+
+**Variants of the wizard.** Nuevo Item is the richest case: it chooses between **two
+different step sets** (`STEPS_INDIVIDUAL` vs `STEPS_VARIANTES`) based on the item type
+picked in step 1, and uses a distinct **purple** accent for the variantes path. The
+compra/venta/presupuesto wizards share the neutral + green-completion accent.
+
+> **Debt.** Like the grid/detail views, wizards are **inlined per page** and lean on
+> hard-coded colors (`bg-white`, `bg-[rgba(250,251,253,1)]`, `slate/gray/green/purple`)
+> rather than tokens. The stepper is duplicated across pages — a strong candidate for a
+> shared `<Wizard>` / `<Stepper>` component in the transformation. See §7.
+
+### 4.4 Special views (`creador-masivo` / `pdv`) — incomplete
+
+Two views deliberately break both the grid and wizard archetypes because their job is a
+bespoke working surface. **Both are currently visually incomplete** and are **not yet
+consistent** with the rest of the app — they need dedicated design work to bring them in
+line (spacing, tokens, shell treatment).
+
+- **Creador Masivo** (`app/catalogo/creador-masivo/page.tsx`) — a spreadsheet-style
+  bulk-entry grid (rows of items with inline cells) plus a mode toggle
+  (standalone vs. con-variantes). Keeps the shell but the working area is a dense editable
+  table rather than a card grid.
+- **PDV / Punto de Venta** (`app/pdv/page.tsx`) — a point-of-sale surface: product search
+  on one side, live cart + checkout panel on the other, designed to be fast to operate.
+  Structurally closest to a two-pane app screen; least aligned with the shared shell
+  styling today.
+
+When the transformation reaches these, the goal is the same shell (Sidebar + pill row +
+title row) with a polished, token-driven working area below — not a redesign of their
+interaction model, which is documented in [`modules/catalogo-creador-masivo.md`](./modules/catalogo-creador-masivo.md)
+and [`modules/pdv.md`](./modules/pdv.md).
 
 ---
 
@@ -265,17 +334,24 @@ re-skin so you don't build on the wrong foundation.
     breadcrumbs=... />
   <ViewHeader                      // shared: title + primary actions + optional extras
     title=... actions=... />
-  <GridView | DetailView>          // per-route content
+  <GridView | DetailView | WizardView | SpecialView>   // per-route content
+    // GridView:
     <UtilityBar                    // shared: search + filter/order + count + bulk + tabs
       .../>
     <RecordGrid variant="floating|uniform" .../>
+    // WizardView:
+    <Wizard steps={STEPS} current={...}>               // shared stepper + step body
+      <Stepper .../> <StepBody .../>
+    </Wizard>
   </...>
 </AppShell>
 ```
 
-Extracting these four shared pieces (`AppShell`, `NavbarPills`, `ViewHeader`,
-`UtilityBar`) from the inlined `catalogo/items` markup — and driving all color through
-the existing tokens — is the concrete goal of the paused transformation.
+Extracting these shared pieces — `AppShell`, `NavbarPills`, `ViewHeader`, `UtilityBar`,
+and a `Wizard`/`Stepper` for creation views — from the inlined page markup, driving all
+color through the existing tokens, and finally bringing the two **special views**
+(`creador-masivo`, `pdv`) up to the same standard, is the concrete goal of the paused
+transformation.
 
 ---
 
@@ -294,5 +370,11 @@ the existing tokens — is the concrete goal of the paused transformation.
       `usePathname()` for every module and its dropdown children.
 - [ ] Adding a grid view? Follow the `catalogo/items` pattern: `max-w-6xl` container,
       sticky utility bar, filter-modal + tag-chips, floating vs. uniform grid choice.
+- [ ] Adding a creation view? Follow the wizard pattern (§4.3): preserved shell,
+      left stepper (completed/active/pending states + gating), right step body,
+      optional full-screen success state. Reuse the (to-be-extracted) `Wizard`/`Stepper`
+      rather than re-inlining a new one.
+- [ ] Touching `creador-masivo` or `pdv`? They are **visually incomplete** (§4.4) — bring
+      them onto the shared shell + tokens; don't copy their current styling as a pattern.
 - [ ] Preserve the **z-index ladder** so sidebar flyouts and dropdowns stay on top.
 - [ ] Keep breadcrumbs explicit per page; the auto-generator is only a fallback.
