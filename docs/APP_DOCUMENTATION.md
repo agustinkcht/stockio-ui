@@ -66,7 +66,8 @@
 | Catálogo · Creador masivo | `/catalogo/creador-masivo` | `app/catalogo/creador-masivo/page.tsx` | [`modules/catalogo-creador-masivo.md`](./modules/catalogo-creador-masivo.md) | ✅ Documented |
 | Catálogo · Lista de precios | `/catalogo/lista-de-precios` | `app/catalogo/lista-de-precios/page.tsx` | [`modules/catalogo-lista-de-precios.md`](./modules/catalogo-lista-de-precios.md) | ✅ Documented |
 | Catálogo · Stock | `/catalogo/stock` | `app/catalogo/stock/page.tsx` | [`modules/catalogo-stock.md`](./modules/catalogo-stock.md) | ✅ Documented |
-| Ventas | `/ventas/*` | `app/ventas/*` | _pending_ | ⬜ Not documented |
+| Ventas · Ventas | `/ventas/ventas`, `.../nueva`, `.../[id]` | `app/ventas/ventas/*` | [`modules/ventas-ventas.md`](./modules/ventas-ventas.md) | ✅ Documented |
+| Ventas · Presupuestos | `/ventas/presupuestos`, `.../nuevo`, `.../[id]` | `app/ventas/presupuestos/*` | [`modules/ventas-presupuestos.md`](./modules/ventas-presupuestos.md) | ✅ Documented |
 | Compras | `/compras/*` | `app/compras/*` | _pending_ | ⬜ Not documented |
 | Contactos | `/contactos/*` | `app/contactos/*` | _pending_ | ⬜ Not documented |
 | PDV (Punto de venta) | `/pdv` | `app/pdv/page.tsx` | _pending_ | ⬜ Not documented |
