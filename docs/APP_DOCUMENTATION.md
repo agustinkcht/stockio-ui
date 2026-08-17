@@ -30,6 +30,7 @@
 | Guide | Scope |
 | --- | --- |
 | [`LAYOUT_AND_UI.md`](./LAYOUT_AND_UI.md) | App shell (sidebar, navbar pills, title row), Grid vs. Detail view archetypes, the theming/token system in `globals.css`, and the pending layout-transformation debt. Read this before any UI re-skin or rewrite. |
+| [`DATA_FLOW_AND_RELATIONSHIPS.md`](./DATA_FLOW_AND_RELATIONSHIPS.md) | How modules share and mutate the same data: the Item hub, the stock model (`enStock`/`reservado`/`disponible`) and its three mutation paths, price snapshotting, contact references, document bridges, and the cross-module debt register. Read this before changing any logic that spans more than one module. |
 
 ---
 
@@ -43,7 +44,7 @@
 | **Variant / Child** | A concrete sellable unit under a parent. Typed as `ItemVariant`. Identified by `skuSuffix`; its full SKU is `{parent.skuPrefix}-{skuSuffix}`. |
 | **SKU** | Stock Keeping Unit string. Standalone → `sku`; parent → `skuPrefix`; child → computed `{skuPrefix}-{skuSuffix}`. |
 | **`id`** | Stable internal identifier, prefixed by type: `STA` (standalone), `PAR` (parent), `VAR` (variant). Preferred over `sku` for lookups. |
-| **`stock`** | Object `{ enStock, reservado, disponible }` — all **strings**. `disponible = enStock - reservado`. Legacy shape used `total` instead of `enStock`. |
+| **`stock`** | Object `{ enStock, reservado, disponible }` — all **strings**. `enStock` (physical) is the editable base; `reservado` is committed-to-sales; `disponible = max(0, enStock - reservado)` is **always derived**, never stored independently. Legacy shape used `total` instead of `enStock`. See [`DATA_FLOW_AND_RELATIONSHIPS.md`](./DATA_FLOW_AND_RELATIONSHIPS.md) §3. |
 | **`precio`** | Object `{ costo, margen, iva, precioFinal }` — all **numbers**. |
 | **`atributosPrincipales`** | Key/value attributes that define/identify an item or variant. |
 | **`atributosInformativos`** | Key/value attributes that are informational only. |
